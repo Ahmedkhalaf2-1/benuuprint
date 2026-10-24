@@ -14,7 +14,7 @@ export const env = {
 
 export function assertApiUrl(): string {
   if (!env.apiUrl) {
-    throw new Error("NEXT_PUBLIC_API_URL is not set. Copy .env.example to .env.local.");
+    throw new Error("NEXT_PUBLIC_API_URL is not set. Set it before `pnpm build` (see .env.example and docs/PRODUCTION_DEPLOYMENT.md).");
   }
   return env.apiUrl;
 }

@@ -114,4 +114,6 @@ export const getOrderActivity = (id: string, signal?: AbortSignal) => api.get<Or
 export type BrandBody = { name: string; instagram?: string | null; website?: string | null; description?: string | null; primaryColor?: string | null; secondaryColor?: string | null };
 /** The owner always comes from the session; the customer is never sent. */
 export const createBrand = (body: BrandBody) => api.post<CustomerBrand>("/customer/brands", body);
-export const updateBrand = (id: string, body: BrandBody) => api.patch<CustomerBrand>(`/customer/brands/${enc(id)}`, body);
+/** PATCH is partial: every field is optional and optional values may be `null` to clear them. */
+export type BrandUpdateBody = Partial<BrandBody>;
+export const updateBrand = (id: string, body: BrandUpdateBody) => api.patch<CustomerBrand>(`/customer/brands/${enc(id)}`, body);
