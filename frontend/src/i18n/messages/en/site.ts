@@ -202,6 +202,7 @@ export const site = {
   why4: "Quality checked during production",
   why5: "Progress you can see",
   whyItMatters: "Why it matters",
+  whyLede: "Instead of dealing with several suppliers, you get every stage of making your garment in one clear process.",
   whyTitleA: "You shouldn't have to",
   whyTitleB: "chase your own order.",
   withBenuuPrint: "With Benuu Print",

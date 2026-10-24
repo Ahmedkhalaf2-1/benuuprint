@@ -39,6 +39,7 @@ export function BrandStatement() {
             <Eyebrow>{t("site.n01WhyBenuuPrint")}</Eyebrow>
             <h2 id="about-title" className="mt-5 text-balance text-[clamp(2.5rem,8vw,7.5rem)] font-semibold uppercase [line-height:0.9] tracking-[-0.05em]">{t("site.whyTitleA")}{" "}<span className="text-pub-brand">{t("site.whyTitleB")}</span>
             </h2>
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-pub-text/80 sm:text-lg">{t("site.whyLede")}</p>
           </div>
           <ol className="border-t border-pub-brand/40">
             {[t("site.why1"), t("site.why2"), t("site.why3"), t("site.why4"), t("site.why5")].map((l, i) => (

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils/cn";
 import { useI18n } from "@/i18n/provider";
 import { CONTACT_HREF, CUSTOMER_LOGIN_HREF, START_SAMPLE_HREF } from "./content";
 
-const base = "group inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap px-6 text-sm font-medium tracking-wide transition-colors active:translate-y-px";
+const base = "pub-display group inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap px-6 text-sm font-medium tracking-wide transition-colors active:translate-y-px";
 
 /** Primary conversion CTA: always the real customer sample flow. */
 export function StartSampleLink({ children, className }: { children?: ReactNode; className?: string }) {
