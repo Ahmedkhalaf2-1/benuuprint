@@ -47,7 +47,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <main id="main" className="bp-enter min-w-0 flex-1 px-4 py-6 sm:px-8">{children}</main>
         </div>
       </div>
-      <Drawer open={drawer} onOpenChange={setDrawer} title="Benue Print" side="start">
+      <Drawer open={drawer} onOpenChange={setDrawer} title="Benuu Print" side="start">
         <div className="flex h-full flex-col"><SidebarNav onNavigate={() => setDrawer(false)} /></div>
       </Drawer>
       <CommandMenu open={search} onOpenChange={setSearch} groups={groups} emptyText="No matching commands. Global search is not available yet." />

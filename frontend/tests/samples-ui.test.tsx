@@ -192,9 +192,9 @@ describe("sample form", () => {
   it("BENUE_PATTERN shows the approved-pattern select (pinning the version); other fits hide it", async () => {
     formApi();
     renderWithClient(<SampleForm initialCustomer={customer} />);
-    await screen.findByRole("radio", { name: /Benue Print pattern/ });
+    await screen.findByRole("radio", { name: /Benuu Print pattern/ });
     expect(screen.queryByRole("combobox", { name: /Approved pattern/ })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("radio", { name: /Benue Print pattern/ }));
+    await userEvent.click(screen.getByRole("radio", { name: /Benuu Print pattern/ }));
     await userEvent.click(screen.getByRole("combobox", { name: /Approved pattern/ }));
     expect(await screen.findByRole("option", { name: /Regular Tee \(v2\)/ })).toBeInTheDocument();
     await userEvent.keyboard("{Escape}");

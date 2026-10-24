@@ -87,7 +87,7 @@ export function ProductStep({ sample, options, patch, stepRef }: StepProps) {
   return (
     <Section stepKey="product">
       {form.error ? <FormError {...form.error} /> : null}
-      <ModeToggle name="Product source" value={f.mode} onChange={(mode) => form.set({ mode })} labels={["From the Benue Print catalogue", "Something else — I'll describe it"]} hints={["Pick a product we already make.", "Tell us about a product that isn't listed."]} />
+      <ModeToggle name="Product source" value={f.mode} onChange={(mode) => form.set({ mode })} labels={["From the Benuu Print catalogue", "Something else — I'll describe it"]} hints={["Pick a product we already make.", "Tell us about a product that isn't listed."]} />
       {f.mode === "catalog" ? (
         <GroupCard icon={<Shirt />} title="Choose a product">
           <ChoiceGroup name="product-type" aria-label="Product" value={f.productTypeId} onValueChange={(v) => form.set({ productTypeId: v })} columns={3} options={options.productTypes.map((p) => ({ value: p.id, label: p.name, description: p.description ?? undefined, icon: <span className="block size-14"><GarmentPreview productType={garmentKindFor(p.name)} colour="#2b302e" fabric="jersey" /></span> }))} />
@@ -120,7 +120,7 @@ export function FabricStep({ sample, options, patch, stepRef }: StepProps) {
         <ChoiceGroup name="provider" aria-label="Who supplies the fabric" value={f.provider} onValueChange={(v) => form.set({ provider: v })} columns={3} options={options.fabricProviders.map((p) => ({ value: p.value, label: PROVIDER_LABELS[p.value]?.label ?? p.value, description: PROVIDER_LABELS[p.value]?.help, icon: PROVIDER_ICON[p.value] }))} />
       </GroupCard>
       <GroupCard icon={<Shirt />} title="Fabric">
-        <ModeToggle name="Fabric source" value={f.fabricMode} onChange={(fabricMode) => form.set({ fabricMode, ...(fabricMode === "custom" ? { colorMode: "custom" as const, fabricColorId: "" } : {}) })} labels={["From the Benue Print catalogue", "My own fabric — I'll describe it"]} />
+        <ModeToggle name="Fabric source" value={f.fabricMode} onChange={(fabricMode) => form.set({ fabricMode, ...(fabricMode === "custom" ? { colorMode: "custom" as const, fabricColorId: "" } : {}) })} labels={["From the Benuu Print catalogue", "My own fabric — I'll describe it"]} />
         {f.fabricMode === "catalog" ? (
           <ChoiceGroup name="fabric-choice" aria-label="Fabric" value={f.fabricId} onValueChange={(v) => form.set({ fabricId: v, fabricColorId: "", colorMode: "catalog" })} columns={2} options={fabrics.map((x) => ({
             value: x.id, label: x.name, description: x.composition ?? undefined,

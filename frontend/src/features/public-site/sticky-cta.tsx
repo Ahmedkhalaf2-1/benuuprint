@@ -6,10 +6,11 @@ import { useEffect, useState } from "react";
 import { START_SAMPLE_HREF } from "./content";
 import { cn } from "@/lib/utils/cn";
 
-/** Pages where a floating Start-a-Sample would be redundant or in the way (forms, legal text, order tracking). */
+/** Pages where a floating Start-a-Sample would be redundant or in the way (forms, legal text, order tracking). The homepage is excluded exactly: it has its own deliberate CTA sequence. */
 const EXCLUDED = ["/contact", "/privacy", "/terms", "/track"];
 
 export function stickyCtaVisible(o: { pastHero: boolean; endInView: boolean; pathname: string }): boolean {
+  if (o.pathname === "/") return false;
   if (EXCLUDED.some((p) => o.pathname === p || o.pathname.startsWith(`${p}/`))) return false;
   return o.pastHero && !o.endInView;
 }

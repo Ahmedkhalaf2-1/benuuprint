@@ -19,7 +19,7 @@ export function WhatWeMake() {
       <SectionIntro eyebrow="02 — What we make" title={<span id="make-title">Every piece, <span className="text-pub-muted">one partner.</span></span>}>
         Start with the garment. We handle everything between your idea and the box.
       </SectionIntro>
-      <GarmentCarousel className="mt-10 lg:hidden" label="Garment families" items={WHAT_WE_MAKE.map((p) => ({ name: p.name, kind: p.kind, lines: [p.note] }))} />
+      <GarmentCarousel className="mt-8 lg:hidden" label="Garment families" actionHref="/products" actionLabel={(n) => `Explore ${n}`} items={WHAT_WE_MAKE.map((p) => ({ name: p.name, kind: p.kind, lines: [p.note] }))} />
       <div className="mt-16 hidden gap-x-16 lg:grid lg:grid-cols-[minmax(0,1fr)_24rem]">
         <ul className="border-t border-pub-line" onMouseLeave={() => setKind(WHAT_WE_MAKE[0]!.kind)}>
           {WHAT_WE_MAKE.map((p, i) => (

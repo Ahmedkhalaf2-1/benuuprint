@@ -26,7 +26,7 @@ import type { CustomerAddress, CustomerProfile } from "./types";
 const blank = (v: string | null | undefined) => v ?? "";
 const orNull = (v: string) => (v.trim() === "" ? null : v.trim());
 
-/** Contact details the customer may change. Name and login email are managed by Benue Print (stated on the page). */
+/** Contact details the customer may change. Name and login email are managed by Benuu Print (stated on the page). */
 function ContactCard({ p }: { p: CustomerProfile }) {
   const qc = useQueryClient();
   const [error, setError] = useState<{ message: string; requestId?: string } | null>(null);
@@ -36,7 +36,7 @@ function ContactCard({ p }: { p: CustomerProfile }) {
     <Card>
       <CardHeader><CardTitle>Contact details</CardTitle></CardHeader>
       <CardContent>
-        <dl className="mb-5 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">Name</dt><dd className="font-medium">{p.name}</dd></div><div><dt className="text-muted-foreground">Login email</dt><dd className="font-medium">{p.email}</dd></div><p className="text-xs text-muted-foreground sm:col-span-2">Your name and login email are managed by Benue Print. Contact us if they need to change.</p></dl>
+        <dl className="mb-5 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">Name</dt><dd className="font-medium">{p.name}</dd></div><div><dt className="text-muted-foreground">Login email</dt><dd className="font-medium">{p.email}</dd></div><p className="text-xs text-muted-foreground sm:col-span-2">Your name and login email are managed by Benuu Print. Contact us if they need to change.</p></dl>
         <form className="space-y-4" noValidate onSubmit={handleSubmit(async (v) => {
           setError(null);
           try { const next = await api.updateProfile({ phone: orNull(v.phone), whatsapp: orNull(v.whatsapp), country: orNull(v.country), city: orNull(v.city), instagram: orNull(v.instagram), preferredLocale: v.preferredLocale as "en" | "ar" }); qc.setQueryData(queryKeys.customer.profile, next); toast.success("Profile saved"); } catch (e) { setError({ message: errorMessage(e), requestId: isApiError(e) ? e.requestId : undefined }); }

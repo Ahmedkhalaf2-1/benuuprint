@@ -150,7 +150,7 @@ function ProofForm({ sample, remaining, currency, kind }: { sample: JourneyTarge
         <FormField id="pp-ref" label="Transaction reference (optional)"><Input id="pp-ref" value={f.reference} onChange={(e) => set({ reference: e.target.value })} /></FormField>
         <FormField id="pp-date" label="Date paid (optional)"><Input id="pp-date" type="date" value={f.receivedAt} onChange={(e) => set({ receivedAt: e.target.value })} /></FormField>
       </div>
-      <div className="space-y-1.5"><Label htmlFor="pp-file">Payment receipt <span aria-hidden className="text-danger">*</span></Label><Input id="pp-file" type="file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /><p className="text-xs text-muted-foreground">PNG, JPEG, GIF, WebP or PDF. Stored privately; only you and Benue Print can open it.</p></div>
+      <div className="space-y-1.5"><Label htmlFor="pp-file">Payment receipt <span aria-hidden className="text-danger">*</span></Label><Input id="pp-file" type="file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /><p className="text-xs text-muted-foreground">PNG, JPEG, GIF, WebP or PDF. Stored privately; only you and Benuu Print can open it.</p></div>
       <Button type="submit" size="lg" loading={busy}>Send payment proof</Button>
     </form>
   );
@@ -275,5 +275,5 @@ export function JourneyFiles({ sample }: { sample: SampleDetail }): ReactNode {
   const rows = q.data ?? sample.files;
   const mine = rows.filter((f) => f.source !== "BENUE_PRINT");
   const shared = rows.filter((f) => f.source === "BENUE_PRINT");
-  return <Card><CardHeader><CardTitle>Files</CardTitle></CardHeader><CardContent className="space-y-5">{shared.length ? <FileList sampleId={sample.id} files={shared} title="Provided by Benue Print" testId="files-staff" /> : null}<FileList sampleId={sample.id} files={mine} title="Uploaded by you" testId="files" /></CardContent></Card>;
+  return <Card><CardHeader><CardTitle>Files</CardTitle></CardHeader><CardContent className="space-y-5">{shared.length ? <FileList sampleId={sample.id} files={shared} title="Provided by Benuu Print" testId="files-staff" /> : null}<FileList sampleId={sample.id} files={mine} title="Uploaded by you" testId="files" /></CardContent></Card>;
 }

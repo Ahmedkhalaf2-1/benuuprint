@@ -202,7 +202,7 @@ describe("production, files, approval", () => {
     expect(card).toHaveTextContent("Sewing");
     expect(card).toHaveTextContent("We are making your sample.");
   });
-  it("files split into 'Provided by Benue Print' (customer-visible staff files) and 'Uploaded by you'", async () => {
+  it("files split into 'Provided by Benuu Print' (customer-visible staff files) and 'Uploaded by you'", async () => {
     const f = (o: Record<string, unknown>) => ({ attachmentId: "a1", assetId: "x", type: "OTHER", originalName: "mine.png", mimeType: "image/png", sizeBytes: 1024, description: null, uploadedAt: "2026-10-02T10:00:00Z", source: "YOU", ...o });
     mockApi({ "GET /customer/samples/s1/files": [f({}), f({ attachmentId: "a2", originalName: "finished-sample.jpg", source: "BENUE_PRINT" })] });
     renderWithClient(<JourneyFiles sample={sample()} />);

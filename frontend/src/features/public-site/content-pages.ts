@@ -64,10 +64,10 @@ export const CONTACT_PROJECT_TYPES = ["New collection", "Single sample", "Bulk o
 
 /* ---------------- legal shells ---------------- */
 export interface LegalSection { id: string; title: string; body: string[]; pending?: string[] }
-export const LEGAL_NOTICE = "This page is a working draft built from how the Benue Print service operates. It is not legal advice and has not been reviewed by a lawyer. Items marked “To be confirmed” are business or legal decisions that must be completed before this page is relied on.";
+export const LEGAL_NOTICE = "This page is a working draft built from how the Benuu Print service operates. It is not legal advice and has not been reviewed by a lawyer. Items marked “To be confirmed” are business or legal decisions that must be completed before this page is relied on.";
 
 export const PRIVACY_SECTIONS: LegalSection[] = [
-  { id: "who", title: "Who this applies to", body: ["This page describes how information is handled when you use the Benue Print website and customer account."], pending: ["Legal name and registered details of the company responsible for your information"] },
+  { id: "who", title: "Who this applies to", body: ["This page describes how information is handled when you use the Benuu Print website and customer account."], pending: ["Legal name and registered details of the company responsible for your information"] },
   { id: "account", title: "Account information", body: ["When your account is created we hold the details needed to run it: your name, email address and sign-in credentials, and optional profile details such as phone, WhatsApp, country, city, Instagram handle and preferred language."] },
   { id: "projects", title: "Sample and order information", body: ["We hold what you submit about a project: product choices, fabric and colour, decoration details, size information, notes, delivery addresses and the quotations, approvals and orders that follow."] },
   { id: "files", title: "Uploaded files", body: ["Reference images, artwork, size charts and similar files you upload are stored so we can produce your sample or order. Only upload files you have the right to use."] },
@@ -85,15 +85,15 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
 
 export const TERMS_SECTIONS: LegalSection[] = [
   { id: "accounts", title: "Customer accounts", body: ["Samples and orders are managed from a customer account. You are responsible for keeping your sign-in details secure and for activity under your account."] },
-  { id: "samples", title: "Sample requests", body: ["A sample request describes what you want made. Submitting it asks Benue Print to review and quote it; it is not a guarantee that a garment can be made as described."] },
-  { id: "quotations", title: "Quotations", body: ["Benue Print issues a quotation for you to accept or reject. Work proceeds on the terms of the quotation you accept."], pending: ["How long a quotation stays valid", "Whether prices can change after acceptance"] },
+  { id: "samples", title: "Sample requests", body: ["A sample request describes what you want made. Submitting it asks Benuu Print to review and quote it; it is not a guarantee that a garment can be made as described."] },
+  { id: "quotations", title: "Quotations", body: ["Benuu Print issues a quotation for you to accept or reject. Work proceeds on the terms of the quotation you accept."], pending: ["How long a quotation stays valid", "Whether prices can change after acceptance"] },
   { id: "payments", title: "Payments", body: ["Payment is submitted and reviewed through your account, with proof of payment where required."], pending: ["Accepted payment methods, currencies and payment timing", "Refunds"] },
   { id: "approvals", title: "Approvals", body: ["You approve a sample, or request changes, before a bulk order is placed. An approval confirms the sample as the reference for production."] },
   { id: "orders", title: "Bulk orders", body: ["A bulk order is placed from an approved sample, with its own quotation, quantities and delivery details."], pending: ["Minimum order quantities, if any"] },
   { id: "production", title: "Production", body: ["Production follows the approved sample and the order specification. Progress is shown in your account."], pending: ["Lead times and how delays are handled"] },
   { id: "shipments", title: "Shipments and tracking", body: ["An order can ship in one or more shipments, each with its own status. A tracking link shows a customer-safe view of an order."], pending: ["Risk, delivery responsibility and handling of failed or returned deliveries"] },
   { id: "responsibilities", title: "Your responsibilities", body: ["Provide accurate information, accurate delivery details and files you have the right to use, and review quotations and samples carefully before approving them."] },
-  { id: "content", title: "Uploaded content", body: ["You keep your rights in your artwork and files. You allow Benue Print to use them to produce and deliver your samples and orders."], pending: ["Any wider license, and how third-party rights are handled"] },
+  { id: "content", title: "Uploaded content", body: ["You keep your rights in your artwork and files. You allow Benuu Print to use them to produce and deliver your samples and orders."], pending: ["Any wider license, and how third-party rights are handled"] },
   { id: "changes", title: "Changes and cancellation", body: ["Changes and cancellation may be limited once work has started."], pending: ["Exactly when and how an order can be changed or cancelled"] },
   { id: "liability", title: "Warranties and liability", body: [], pending: ["Any warranties and the limits of liability"] },
   { id: "law", title: "Governing law", body: [], pending: ["Governing law and jurisdiction"] },

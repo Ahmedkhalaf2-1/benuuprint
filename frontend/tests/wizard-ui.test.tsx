@@ -80,9 +80,9 @@ describe("review summary cards", () => {
     render(<ReviewSummary sample={sample()} onEdit={edit} />);
     const expectIn = (key: string, ...texts: string[]) => { const card = screen.getByTestId(`summary-${key}`); for (const t of texts) expect(card).toHaveTextContent(t); };
     expectIn("brand", "Nile Core", "SMP-000123");
-    expectIn("product", "Hoodie", "Benue Print catalogue");
-    expectIn("fabric", "Benue Print will supply the fabric", "Brushed Fleece", "Forest", "Pantone 19-5918", "320 g/m²", "Soft hand");
-    expectIn("size", "M", "Use a Benue Print pattern", "Boxy Hoodie", "Longer body");
+    expectIn("product", "Hoodie", "Benuu Print catalogue");
+    expectIn("fabric", "Benuu Print will supply the fabric", "Brushed Fleece", "Forest", "Pantone 19-5918", "320 g/m²", "Soft hand");
+    expectIn("size", "M", "Use a Benuu Print pattern", "Boxy Hoodie", "Longer body");
     expectIn("decoration", "Embroidery", "Left chest", "9 × 9 cm", "2 colours", "Artwork: logo-mark.pdf", "Matte inks");
     expectIn("extras", "Metal zip", "× 2", "Woven neck label", "Polybag");
     expectIn("files", "logo-mark.pdf", "front.jpg", "Artwork · 1", "Reference · 1");

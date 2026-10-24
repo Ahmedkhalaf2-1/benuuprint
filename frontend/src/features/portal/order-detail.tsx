@@ -75,7 +75,7 @@ function Delivered({ o }: { o: OrderDetail }) {
   return (
     <Card className="border-tone-success-fg/30" data-testid="delivered"><CardContent className="flex flex-wrap items-center gap-4 pt-4">
       <PackageCheck aria-hidden className="size-8 text-tone-success-fg" />
-      <div className="min-w-0 flex-1"><p className="font-semibold">Your order has been delivered</p><p className="text-sm text-muted-foreground">{o.deliveredAt ? `Delivered ${formatDate(o.deliveredAt)}. ` : ""}Thank you for working with Benue Print.</p></div>
+      <div className="min-w-0 flex-1"><p className="font-semibold">Your order has been delivered</p><p className="text-sm text-muted-foreground">{o.deliveredAt ? `Delivered ${formatDate(o.deliveredAt)}. ` : ""}Thank you for working with Benuu Print.</p></div>
       <ReorderButton o={o} />
     </CardContent></Card>
   );

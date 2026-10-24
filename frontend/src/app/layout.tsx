@@ -7,8 +7,8 @@ import { QueryProvider } from "@/lib/query/provider";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Benue Print", template: "%s · Benue Print" },
-  description: "Benue Print factory operating system",
+  title: { default: "Benuu Print", template: "%s · Benuu Print" },
+  description: "Benuu Print factory operating system",
   robots: { index: false, follow: false },
 };
 

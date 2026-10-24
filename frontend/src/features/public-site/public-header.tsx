@@ -9,15 +9,15 @@ import { CUSTOMER_LOGIN_HREF, NAV_LINKS, START_SAMPLE_HREF } from "./content";
 
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <Link href="/" aria-label="Benue Print — home" className={cn("font-semibold uppercase tracking-[0.22em] text-pub-text", className)}>
-      Benue Print
+    <Link href="/" aria-label="Benuu Print — home" className={cn("font-semibold uppercase tracking-[0.22em] text-pub-text", className)}>
+      Benuu Print
     </Link>
   );
 }
 
 /**
  * Floating header: transparent over the hero, solid once the page scrolls. Desktop (>= lg) is the approved bar.
- * Phones get a compact bar (wordmark, always-reachable Start a Sample, 44px menu button), a thin page-progress line, and a full-height
+ * Phones get a compact bar (wordmark and 44px menu button only; Start a Sample lives in the menu panel, the hero and the closing section), a thin page-progress line, and a full-height
  * dark menu panel that eases in. The panel is always mounted (so it can animate) and inert/aria-hidden while closed.
  */
 export function PublicHeader() {
@@ -58,7 +58,6 @@ export function PublicHeader() {
             <Link href={START_SAMPLE_HREF} className="inline-flex h-10 items-center bg-pub-brand-deep px-5 text-sm font-medium text-white transition-colors hover:bg-pub-brand-deeper active:translate-y-px">Start a Sample</Link>
           </div>
           <div className="flex items-center gap-1 lg:hidden">
-            <Link href={START_SAMPLE_HREF} className="inline-flex h-11 items-center bg-pub-brand-deep px-4 text-xs font-medium uppercase tracking-[0.08em] text-white active:bg-pub-brand-deeper">Start a Sample</Link>
             <button type="button" className="inline-flex size-11 items-center justify-center text-pub-text active:bg-white/5" aria-expanded={open} aria-controls="pub-mobile-nav" aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((o) => !o)}>
               {open ? <X aria-hidden className="size-6" /> : <Menu aria-hidden className="size-6" />}
             </button>

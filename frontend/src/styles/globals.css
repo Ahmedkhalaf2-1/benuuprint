@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ---------- Benue Print design tokens (the only place hex values live) ---------- */
+/* ---------- Benuu Print design tokens (the only place hex values live) ---------- */
 :root {
   /* ---------- Benue shared brand foundation: the one source for public, staff and customer UIs ---------- */
   --benue-bg: #0a0b0b;

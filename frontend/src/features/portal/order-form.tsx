@@ -133,7 +133,7 @@ export function OrderForm({ sampleId, orderId }: { sampleId?: string; orderId?: 
       <Card><CardHeader><CardTitle>Quantity</CardTitle></CardHeader><CardContent className="space-y-4">
         <FormField id="ord-total" label="Total units" hint="How many pieces in all."><Input id="ord-total" inputMode="numeric" className="w-40" value={total} onChange={(e) => setTotal(e.target.value.replace(/[^\d]/g, ""))} /></FormField>
         <div className="space-y-2"><h3 className="text-sm font-medium">Sizes{colors.length ? " and colours" : ""}</h3>
-          {noSizes ? <p role="status" data-testid="no-sizes" className="rounded-md bg-surface-muted px-3 py-2 text-sm">No sizes are available to choose right now. Please contact Benue Print to set up your quantities.</p> : (
+          {noSizes ? <p role="status" data-testid="no-sizes" className="rounded-md bg-surface-muted px-3 py-2 text-sm">No sizes are available to choose right now. Please contact Benuu Print to set up your quantities.</p> : (
             <>
               {scales.length > 1 ? <Select aria-label="Size range" className="w-56" value={scale.id} onValueChange={setScaleId} options={scales.map((x) => ({ value: x.id, label: x.name }))} /> : null}
               <Matrix sizes={scale.sizes} colors={colors} cells={cells} onChange={setCells} />

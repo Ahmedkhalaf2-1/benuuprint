@@ -77,7 +77,7 @@ export function ReviewSummary({ sample, onEdit, highlight }: { sample: SampleDet
         {product ? (
           <div className="flex items-center gap-4">
             {!custom ? <span className="block size-16 shrink-0"><GarmentPreview productType={garmentKindFor(product)} colour="#2b302e" fabric="jersey" /></span> : null}
-            <div className="min-w-0"><p className="text-xl font-semibold tracking-tight">{product}</p><Chip className="mt-1.5">{custom ? "Described by you" : "Benue Print catalogue"}</Chip></div>
+            <div className="min-w-0"><p className="text-xl font-semibold tracking-tight">{product}</p><Chip className="mt-1.5">{custom ? "Described by you" : "Benuu Print catalogue"}</Chip></div>
           </div>
         ) : <p className="text-sm text-muted-foreground">Not chosen yet.</p>}
         {s.customProductDescription ? <p className="text-sm text-muted-foreground">{s.customProductDescription}</p> : null}

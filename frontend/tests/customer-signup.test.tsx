@@ -253,7 +253,7 @@ describe("email verification flag", () => {
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     const box = await screen.findByTestId("account-created");
     expect(box).toHaveTextContent("Account created");
-    expect(box).toHaveTextContent("Your Benue Print account is ready.");
+    expect(box).toHaveTextContent("Your Benuu Print account is ready.");
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/account/login?next=%2Faccount%2Fsamples%2Fnew");
     expect(document.body.textContent).not.toMatch(/verification link|check your email|Resend/i);
     expect(replace).not.toHaveBeenCalled();

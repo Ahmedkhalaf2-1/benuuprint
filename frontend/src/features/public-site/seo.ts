@@ -2,8 +2,8 @@ import type { Metadata, MetadataRoute } from "next";
 import { env } from "@/lib/config/env";
 import { PRIVATE_PATHS, PUBLIC_ROUTES } from "./routes";
 
-export const SITE_NAME = "Benue Print";
-const HOME_TITLE = "Benue Print — Custom apparel manufacturing, sample to delivery";
+export const SITE_NAME = "Benuu Print";
+const HOME_TITLE = "Benuu Print — Custom apparel manufacturing, sample to delivery";
 const DESCRIPTION = "Custom apparel manufacturing from first sample to full-scale production — built around quality, visibility, and control.";
 
 /** Site-wide metadata for the `(public)` group: it opts the public site back into indexing (the root layout is noindex). */

@@ -99,11 +99,11 @@ export function ProcessStory({ videoSrc = null }: { videoSrc?: string | null }) 
 
   return (
     <section id="process" aria-labelledby="process-title" className="scroll-mt-20 border-t border-pub-line bg-pub-surface">
-      <div className="mx-auto w-full max-w-[88rem] px-5 pt-16 sm:px-8 sm:pt-32 lg:px-12">
+      <div className="mx-auto w-full max-w-[88rem] px-5 pt-12 sm:px-8 sm:pt-32 lg:px-12">
         <Eyebrow>03 — Process</Eyebrow>
         <EditorialHeading className="mt-5"><span id="process-title">From idea <span className="text-pub-brand">to delivery.</span></span></EditorialHeading>
       </div>
-      <div className="mx-auto w-full max-w-[88rem] px-5 pb-16 pt-10 sm:px-8 lg:hidden"><MobileProcess videoSrc={videoSrc} /></div>
+      <div className="mx-auto w-full max-w-[88rem] px-5 pb-12 pt-8 sm:px-8 lg:hidden"><MobileProcess videoSrc={videoSrc} /></div>
       <div className="mx-auto hidden w-full max-w-[88rem] gap-x-20 px-5 sm:px-8 lg:grid lg:grid-cols-[1.05fr_1fr] lg:px-12">
         <div className="sticky top-16 z-10 -mx-5 h-[36vh] border-b border-pub-line bg-pub-surface/95 px-5 pt-3 backdrop-blur sm:-mx-8 sm:px-8 lg:static lg:mx-0 lg:h-auto lg:border-0 lg:bg-transparent lg:px-0 lg:pt-0 lg:backdrop-blur-none">
           <div className="mx-auto aspect-square h-full max-h-[36vh] lg:sticky lg:top-24 lg:mt-14 lg:h-auto lg:max-h-none lg:w-full">

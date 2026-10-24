@@ -53,7 +53,7 @@ export function sizeBody(f: SizeState): SampleBody {
   return {
     sampleSizeOptionId: f.sizeId || null,
     ...(f.fitMethod ? { fitMethod: f.fitMethod } : {}),
-    // a pattern only makes sense with the Benue Print pattern fit method
+    // a pattern only makes sense with the Benuu Print pattern fit method
     patternVersionId: f.fitMethod === "BENUE_PATTERN" && f.patternVersionId ? f.patternVersionId : null,
     fitNotes: t(f.fitNotes),
   };

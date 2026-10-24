@@ -99,7 +99,7 @@ export function CustomerLoginForm() {
         <p className="text-center text-sm"><Link href="/account/forgot-password" className="text-brand hover:underline">Forgot your password?</Link></p>
       </form>
       <div className="mt-6 border-t pt-6" data-testid="signup-cta">
-        <p className="text-sm text-muted-foreground">New to Benue Print?</p>
+        <p className="text-sm text-muted-foreground">New to Benuu Print?</p>
         <Button asChild variant="secondary" size="lg" className="mt-2 w-full"><Link href={authHref("/account/register", next)}>Create an account</Link></Button>
       </div>
     </>
@@ -112,9 +112,9 @@ export function ActivateForm() {
   const [error, setError] = useState<string | null>(null);
   const schema = z.object({ password: passwordSchema, confirm: z.string() }).refine((v) => v.password === v.confirm, { path: ["confirm"], message: "The passwords do not match" });
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{ password: string; confirm: string }>({ resolver: zodResolver(schema) });
-  if (!token) return <Banner tone="error">This activation link is incomplete. Open the link from your invitation email, or ask Benue Print to send a new one.</Banner>;
+  if (!token) return <Banner tone="error">This activation link is incomplete. Open the link from your invitation email, or ask Benuu Print to send a new one.</Banner>;
   return (
-    <form onSubmit={handleSubmit(async (v) => { setError(null); try { await activateAccount({ token, password: v.password }); router.replace("/account/login?activated=1"); } catch (e) { setError(isApiError(e) && (e.status === 400 || e.status === 404 || e.status === 410) ? `${e.messages.join(" ")} If your link has expired, ask Benue Print to send a new invitation.` : portalErrorText(e)); } })} noValidate className="space-y-4" aria-label="Activate your account">
+    <form onSubmit={handleSubmit(async (v) => { setError(null); try { await activateAccount({ token, password: v.password }); router.replace("/account/login?activated=1"); } catch (e) { setError(isApiError(e) && (e.status === 400 || e.status === 404 || e.status === 410) ? `${e.messages.join(" ")} If your link has expired, ask Benuu Print to send a new invitation.` : portalErrorText(e)); } })} noValidate className="space-y-4" aria-label="Activate your account">
       {error ? <Banner tone="error">{error}</Banner> : null}
       <PasswordInput id="a-password" label="Choose a password" autoComplete="new-password" error={errors.password?.message} {...register("password")} />
       <p className="-mt-2 text-xs text-muted-foreground">At least 12 characters, with a lowercase letter, an uppercase letter and a digit.</p>

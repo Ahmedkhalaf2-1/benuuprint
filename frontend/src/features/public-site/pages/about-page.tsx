@@ -6,7 +6,7 @@ import { StartSampleLink } from "../cta";
 export function AboutPage() {
   return (
     <main>
-      <PageHero eyebrow="About" title={<>Built around <span className="text-pub-brand">the sample.</span></>} lede="Benue Print makes custom apparel from a first sample through to delivery, and shows you every step in one account." outline="Sample" field>
+      <PageHero eyebrow="About" title={<>Built around <span className="text-pub-brand">the sample.</span></>} lede="Benuu Print makes custom apparel from a first sample through to delivery, and shows you every step in one account." outline="Sample" field>
         <StartSampleLink />
       </PageHero>
       <section aria-labelledby="about-statement" className="border-b border-pub-line">

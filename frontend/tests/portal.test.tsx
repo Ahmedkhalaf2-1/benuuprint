@@ -133,7 +133,7 @@ describe("payload builders: exclusive catalogue/custom choices and customer-only
     expect(fabricProblems({ ...base, colorMode: "custom", customHex: "navy" })).toEqual(["Colour code must look like #1A2B3C"]);
     expect(fabricProblems({ ...base, gsm: "-3" })).toEqual(["Fabric weight must be a positive number"]);
   });
-  it("size/fit: a pattern is sent only with the Benue Print pattern fit; nothing internal can be produced", () => {
+  it("size/fit: a pattern is sent only with the Benuu Print pattern fit; nothing internal can be produced", () => {
     expect(sizeBody({ sizeId: "z1", fitMethod: "BENUE_PATTERN", patternVersionId: "pv1", fitNotes: "" })).toEqual({ sampleSizeOptionId: "z1", fitMethod: "BENUE_PATTERN", patternVersionId: "pv1", fitNotes: null });
     expect(sizeBody({ sizeId: "z1", fitMethod: "NOT_SURE", patternVersionId: "pv1", fitNotes: "snug" })).toEqual({ sampleSizeOptionId: "z1", fitMethod: "NOT_SURE", patternVersionId: null, fitNotes: "snug" });
     const keys = Object.keys({ ...productBody(productState(detail())), ...fabricBody(fabricState(detail())), ...sizeBody(sizeState(detail())), ...notesBody({ notes: "a", specialInstructions: "b" }) });
@@ -163,7 +163,7 @@ describe("draft creation, patching and conditional fields", () => {
     renderWithClient(<NewSample />);
     expect(await screen.findByTestId("no-brand")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create brand" })).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/contact Benue Print/i);
+    expect(document.body.textContent).not.toMatch(/contact Benuu Print/i);
   });
   it("product step: catalogue ⇄ custom conditional fields; saving PATCHes only that step's fields", async () => {
     const calls = mockApi({ "PATCH /customer/samples/s1": () => json(200, detail()) });
@@ -189,11 +189,11 @@ describe("draft creation, patching and conditional fields", () => {
     await act(async () => { expect(await reg.current!.save()).toBe(false); }); // custom fabric needs a name
     expect(await screen.findByRole("alert")).toHaveTextContent("Give your fabric a name");
   });
-  it("size step: pattern picker only for the Benue Print pattern fit; size-chart fit points to Files", async () => {
+  it("size step: pattern picker only for the Benuu Print pattern fit; size-chart fit points to Files", async () => {
     const reg = { current: null as null | { dirty: boolean; save: () => Promise<boolean> } };
     renderWithClient(<SizeStep sample={detail({ productTypeId: "pt1", fitMethod: "NOT_SURE" })} options={options} stepRef={reg} patch={async () => undefined} changed={() => undefined} />);
     expect(screen.queryByLabelText("Pattern")).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("radio", { name: /Use a Benue Print pattern/ }));
+    await userEvent.click(screen.getByRole("radio", { name: /Use a Benuu Print pattern/ }));
     expect(screen.getByRole("combobox", { name: "Pattern" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("radio", { name: /I have a size chart/ }));
     expect(screen.getAllByText(/Upload your size chart/).length).toBeGreaterThan(1); // option help + the notice
@@ -264,7 +264,7 @@ describe("ownership and privacy", () => {
     const s = { ...detail({ productName: "Tee", fabricName: "Milton", fabricProvider: "BENUE_PRINT", fitMethod: "COPY_CUSTOMER_PIECE", size: { id: "z-secret-id", name: "M" }, customColorName: "Navy", customHex: "#001F3F", gsm: 220, decorations: [{ id: "d-secret", printMethod: { id: "pm-secret", name: "DTF" }, placement: "Centre chest", side: "FRONT", width: "10", height: "12", unit: "CM", colorCount: 3, notes: null, artworkRequired: true, artwork: { id: "art-secret", name: "logo.png", versionCount: 2 } }] }), factoryInstructions: "INTERNAL ONLY", assignedSales: "Staff Person" } as unknown as SampleDetail;
     render(<SpecificationView s={s} />);
     const text = document.body.textContent ?? "";
-    for (const shown of ["Tee", "Milton", "I will supply the fabric".length ? "Benue Print will supply the fabric" : "", "Copy an existing garment", "Navy", "220 g/m²", "DTF", "Centre chest", "10 × 12 cm", "Artwork: logo.png"]) expect(text).toContain(shown);
+    for (const shown of ["Tee", "Milton", "I will supply the fabric".length ? "Benuu Print will supply the fabric" : "", "Copy an existing garment", "Navy", "220 g/m²", "DTF", "Centre chest", "10 × 12 cm", "Artwork: logo.png"]) expect(text).toContain(shown);
     for (const hidden of ["z-secret-id", "d-secret", "pm-secret", "art-secret", "INTERNAL ONLY", "Staff Person", "factoryInstructions"]) expect(text).not.toContain(hidden);
   });
   it("private files: the signed link is requested only on click, opened on the API origin, never shown; uploads go multipart through the backend with type and decoration link", async () => {
@@ -308,12 +308,12 @@ describe("dashboard, list, status and next step", () => {
     expect(within(screen.getByTestId("needs-action")).getAllByTestId("sample-row")).toHaveLength(1); // only what needs the customer
     expect(screen.getByRole("link", { name: "Request a sample" })).toHaveAttribute("href", "/account/samples/new");
   });
-  it("dashboard without a brand: the Create brand onboarding (never 'contact Benue Print') and no 'Request a sample' button", async () => {
+  it("dashboard without a brand: the Create brand onboarding (never 'contact Benuu Print') and no 'Request a sample' button", async () => {
     mockApi({ "GET /customer/brands": [], "GET /customer/samples": page([]) });
     renderWithClient(<PortalDashboard />);
     expect(await screen.findByTestId("first-brand")).toHaveTextContent("Create your brand");
     expect(screen.getByRole("button", { name: "Create brand" })).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/contact Benue Print/i);
+    expect(document.body.textContent).not.toMatch(/contact Benuu Print/i);
     expect(screen.queryByRole("link", { name: "Request a sample" })).not.toBeInTheDocument();
   });
   it("My samples uses only the customer endpoint with server-side filters (status, brand, search, sort) and never sends a customer id", async () => {
@@ -330,7 +330,7 @@ describe("dashboard, list, status and next step", () => {
     mockApi({
       "GET /customer/samples/s1": detail({ status: "UNDER_REVIEW", statusLabel: "Under review", nextStep: "Our team is reviewing your request.", editable: false, productName: "Tee", submittedAt: "2026-10-02T10:00:00Z" }),
       "GET /customer/samples/s1/activity": [{ at: "2026-10-02T10:00:00Z", status: "SUBMITTED", title: "Request submitted", message: null }, { at: "2026-10-03T10:00:00Z", status: "UNDER_REVIEW", title: "Under review", message: "We started reviewing." }],
-      "GET /customer/samples/s1/messages": [{ id: "m1", at: "2026-10-03T11:00:00Z", from: "Benue Print", content: "Could you confirm the colour?" }],
+      "GET /customer/samples/s1/messages": [{ id: "m1", at: "2026-10-03T11:00:00Z", from: "Benuu Print", content: "Could you confirm the colour?" }],
     });
     search = "tab=activity";
     renderWithClient(<SampleDetailPage id="s1" />);
@@ -350,7 +350,7 @@ describe("profile", () => {
     expect(await screen.findByText("Nile Streetwear")).toBeInTheDocument();
     expect(screen.queryByLabelText("Name")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Login email|^Email/)).not.toBeInTheDocument();
-    expect(screen.getByText(/managed by Benue Print/)).toBeInTheDocument();
+    expect(screen.getByText(/managed by Benuu Print/)).toBeInTheDocument();
     await userEvent.clear(screen.getByLabelText("Phone"));
     await userEvent.type(screen.getByLabelText("Phone"), "0111");
     await userEvent.click(screen.getByRole("button", { name: "Save changes" }));

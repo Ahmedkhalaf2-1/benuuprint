@@ -9,7 +9,7 @@ export function Eyebrow({ children, className }: { children: ReactNode; classNam
 
 /** Display type: large, tight, uppercase. `as` keeps the heading hierarchy correct per section. */
 export function EditorialHeading({ as: Tag = "h2", children, className }: { as?: ElementType; children: ReactNode; className?: string }) {
-  return <Tag className={cn("text-balance font-semibold uppercase [line-height:0.92] tracking-[-0.045em] text-[clamp(2.5rem,7.2vw,6.5rem)]", className)}>{children}</Tag>;
+  return <Tag className={cn("text-balance font-semibold uppercase [line-height:0.92] tracking-[-0.045em] text-[clamp(2.25rem,7.2vw,6.5rem)]", className)}>{children}</Tag>;
 }
 
 export function SectionIntro({ eyebrow, title, children, className }: { eyebrow: string; title: ReactNode; children?: ReactNode; className?: string }) {
@@ -17,7 +17,7 @@ export function SectionIntro({ eyebrow, title, children, className }: { eyebrow:
     <header className={cn("pub-reveal max-w-5xl", className)}>
       <Eyebrow>{eyebrow}</Eyebrow>
       <EditorialHeading className="mt-5">{title}</EditorialHeading>
-      {children ? <p className="mt-6 max-w-xl text-base leading-relaxed text-pub-muted sm:text-lg">{children}</p> : null}
+      {children ? <p className="mt-4 max-w-xl text-base leading-relaxed text-pub-muted sm:mt-6 sm:text-lg">{children}</p> : null}
     </header>
   );
 }
@@ -26,7 +26,7 @@ export function SectionIntro({ eyebrow, title, children, className }: { eyebrow:
 export function Section({ id, labelledBy, children, className }: { id?: string; labelledBy?: string; children: ReactNode; className?: string }) {
   return (
     <section id={id} aria-labelledby={labelledBy} className={cn("scroll-mt-20 border-t border-pub-line", className)}>
-      <div className="mx-auto w-full max-w-[88rem] px-5 py-16 sm:px-8 sm:py-32 lg:px-12">{children}</div>
+      <div className="mx-auto w-full max-w-[88rem] px-5 py-12 sm:px-8 sm:py-32 lg:px-12">{children}</div>
     </section>
   );
 }

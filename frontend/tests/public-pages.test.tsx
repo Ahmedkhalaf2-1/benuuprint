@@ -53,7 +53,7 @@ describe("sitemap, robots, metadata", () => {
       const { metadata } = await import(`@/app/(public)/${slug}/page`);
       expect(metadata.title, slug).toBeTruthy();
       expect(metadata.description?.length, slug).toBeGreaterThan(40);
-      expect(metadata.openGraph?.title, slug).toContain("Benue Print");
+      expect(metadata.openGraph?.title, slug).toContain("Benuu Print");
       expect(metadata.twitter?.card, slug).toBe("summary_large_image");
       expect(JSON.stringify(metadata), slug).not.toMatch(/localhost/);
     }

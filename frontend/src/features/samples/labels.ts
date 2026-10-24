@@ -1,7 +1,7 @@
 import { humanizeCode } from "@/lib/utils/format";
 
 export const FIT_METHOD_LABELS: Record<string, { label: string; description: string }> = {
-  BENUE_PATTERN: { label: "Benue Print pattern", description: "Cut from one of our approved patterns." },
+  BENUE_PATTERN: { label: "Benuu Print pattern", description: "Cut from one of our approved patterns." },
   COPY_CUSTOMER_PIECE: { label: "Copy customer's piece", description: "The customer provides a garment to copy." },
   CUSTOM_SIZE_CHART: { label: "Custom size chart", description: "Made to the customer's size chart (file required to submit)." },
   NOT_SURE: { label: "Not sure yet", description: "To be decided during review." },
@@ -9,7 +9,7 @@ export const FIT_METHOD_LABELS: Record<string, { label: string; description: str
 
 export const PROVIDER_LABELS: Record<string, string> = {
   CUSTOMER: "Customer supplies the fabric",
-  BENUE_PRINT: "Benue Print sources the fabric",
+  BENUE_PRINT: "Benuu Print sources the fabric",
   NOT_DECIDED: "Not decided yet",
 };
 

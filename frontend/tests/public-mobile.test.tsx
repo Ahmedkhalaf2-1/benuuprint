@@ -21,16 +21,17 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); document.document
 const scrollTo = () => { Element.prototype.scrollTo = vi.fn() as never; };
 
 describe("mobile navigation", () => {
-  it("keeps Start a Sample in the bar and opens an inert-while-closed menu panel that locks scroll and closes on Escape", async () => {
+  it("keeps the phone bar to brand + menu (no CTA competing with the hero) and opens an inert-while-closed menu panel that locks scroll and closes on Escape", async () => {
     render(<PublicHeader />);
     const panel = document.getElementById("pub-mobile-nav")!;
     expect(panel).toHaveAttribute("aria-hidden", "true");
     expect(panel).toHaveAttribute("inert");
     expect(screen.queryByRole("navigation", { name: "Mobile" })).toBeNull();
-    const bar = screen.getAllByRole("link", { name: /start a sample/i });
-    expect(bar.length).toBeGreaterThan(0);
-    for (const l of bar) expect(l).toHaveAttribute("href", "/account/samples/new");
+    const phoneBar = screen.getByRole("button", { name: "Open menu" }).parentElement!;
+    expect(phoneBar.querySelectorAll("a")).toHaveLength(0);
     await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+    const menuCta = within(screen.getByRole("navigation", { name: "Mobile" })).getByRole("link", { name: /start a sample/i });
+    expect(menuCta).toHaveAttribute("href", "/account/samples/new");
     expect(panel).toHaveAttribute("aria-hidden", "false");
     expect(document.documentElement.style.overflow).toBe("hidden");
     expect(within(screen.getByRole("navigation", { name: "Mobile" })).getAllByRole("link").length).toBeGreaterThanOrEqual(7);
@@ -43,8 +44,8 @@ describe("mobile navigation", () => {
 describe("sticky mobile CTA", () => {
   it("appears after the hero, hides near closing CTAs and on form/legal/tracking pages", () => {
     expect(stickyCtaVisible({ pastHero: false, endInView: false, pathname: "/" })).toBe(false);
-    expect(stickyCtaVisible({ pastHero: true, endInView: false, pathname: "/" })).toBe(true);
-    expect(stickyCtaVisible({ pastHero: true, endInView: true, pathname: "/" })).toBe(false);
+    expect(stickyCtaVisible({ pastHero: true, endInView: false, pathname: "/" })).toBe(false); // the homepage has its own deliberate CTA sequence
+    expect(stickyCtaVisible({ pastHero: true, endInView: true, pathname: "/products" })).toBe(false);
     for (const p of ["/contact", "/privacy", "/terms", "/track", "/track/abc"]) expect(stickyCtaVisible({ pastHero: true, endInView: false, pathname: p })).toBe(false);
     expect(stickyCtaVisible({ pastHero: true, endInView: false, pathname: "/products" })).toBe(true);
   });
@@ -59,7 +60,7 @@ describe("sticky mobile CTA", () => {
 
 describe("garment carousel (touch-first What We Make / Products)", () => {
   const items = [{ name: "T-Shirts", kind: "tshirt" as const, lines: ["a"] }, { name: "Hoodies", kind: "hoodie" as const, lines: ["b"] }, { name: "Polos", kind: "polo" as const, lines: ["c"] }];
-  it("tapping a chip selects that garment and scrolls its card into view; every card ends in Start a Sample", async () => {
+  it("tapping a chip selects that garment and scrolls its card into view; every card ends in a quiet text action, not a green button", async () => {
     scrollTo();
     render(<GarmentCarousel items={items} label="Garments" />);
     const tabs = screen.getAllByRole("tab");
@@ -68,9 +69,10 @@ describe("garment carousel (touch-first What We Make / Products)", () => {
     expect(tabs[2]).toHaveAttribute("aria-selected", "true");
     expect(tabs[0]).toHaveAttribute("aria-selected", "false");
     expect(Element.prototype.scrollTo).toHaveBeenCalled();
-    const links = screen.getAllByRole("link", { name: "Start a Sample" });
+    const links = screen.getAllByRole("link", { name: /start with/i });
     expect(links).toHaveLength(3);
     for (const l of links) expect(l).toHaveAttribute("href", "/account/samples/new");
+    expect(screen.queryByRole("link", { name: "Start a Sample" })).toBeNull();
   });
   it("does not animate the scroll under reduced motion", async () => {
     scrollTo();

@@ -26,7 +26,7 @@ export function PublicFooter() {
           </nav>
         ))}
       </div>
-      <div className="border-t border-pub-line"><p className="mx-auto w-full max-w-[88rem] px-5 py-6 text-xs text-pub-muted sm:px-8 lg:px-12">© Benue Print</p></div>
+      <div className="border-t border-pub-line"><p className="mx-auto w-full max-w-[88rem] px-5 py-6 text-xs text-pub-muted sm:px-8 lg:px-12">© Benuu Print</p></div>
     </footer>
   );
 }

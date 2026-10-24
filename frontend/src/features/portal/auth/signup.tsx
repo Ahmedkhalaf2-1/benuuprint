@@ -53,7 +53,7 @@ export function RegisterForm() {
     return (
       <div className="space-y-6" data-testid="account-created">
         <div className="flex size-12 items-center justify-center rounded-sm border border-brand/40 bg-brand-soft/50 text-brand"><CheckCircle2 aria-hidden className="size-6" /></div>
-        <div role="status"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">Account created</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">Account created</h1><p className="mt-2 text-sm text-muted-foreground">Your Benue Print account is ready.</p></div>
+        <div role="status"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">Account created</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">Account created</h1><p className="mt-2 text-sm text-muted-foreground">Your Benuu Print account is ready.</p></div>
         <Button asChild size="lg" className="h-12 w-full"><Link href={authHref("/account/login", next)}>Sign in</Link></Button>
       </div>
     );
@@ -193,7 +193,7 @@ export function VerifyEmailPanel() {
       ) : state === "verified" ? (
         <>
           <div className="flex size-12 items-center justify-center rounded-sm border border-brand/40 bg-brand-soft/50 text-brand"><CheckCircle2 aria-hidden className="size-6" /></div>
-          <div role="status"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">Email verified</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">Your account is ready</h1><p className="mt-2 text-sm text-muted-foreground">Your Benue Print account is ready. Sign in to continue.</p></div>
+          <div role="status"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">Email verified</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">Your account is ready</h1><p className="mt-2 text-sm text-muted-foreground">Your Benuu Print account is ready. Sign in to continue.</p></div>
           <Button asChild size="lg" className="h-12 w-full"><Link href={authHref("/account/login", dest, { verified: "1" })} onClick={() => signupNext.clear()}>Sign in</Link></Button>
         </>
       ) : (

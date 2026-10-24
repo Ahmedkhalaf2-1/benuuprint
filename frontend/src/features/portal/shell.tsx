@@ -28,7 +28,7 @@ export function PortalGuard({ children }: { children: ReactNode }) {
 }
 
 /**
- * Customer portal frame: calmer than the staff app, same Benue Print language. One `nav` element: a top tab bar from sm up and a
+ * Customer portal frame: calmer than the staff app, same Benuu Print language. One `nav` element: a top tab bar from sm up and a
  * fixed bottom tab bar on phones (large touch targets, icon + label), so the four destinations are always one thumb-tap away.
  */
 export function PortalShell({ children }: { children: ReactNode }) {
@@ -38,7 +38,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="sticky top-0 z-30 border-b bg-surface-sunken">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-x-6 px-4 sm:h-16">
-          <Link href="/account" aria-label="Benue Print — my account"><Brand /></Link>
+          <Link href="/account" aria-label="Benuu Print — my account"><Brand /></Link>
           <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-surface-sunken pb-[env(safe-area-inset-bottom)] sm:static sm:order-2 sm:flex sm:gap-1 sm:border-0 sm:bg-transparent sm:pb-0">
             {NAV.map((n) => {
               const active = n.match(pathname);
@@ -56,7 +56,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="bp-enter mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-28 sm:py-10 sm:pb-10">{children}</main>
-      <footer className="hidden border-t bg-surface-sunken px-4 py-4 text-center text-xs text-muted-foreground sm:block">Benue Print · Questions? Contact your Benue Print team.</footer>
+      <footer className="hidden border-t bg-surface-sunken px-4 py-4 text-center text-xs text-muted-foreground sm:block">Benuu Print · Questions? Contact your Benuu Print team.</footer>
     </div>
   );
 }

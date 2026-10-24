@@ -35,7 +35,7 @@ export function Hero() {
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <StartSampleLink className="h-14 w-full sm:h-12 sm:w-auto"><span className="sm:hidden">Start a Sample</span><span className="hidden sm:inline">Start your sample</span></StartSampleLink>
-            <GhostAnchor href="#process" className="h-12 w-full border border-pub-line sm:w-auto sm:border-0"><span className="sm:hidden">See the Process</span><span className="hidden sm:inline">See how it works</span><ArrowDown aria-hidden className="size-4" /></GhostAnchor>
+            <GhostAnchor href="#process" className="h-11 w-full text-pub-text/70 sm:h-12 sm:w-auto"><span className="sm:hidden">See the Process</span><span className="hidden sm:inline">See how it works</span><ArrowDown aria-hidden className="size-4" /></GhostAnchor>
           </div>
         </div>
       </div>

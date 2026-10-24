@@ -118,7 +118,7 @@ describe("empty states", () => {
     mockApi({ "GET /customer/brands": [], "GET /customer/samples": page([]) });
     renderWithClient(<SamplesList />);
     expect(await screen.findByRole("link", { name: "Create brand" })).toHaveAttribute("href", "/account");
-    expect(document.body.textContent).not.toMatch(/contact Benue Print/i);
+    expect(document.body.textContent).not.toMatch(/contact Benuu Print/i);
   });
 });
 
