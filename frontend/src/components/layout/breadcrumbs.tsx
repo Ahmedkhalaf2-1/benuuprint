@@ -1,0 +1,25 @@
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
+
+export interface Crumb {
+  label: string;
+  href?: string;
+}
+
+export function Breadcrumbs({ items }: { items: Crumb[] }) {
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="flex flex-wrap items-center gap-1 font-mono text-[0.6875rem] uppercase tracking-[0.1em] text-muted-foreground">
+        {items.map((c, i) => {
+          const last = i === items.length - 1;
+          return (
+            <li key={`${c.label}-${i}`} className="flex items-center gap-1">
+              {c.href && !last ? <Link href={c.href} className="hover:text-foreground">{c.label}</Link> : <span aria-current={last ? "page" : undefined} className={last ? "text-foreground" : undefined}>{c.label}</span>}
+              {!last ? <ChevronRight aria-hidden className="size-3 rtl:rotate-180" /> : null}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
