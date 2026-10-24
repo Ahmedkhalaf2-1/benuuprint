@@ -1,8 +1,7 @@
 import dynamic from "next/dynamic";
 import { Hero } from "./hero";
 import { resolveGarmentModel, resolveProcessVideo } from "./hero-media";
-import { StitchDivider } from "./primitives";
-import { BrandStatement, Capabilities, Decoration, FabricStory, FinalCta, PortalShowcase, QualitySection, Transparency, TrustStrip, WorkSection } from "./sections-static";
+import { BrandStatement, Capabilities, FinalCta, PortalShowcase, QualitySection, Transparency, TrustStrip } from "./sections-static";
 import { WhatWeMake } from "./what-we-make";
 
 /** Below-the-fold interactive sections are split into their own chunks; they still render on the server. */
@@ -19,14 +18,10 @@ export function Homepage() {
         <WhatWeMake />
         <ProcessStory videoSrc={resolveProcessVideo()} />
         <BuilderPreview modelSrc={resolveGarmentModel()} />
-        <FabricStory />
-        <Decoration />
-        <StitchDivider className="py-4" />
-        <QualitySection />
-        <PortalShowcase />
-        <Transparency />
         <Capabilities />
-        <WorkSection />
+        <QualitySection />
+        <Transparency />
+        <PortalShowcase />
         <FinalCta />
       </main>
     </>

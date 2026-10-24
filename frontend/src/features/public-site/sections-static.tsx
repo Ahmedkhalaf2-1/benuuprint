@@ -29,7 +29,7 @@ export function TrustStrip() {
 
 /** Colour-field section: a deeper green-black ground and a cropped outline word give the page a change of pace. */
 export function BrandStatement() {
-  const { t, loc } = useI18n();
+  const { t } = useI18n();
   return (
     <section id="about" aria-labelledby="about-title" className="relative isolate scroll-mt-20 overflow-hidden bg-pub-field">
       <p aria-hidden className="pub-outline-text pointer-events-none absolute -bottom-[0.18em] start-[-0.04em] -z-10 select-none whitespace-nowrap text-[clamp(8rem,26vw,26rem)] font-semibold uppercase leading-none tracking-[-0.06em]">{t("site.scale")}</p>
@@ -37,11 +37,11 @@ export function BrandStatement() {
         <div className="grid gap-10 sm:gap-16 lg:grid-cols-[1.6fr_1fr] lg:items-end">
           <div className="pub-reveal">
             <Eyebrow>{t("site.n01WhyBenuuPrint")}</Eyebrow>
-            <h2 id="about-title" className="mt-5 text-balance text-[clamp(2.5rem,8vw,7.5rem)] font-semibold uppercase [line-height:0.9] tracking-[-0.05em]">{t("site.yourCollectionDeservesMoreThan")}{" "}<span className="text-pub-brand">{t("site.aSupplier")}</span>
+            <h2 id="about-title" className="mt-5 text-balance text-[clamp(2.5rem,8vw,7.5rem)] font-semibold uppercase [line-height:0.9] tracking-[-0.05em]">{t("site.whyTitleA")}{" "}<span className="text-pub-brand">{t("site.whyTitleB")}</span>
             </h2>
           </div>
           <ol className="border-t border-pub-brand/40">
-            {loc(["One manufacturing partner", "Sample to scale", "A clear process", "Quality control throughout", "Transparent production"]).map((l, i) => (
+            {[t("site.why1"), t("site.why2"), t("site.why3"), t("site.why4"), t("site.why5")].map((l, i) => (
               <li key={l} className="pub-seq flex items-baseline gap-4 border-b border-pub-line py-4 text-lg text-pub-text/90" style={{ "--i": i } as React.CSSProperties}>
                 <span className="font-mono text-xs text-pub-brand">{String(i + 1).padStart(2, "0")}</span>{l}
               </li>
@@ -111,7 +111,7 @@ export function QualitySection() {
   const { t } = useI18n();
   return (
     <Section labelledBy="quality-title" className="bg-pub-surface">
-      <SectionIntro eyebrow={t("site.n07Quality")} title={<span id="quality-title">{t("site.checkedAllTheWayThrough")}</span>}>{t("site.qualityIsNotAStampAt")}</SectionIntro>
+      <SectionIntro eyebrow={t("site.qualityEyebrow")} title={<span id="quality-title">{t("site.qualityTitle")}</span>}>{t("site.qualityLede")}</SectionIntro>
       <QualityLine />
     </Section>
   );
@@ -121,12 +121,13 @@ export function QualitySection() {
 export function PortalShowcase() {
   const { t, loc } = useI18n();
   return (
-    <section aria-labelledby="portal-title" className="relative isolate overflow-hidden border-t border-pub-line bg-pub-field">
+    <section id="account" aria-labelledby="portal-title" className="relative isolate overflow-hidden border-t border-pub-line bg-pub-field">
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: "radial-gradient(ellipse 50% 60% at 75% 50%, rgb(12 127 93 / 0.22), transparent 70%)" }} />
       <div className="mx-auto grid w-full max-w-[88rem] gap-10 px-5 py-12 sm:gap-16 sm:px-8 sm:py-32 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-12">
         <div>
-          <Eyebrow>{t("site.n08CustomerAccount")}</Eyebrow>
-          <EditorialHeading className="pub-reveal mt-5"><span id="portal-title">{t("site.seeYourProduction")}{" "}<span className="text-pub-muted">{t("site.notJustTheFinalBox")}</span></span></EditorialHeading>
+          <Eyebrow>{t("site.acctEyebrow")}</Eyebrow>
+          <EditorialHeading className="pub-reveal mt-5"><span id="portal-title">{t("site.acctTitleA")}{" "}<span className="text-pub-muted">{t("site.acctTitleB")}</span></span></EditorialHeading>
+          <p className="pub-reveal mt-6 max-w-md text-base leading-relaxed text-pub-muted sm:text-lg">{t("site.acctLede")}</p>
           <ul className="mt-7 grid grid-cols-2 gap-x-6 gap-y-3 sm:mt-10">
             {loc(PORTAL_BENEFITS).map((b) => <li key={b} className="flex items-center gap-2.5 border-t border-pub-line pt-3 text-sm text-pub-text/90"><span aria-hidden className="size-1.5 rounded-full bg-pub-brand" />{b}</li>)}
           </ul>
@@ -173,13 +174,13 @@ export function PortalShowcase() {
 /** Left: a fragmented process. Right: one connected line. */
 export function Transparency() {
   const { t, loc } = useI18n();
-  const offsets = ["ms-0", "sm:ms-10", "sm:ms-4", "sm:ms-14"];
+  const offsets = ["ms-0", "sm:ms-10", "sm:ms-4", "sm:ms-14", "sm:ms-6"];
   return (
     <Section labelledBy="transp-title" className="bg-pub-surface">
-      <SectionIntro eyebrow={t("site.n09ProcessTransparency")} title={<span id="transp-title">{t("site.knowWhereItStands")}</span>} />
+      <SectionIntro eyebrow={t("site.diffEyebrow")} title={<span id="transp-title">{t("site.diffTitle")}</span>}>{t("site.diffLede")}</SectionIntro>
       <div className="mt-10 grid gap-8 sm:mt-16 sm:gap-16 md:grid-cols-2">
         <div>
-          <h3 className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-pub-muted">{t("site.typicalManufacturing")}</h3>
+          <h3 className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-pub-muted">{t("site.diffUsual")}</h3>
           <ul className="mt-6 space-y-4 sm:mt-8 sm:space-y-6">
             {loc(TRADITIONAL).map((item, i) => <li key={item} className={cn("w-fit max-w-full border border-dashed border-pub-line px-5 py-3 text-lg text-pub-muted", offsets[i])} style={{ transform: `rotate(${i % 2 ? 0.8 : -0.8}deg)` }}>{item}</li>)}
           </ul>
@@ -205,10 +206,10 @@ export function Transparency() {
 export function Capabilities() {
   const { t, loc } = useI18n();
   return (
-    <Section labelledBy="cap-title">
+    <Section id="manufacturing" labelledBy="cap-title">
       <div className="grid gap-10 sm:gap-16 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="lg:sticky lg:top-28 lg:self-start">
-          <SectionIntro eyebrow={t("site.n10ManufacturingCapabilities")} title={<span id="cap-title">{t("site.everythingUnderOneRoof")}</span>} />
+          <SectionIntro eyebrow={t("site.capEyebrow")} title={<span id="cap-title">{t("site.everythingUnderOneRoof")}</span>}>{t("site.capLede")}</SectionIntro>
         </div>
         <div className="border-t border-pub-line lg:hidden">
           {loc(CAPABILITIES).map((c, i) => (
@@ -278,8 +279,8 @@ export function FinalCta() {
     <section data-cta-end aria-labelledby="cta-title" className="relative isolate overflow-hidden border-t border-pub-line">
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: "radial-gradient(ellipse 60% 80% at 80% 100%, rgb(12 127 93 / 0.35), transparent 70%)" }} />
       <div className="mx-auto w-full max-w-[88rem] px-5 py-16 sm:px-8 sm:py-40 lg:px-12">
-        <h2 id="cta-title" className="pub-reveal text-[clamp(3rem,11vw,10rem)] font-semibold uppercase [line-height:0.88] tracking-[-0.055em]">{t("site.readyToMakeItReal")}</h2>
-        <p className="mt-6 max-w-md text-lg text-pub-muted sm:mt-8">{t("site.startWithASampleScaleWhen")}</p>
+        <h2 id="cta-title" className="pub-reveal text-balance text-[clamp(2.75rem,8vw,7.5rem)] font-semibold uppercase [line-height:0.9] tracking-[-0.05em]">{t("site.ctaTitle")}</h2>
+        <p className="mt-6 max-w-md text-lg text-pub-muted sm:mt-8">{t("site.ctaLede")}</p>
         <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row"><StartSampleLink className="h-14 w-full sm:h-12 sm:w-auto" /><CustomerLoginLink className="h-11 w-full max-sm:border-0 max-sm:text-pub-muted sm:h-12 sm:w-auto" /></div>
       </div>
     </section>

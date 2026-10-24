@@ -107,7 +107,7 @@ export function ProcessStory({ videoSrc = null }: { videoSrc?: string | null }) 
     <section id="process" aria-labelledby="process-title" className="scroll-mt-20 border-t border-pub-line bg-pub-surface">
       <div className="mx-auto w-full max-w-[88rem] px-5 pt-12 sm:px-8 sm:pt-32 lg:px-12">
         <Eyebrow>{t("site.n03Process")}</Eyebrow>
-        <EditorialHeading className="mt-5"><span id="process-title">{t("site.fromIdea")}{" "}<span className="text-pub-brand">{t("site.toDelivery")}</span></span></EditorialHeading>
+        <EditorialHeading className="mt-5"><span id="process-title">{t("site.processTitleA")}{" "}<span className="text-pub-brand">{t("site.processTitleB")}</span></span></EditorialHeading>
       </div>
       <div className="mx-auto w-full max-w-[88rem] px-5 pb-12 pt-8 sm:px-8 lg:hidden"><MobileProcess videoSrc={videoSrc} /></div>
       <div className="mx-auto hidden w-full max-w-[88rem] gap-x-20 px-5 sm:px-8 lg:grid lg:grid-cols-[1.05fr_1fr] lg:px-12">

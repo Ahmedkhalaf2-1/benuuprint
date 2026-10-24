@@ -59,7 +59,7 @@ export function BuilderPreview({ modelSrc = null }: { modelSrc?: string | null }
   return (
     <Section id="builder" labelledBy="builder-title" className="bg-pub-bg">
       <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
-        <SectionIntro eyebrow={t("site.n04SampleBuilder")} title={<span id="builder-title">{t("site.buildItBeforeWeMakeIt")}</span>}>{t("site.chooseTheGarmentFabricColourAnd")}</SectionIntro>
+        <SectionIntro eyebrow={t("site.n04SampleBuilder")} title={<span id="builder-title">{t("site.buildItBeforeWeMakeIt")}</span>}>{t("site.builderLede")}</SectionIntro>
       </div>
       <div className="mt-8 grid grid-cols-[minmax(0,1fr)] border border-pub-line sm:mt-14 lg:grid-cols-[minmax(0,26rem)_1fr]">
         <div className="order-2 space-y-6 border-pub-line p-5 sm:space-y-7 sm:p-8 lg:order-1 lg:border-e">

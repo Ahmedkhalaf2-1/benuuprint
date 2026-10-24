@@ -135,15 +135,12 @@ const siteContent: Record<string, string> = {
 };
 
 const sitePages: Record<string, string> = {
-  "Your idea, made into something you can hold.": "فكرتك، في صورة قطعة تمسكها بيدك.",
   "We turn your brief, references and artwork into a physical sample built to the specification you approved.": "نحوّل طلبك ومراجعك وتصميمك إلى عينة فعلية مصنوعة وفق المواصفات التي اعتمدتها.",
   "A sample settles what drawings cannot: fit, finish and feel, before you commit to a run.": "العينة تحسم ما لا تحسمه الرسومات: المقاس والتشطيب والملمس، قبل أن تلتزم بالإنتاج.",
   "A finished sample, with its progress visible in your account.": "عينة مكتملة، وتقدّمها ظاهر في حسابك.",
-  "The shape of the garment, decided on purpose.": "شكل القطعة، يُحدَّد عن قصد.",
   "Patterns are developed or adjusted to the fit you describe, and worked through your size set.": "يُطوَّر الباترون أو يُعدَّل وفق المقاس الذي تصفه، ويُجرَّب على مجموعة مقاساتك.",
   "Fit is what people notice first, and it is hard to change once production starts.": "المقاس أول ما يلاحظه الناس، ويصعب تغييره بعد بدء الإنتاج.",
   "A sample cut from the pattern you approved, with fit notes you can respond to.": "عينة مقصوصة من الباترون الذي اعتمدته، مع ملاحظات المقاس لتردّ عليها.",
-  "Fabric chosen for the garment, not the other way round.": "خامة تُختار من أجل القطعة، لا العكس.",
   "We help you choose a fabric that suits the garment, the decoration and your budget, then source it for the sample and the order.": "نساعدك في اختيار خامة تناسب القطعة وطريقة التزيين وميزانيتك، ثم نوفّرها للعينة وللطلب.",
   "Fabric decides how a garment drapes, wears and takes decoration.": "الخامة هي ما يحدد سقوط القطعة ومتانتها وتقبّلها للتزيين.",
   "Your fabric and colour choices recorded on the request, alongside any reference you supplied.": "اختياراتك من الخامات والألوان مسجّلة في الطلب، إلى جانب أي مرجع قدّمته.",
@@ -248,6 +245,9 @@ const sitePages: Record<string, string> = {
   "Single sample": "عينة واحدة",
   "Bulk order": "طلب بالجملة",
   "Something else": "شيء آخر",
+  "From brief to a sample in your hands.": "من الطلب إلى عينة في يدك.",
+  "Patterns built to your fit.": "باترون يُبنى على مقاسك.",
+  "Fabric chosen to suit the garment.": "خامة تناسب القطعة.",
 };
 
 const siteLegal: Record<string, string> = {
@@ -322,7 +322,6 @@ const siteLegal: Record<string, string> = {
 
 const siteMeta: Record<string, string> = {
   "Benuu Print — Custom apparel manufacturing, sample to delivery": "Benuu Print — تصنيع ملابس مخصّص، من العينة إلى التسليم",
-  "Custom apparel manufacturing from first sample to full-scale production — built around quality, visibility, and control.": "تصنيع ملابس مخصّص من العينة الأولى حتى الإنتاج الكامل — قائم على الجودة والوضوح والتحكّم.",
   "Talk to Benuu Print about a project, or start a sample request directly.": "تحدّث مع Benuu Print عن مشروعك، أو ابدأ طلب عينة مباشرةً.",
   "Benuu Print makes custom apparel around a sample-first process, with clear approvals, structured production and visible delivery.": "تصنع Benuu Print ملابس مخصّصة وفق منهج يبدأ بالعينة، مع موافقات واضحة وإنتاج منظّم وتسليم يمكن متابعته.",
   "Eight areas of work from first sample to delivery: sample development, pattern and fit, fabric sourcing, decoration, cut and sew, quality control, packaging and fulfillment.": "ثمانية مجالات عمل من العينة الأولى حتى التسليم: تطوير العينات، والباترون والمقاس، وتوريد الخامات، والتزيين، والقص والخياطة، ومراقبة الجودة، والتعبئة، والشحن والتسليم.",
@@ -334,6 +333,7 @@ const siteMeta: Record<string, string> = {
   "Open your Benuu Print tracking link to see the status of your order and its shipments. No account needed.": "افتح رابط التتبّع الخاص بك من Benuu Print لتعرف حالة طلبك وشحناته. لا حاجة إلى حساب.",
   "Track an order": "تتبّع طلب",
   "Order tracking": "تتبّع الطلب",
+  "Custom apparel manufacturing, from the first sample to full production. Quality is checked along the way and progress is visible in your account.": "تصنيع ملابس مخصّص من العينة الأولى حتى الإنتاج الكامل، مع فحص الجودة أثناء التصنيع ومتابعة التقدّم من حسابك.",
 };
 
 const tracking: Record<string, string> = {
@@ -1138,4 +1138,45 @@ const builderAndTail: Record<string, string> = {
   "No": "لا",
 };
 
-export const phrases: Messages["phrases"] = { ...siteContent, ...sitePages, ...siteLegal, ...siteMeta, ...tracking, ...siteMisc, ...pageTitles, ...shell, ...portalLabels, ...staffModuleShared, ...staffModule, ...tabs, ...errorsAndForms, ...labelMaps, ...commandCenter, ...accountPages, ...moreTitles, ...maxChars, ...heroLines, ...moreLabels, ...publicExtras, ...tailMisc, ...modeToggle, ...backendCopy, ...serverPages, ...builderAndTail };
+const homeCopy: Record<string, string> = {
+  "Light jersey to heavyweight boxy cuts.": "من التيشيرتات الخفيفة إلى القصّات الواسعة الثقيلة.",
+  "Hoodies with clean seams and room for artwork.": "هوديز بخياطة نظيفة ومساحات جاهزة للطباعة والتطريز.",
+  "Crew necks in the fabric you choose.": "سويت شيرت برقبة دائرية بالخامة التي تختارها.",
+  "Collars and plackets that sit right.": "ياقات وفتحات أزرار مضبوطة.",
+  "Outer layers with proper structure.": "جاكيتات بتفصيل محكم.",
+  "Shorts, joggers and trousers to match your tops.": "شورتات وجوجرز وبناطيل تناسب القطع العلوية.",
+  "Team kits and activewear.": "ملابس للفرق والأندية والملابس الرياضية.",
+  "Not on the list? Describe it and we'll confirm what can be made.": "قطعة غير مدرجة؟ صِفها وسنؤكد لك ما يمكن تصنيعه.",
+  "Tell us what you want to make": "أخبرنا بما تريد تصنيعه",
+  "Choose a garment or describe a custom one. Add references, artwork and size notes.": "اختر قطعة أو صِف قطعة مخصّصة، وأرفق المراجع والتصاميم وملاحظات المقاسات.",
+  "Request": "الطلب",
+  "Set the sample details": "حدّد تفاصيل العينة",
+  "Pick fabric, colour and decoration. It all stays in one request.": "اختر الخامة واللون وطريقة التزيين، وتبقى كلها في طلب واحد.",
+  "Details": "التفاصيل",
+  "Review the quotation and pay": "راجع عرض السعر وادفع",
+  "We send the quotation to your account. Accept it or ask for changes, then upload your payment proof.": "يصلك عرض السعر في حسابك. اقبله أو اطلب تعديلات، ثم ارفع إثبات الدفع.",
+  "We make your sample": "نصنع عينتك",
+  "Pattern, cutting, decoration and sewing. You can follow the status in your account.": "باترون وقص وتزيين وخياطة، وتتابع الحالة من حسابك.",
+  "Approve it, then order": "اعتمد العينة ثم اطلب الكمية",
+  "Approve the sample or ask for changes. Once you're happy, place the production order.": "اعتمد العينة أو اطلب تعديلات. وعندما تطمئن، قدّم طلب الإنتاج.",
+  "Approval": "الاعتماد",
+  "Production, checks and delivery": "الإنتاج والفحص والتسليم",
+  "We produce in stages with quality checks along the way, then pack and ship. Every step shows in your account.": "ننتج على مراحل مع فحوصات جودة في الطريق، ثم نعبّئ ونشحن، وكل خطوة تظهر في حسابك.",
+  "Production": "الإنتاج",
+  "Several decoration methods, chosen to suit the artwork.": "عدة طرق تزيين نختار منها ما يناسب التصميم.",
+  "Track sample requests": "تتبّع طلبات العينات",
+  "Review quotations": "مراجعة عروض الأسعار",
+  "Send payment proof": "إرسال إثبات الدفع",
+  "Updates scattered across messages": "التحديثات مبعثرة في الرسائل",
+  "Hard to tell which stage the order is at": "يصعب معرفة المرحلة التي وصل إليها الطلب",
+  "Different people handling different parts": "كل جزء يتولاه شخص مختلف",
+  "Problems found too late": "مشكلات تُكتشف متأخرًا",
+  "One organized production flow": "مسار إنتاج واحد منظّم",
+  "Clear stages from sample to delivery": "مراحل واضحة من العينة إلى التسليم",
+  "Approvals at defined points": "موافقات في نقاط محددة",
+  "Quality checks along the way": "فحوصات جودة في الطريق",
+  "You keep having to ask what's next": "تظل تسأل عن الخطوة التالية",
+  "Progress and next steps visible in your account": "التقدّم والخطوات التالية ظاهرة في حسابك",
+};
+
+export const phrases: Messages["phrases"] = { ...siteContent, ...sitePages, ...siteLegal, ...siteMeta, ...tracking, ...siteMisc, ...pageTitles, ...shell, ...portalLabels, ...staffModuleShared, ...staffModule, ...tabs, ...errorsAndForms, ...labelMaps, ...commandCenter, ...accountPages, ...moreTitles, ...maxChars, ...heroLines, ...moreLabels, ...publicExtras, ...tailMisc, ...modeToggle, ...backendCopy, ...serverPages, ...builderAndTail, ...homeCopy };

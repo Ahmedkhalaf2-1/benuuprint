@@ -5,7 +5,7 @@ import { PRIVATE_PATHS, PUBLIC_ROUTES } from "./routes";
 
 export const SITE_NAME = "Benuu Print";
 const HOME_TITLE = "Benuu Print — Custom apparel manufacturing, sample to delivery";
-export const DESCRIPTION = "Custom apparel manufacturing from first sample to full-scale production — built around quality, visibility, and control.";
+export const DESCRIPTION = "Custom apparel manufacturing, from the first sample to full production. Quality is checked along the way and progress is visible in your account.";
 
 /** Site-wide metadata for the `(public)` group: it opts the public site back into indexing (the root layout is noindex). */
 export const publicGroupMetadata: Metadata = {

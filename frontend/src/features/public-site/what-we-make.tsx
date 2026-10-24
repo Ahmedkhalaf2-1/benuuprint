@@ -17,8 +17,8 @@ export function WhatWeMake() {
   const [kind, setKind] = useState<GarmentKind>(WHAT_WE_MAKE[0]!.kind);
   const active = loc(WHAT_WE_MAKE).find((p) => p.kind === kind) ?? loc(WHAT_WE_MAKE)[0]!;
   return (
-    <Section id="capabilities" labelledBy="make-title">
-      <SectionIntro eyebrow={t("site.n02WhatWeMake")} title={<span id="make-title">{t("site.everyPiece")}{" "}<span className="text-pub-muted">{t("site.onePartner")}</span></span>}>{t("site.startWithTheGarmentWeHandle")}</SectionIntro>
+    <Section id="what-we-make" labelledBy="make-title">
+      <SectionIntro eyebrow={t("site.n02WhatWeMake")} title={<span id="make-title">{t("site.makeTitleA")}{" "}<span className="text-pub-muted">{t("site.makeTitleB")}</span></span>}>{t("site.makeLede")}</SectionIntro>
       <GarmentCarousel className="mt-8 lg:hidden" label={t("site.garmentFamilies")} actionHref="/products" actionLabel={(n) => t("site.exploreName", { name: n })} items={loc(WHAT_WE_MAKE).map((p) => ({ name: p.name, kind: p.kind, lines: [p.note] }))} />
       <div className="mt-16 hidden gap-x-16 lg:grid lg:grid-cols-[minmax(0,1fr)_24rem]">
         <ul className="border-t border-pub-line" onMouseLeave={() => setKind(WHAT_WE_MAKE[0]!.kind)}>

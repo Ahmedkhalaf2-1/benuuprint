@@ -31,23 +31,23 @@ export const TRUST_ITEMS = ["Sample development", "Bulk production", "Quality co
  * map each public category to a model, and it is local to the public site.
  */
 export const WHAT_WE_MAKE: ReadonlyArray<{ name: string; note: string; kind: GarmentKind }> = [
-  { name: "T-Shirts", note: "Jersey basics to heavyweight boxy cuts.", kind: "tshirt" },
-  { name: "Hoodies", note: "Structured hoods, clean seams, decoration-ready panels.", kind: "hoodie" },
-  { name: "Sweatshirts", note: "Crew necks built around the fabric you choose.", kind: "sweatshirt" },
-  { name: "Polo Shirts", note: "Collars and plackets finished properly.", kind: "polo" },
-  { name: "Jackets", note: "Layering pieces with considered construction.", kind: "jacket" },
-  { name: "Bottoms", note: "Shorts, joggers and trousers in matching fabrics.", kind: "bottoms" },
-  { name: "Sportswear", note: "Performance cuts for teams and labels.", kind: "sportswear" },
-  { name: "Custom Pieces", note: "Something not on this list? Start with a sample.", kind: "custom" },
+  { name: "T-Shirts", note: "Light jersey to heavyweight boxy cuts.", kind: "tshirt" },
+  { name: "Hoodies", note: "Hoodies with clean seams and room for artwork.", kind: "hoodie" },
+  { name: "Sweatshirts", note: "Crew necks in the fabric you choose.", kind: "sweatshirt" },
+  { name: "Polo Shirts", note: "Collars and plackets that sit right.", kind: "polo" },
+  { name: "Jackets", note: "Outer layers with proper structure.", kind: "jacket" },
+  { name: "Bottoms", note: "Shorts, joggers and trousers to match your tops.", kind: "bottoms" },
+  { name: "Sportswear", note: "Team kits and activewear.", kind: "sportswear" },
+  { name: "Custom Pieces", note: "Not on the list? Describe it and we'll confirm what can be made.", kind: "custom" },
 ];
 
 export const JOURNEY = [
-  { title: "Tell us what you're making", body: "Choose a garment, or describe a custom one. Add references, artwork and size notes.", stage: "Idea" },
-  { title: "Build your sample", body: "Pick fabric, colour and decoration. Every choice is saved to one request.", stage: "Fabric" },
-  { title: "Review your quotation", body: "See the quote in your account. Accept it, or ask for changes.", stage: "Quotation" },
-  { title: "We produce your sample", body: "Pattern, cutting, decoration and sewing, with progress you can follow.", stage: "Sample" },
-  { title: "Approve and scale", body: "Approve the sample, or request changes. Then place the production order.", stage: "Approval" },
-  { title: "Track production and delivery", body: "Follow production, packaging and shipment until it arrives.", stage: "Delivery" },
+  { title: "Tell us what you want to make", body: "Choose a garment or describe a custom one. Add references, artwork and size notes.", stage: "Request" },
+  { title: "Set the sample details", body: "Pick fabric, colour and decoration. It all stays in one request.", stage: "Details" },
+  { title: "Review the quotation and pay", body: "We send the quotation to your account. Accept it or ask for changes, then upload your payment proof.", stage: "Quotation" },
+  { title: "We make your sample", body: "Pattern, cutting, decoration and sewing. You can follow the status in your account.", stage: "Sample" },
+  { title: "Approve it, then order", body: "Approve the sample or ask for changes. Once you're happy, place the production order.", stage: "Approval" },
+  { title: "Production, checks and delivery", body: "We produce in stages with quality checks along the way, then pack and ship. Every step shows in your account.", stage: "Production" },
 ] as const;
 
 /** `visualKey` is a decorative-texture token only (no material data); a future 3D viewer can map it to a garment material. */
@@ -87,14 +87,14 @@ export const CAPABILITIES = [
   { name: "Sample development", body: "From a brief to a finished sample." },
   { name: "Pattern & fit", body: "Patterns developed and adjusted to your fit." },
   { name: "Fabric sourcing", body: "Fabric matched to the garment and the budget." },
-  { name: "Printing & embroidery", body: "Multiple decoration methods under one roof." },
+  { name: "Printing & embroidery", body: "Several decoration methods, chosen to suit the artwork." },
   { name: "Cut & sew", body: "Construction to the approved sample." },
   { name: "Quality control", body: "Checks at several points, not only at the end." },
   { name: "Packaging", body: "Folded, labelled and packed for delivery." },
   { name: "Fulfillment", body: "Shipments tracked through to your door." },
 ] as const;
 
-export const PORTAL_BENEFITS = ["Track requests", "Review quotes", "Submit payments", "Follow production", "Track shipments", "Reorder"] as const;
+export const PORTAL_BENEFITS = ["Track sample requests", "Review quotations", "Send payment proof", "Follow production", "Track shipments", "Reorder"] as const;
 
 /**
  * Illustrative portal state for the showcase. Every status below is a real customer-portal status label
@@ -115,8 +115,8 @@ export const PORTAL_ORDER_STEPS = [
 ] as const;
 export const PORTAL_ORDER_ACTIVE = 1;
 
-export const TRADITIONAL = ["Status in email threads", "Quotes in spreadsheets", "Approvals by message", "Unclear what happens next"] as const;
-export const BENUE = ["One account for every request", "Clear approvals at each stage", "Production you can follow", "Shipments tracked to delivery"] as const;
+export const TRADITIONAL = ["Updates scattered across messages", "Hard to tell which stage the order is at", "Different people handling different parts", "Problems found too late", "You keep having to ask what's next"] as const;
+export const BENUE = ["One organized production flow", "Clear stages from sample to delivery", "Approvals at defined points", "Quality checks along the way", "Progress and next steps visible in your account"] as const;
 
 /** Real case studies go here. Until approved work exists the section renders honest placeholders. */
 export interface WorkItem { title: string; category: string; techniques: string[]; material: string; quantity?: string; imageSrc?: string; imageAlt?: string }
