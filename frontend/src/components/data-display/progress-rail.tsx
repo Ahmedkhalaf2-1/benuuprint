@@ -1,4 +1,7 @@
+"use client";
+
 import { Check } from "lucide-react";
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
 
 export type RailState = "DONE" | "ACTIVE" | "PENDING";
@@ -9,6 +12,7 @@ export interface RailStep { code: string; label: string; state: RailState }
  * Done = emerald, active = emerald ring with a soft ping, pending = hollow. State is also spoken ("Done" / "In progress" / "Not started").
  */
 export function ProgressRail({ steps, label, testId, phase, compact, className }: { steps: RailStep[]; label: string; testId?: string; phase?: string; compact?: boolean; className?: string }) {
+  const { t } = useI18n();
   return (
     <ol aria-label={label} data-testid={testId} data-phase={phase} className={cn("relative", className)}>
       {steps.map((s, i) => {
@@ -24,7 +28,7 @@ export function ProgressRail({ steps, label, testId, phase, compact, className }
               <span className="font-mono text-[0.6875rem] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
               <span className={cn(s.state === "PENDING" && "text-muted-foreground", s.state === "ACTIVE" && "font-semibold text-foreground")}>{s.label}</span>
             </span>
-            <span className="sr-only">{s.state === "DONE" ? "Done" : s.state === "ACTIVE" ? "In progress" : "Not started"}</span>
+            <span className="sr-only">{s.state === "DONE" ? t("common.done") : s.state === "ACTIVE" ? t("common.inProgress") : t("common.notStarted")}</span>
           </li>
         );
       })}

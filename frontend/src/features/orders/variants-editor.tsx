@@ -19,6 +19,7 @@ import { CUSTOM, NONE, intOk, type Row } from "./matrix";
 import { QuantityMatrix } from "./quantity-matrix";
 import { QuantitySummary } from "./quantity-summary";
 import type { ItemInput, OrderDetail, OrderItem, VariantInput } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 interface ItemState { id: string; isNew?: boolean; productName: string; quantity: string; notes: string; rows: Row[] }
 let seq = 0;
@@ -59,6 +60,7 @@ export function VariantsEditor({ order, fabricColors, onSave, saveLabel = "Save 
   saveLabel?: string;
   disabledExtra?: boolean;
 }) {
+  const { t } = useI18n();
   const inv = useOrderInvalidation();
   const config = useConfiguratorOptions();
   const [items, setItems] = useState<ItemState[]>(order.items.length ? order.items.map(fromItem) : [{ id: "new-item", isNew: true, productName: "Product", quantity: "", notes: "", rows: [] }]);
@@ -86,7 +88,7 @@ export function VariantsEditor({ order, fabricColors, onSave, saveLabel = "Save 
       await save.mutateAsync();
       setDirty(false);
       setShowErrors(false);
-      if (!onSave) toast.success("Variants saved");
+      if (!onSave) toast.success(t("orders.variantsSaved"));
     } catch (e) {
       setError({ message: errorMessage(e), requestId: isApiError(e) ? e.requestId : undefined });
     }
@@ -103,43 +105,43 @@ export function VariantsEditor({ order, fabricColors, onSave, saveLabel = "Save 
             <CardHeader><CardTitle><span id={`item-${it.id}`}>{it.productName}</span></CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-[10rem_1fr]">
-                <div className="space-y-1.5"><label htmlFor={`q-${it.id}`} className="text-[0.8125rem] font-medium">Order quantity</label><Input id={`q-${it.id}`} inputMode="numeric" aria-invalid={showErrors && !intOk(it.quantity)} value={it.quantity} onChange={(e) => patchItem(it.id, (i) => ({ ...i, quantity: e.target.value }))} /></div>
-                <div className="space-y-1.5"><label htmlFor={`n-${it.id}`} className="text-[0.8125rem] font-medium">Item notes</label><Input id={`n-${it.id}`} value={it.notes} onChange={(e) => patchItem(it.id, (i) => ({ ...i, notes: e.target.value }))} /></div>
+                <div className="space-y-1.5"><label htmlFor={`q-${it.id}`} className="text-[0.8125rem] font-medium">{t("orders.orderQuantity")}</label><Input id={`q-${it.id}`} inputMode="numeric" aria-invalid={showErrors && !intOk(it.quantity)} value={it.quantity} onChange={(e) => patchItem(it.id, (i) => ({ ...i, quantity: e.target.value }))} /></div>
+                <div className="space-y-1.5"><label htmlFor={`n-${it.id}`} className="text-[0.8125rem] font-medium">{t("orders.itemNotes")}</label><Input id={`n-${it.id}`} value={it.notes} onChange={(e) => patchItem(it.id, (i) => ({ ...i, notes: e.target.value }))} /></div>
               </div>
               <QuantitySummary orderQuantity={orderQty} variantTotal={total} />
-              {total !== orderQty && total > 0 ? <Button type="button" variant="ghost" size="sm" onClick={() => patchItem(it.id, (i) => ({ ...i, quantity: String(total) }))}>Set order quantity to {total}</Button> : null}
-              <div role="tablist" aria-label="Variant editor view" className="inline-flex rounded-md border p-0.5 text-sm">
-                {(["matrix", "list"] as const).map((v) => <button key={v} type="button" role="tab" aria-selected={view === v} onClick={() => setView(v)} className={`rounded-sm px-3 py-1 ${view === v ? "bg-brand text-brand-foreground" : "text-muted-foreground hover:bg-surface-muted"}`}>{v === "matrix" ? "Colour × size grid" : "List"}</button>)}
+              {total !== orderQty && total > 0 ? <Button type="button" variant="ghost" size="sm" onClick={() => patchItem(it.id, (i) => ({ ...i, quantity: String(total) }))}>{t("orders.setOrderQuantityToTotal", { total })}</Button> : null}
+              <div role="tablist" aria-label={t("orders.variantEditorView")} className="inline-flex rounded-md border p-0.5 text-sm">
+                {(["matrix", "list"] as const).map((v) => <button key={v} type="button" role="tab" aria-selected={view === v} onClick={() => setView(v)} className={`rounded-sm px-3 py-1 ${view === v ? "bg-brand text-brand-foreground" : "text-muted-foreground hover:bg-surface-muted"}`}>{v === "matrix" ? t("orders.colourSizeGrid") : t("orders.list")}</button>)}
               </div>
               {view === "matrix" ? <QuantityMatrix rows={it.rows} sizes={sizes} colors={fabricColors} nextKey={() => ++seq} onChange={(rows) => patchItem(it.id, (i) => ({ ...i, rows }))} /> : null}
               {view === "list" ? (
-              <div className="space-y-2" role="group" aria-label={`Variants of ${it.productName}`}>
-                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_6rem_2rem] gap-2 text-xs text-muted-foreground md:grid"><span>Size</span><span>Colour</span><span>Quantity</span><span /></div>
+              <div className="space-y-2" role="group" aria-label={t("orders.variantsOfProductname", { productName: it.productName })}>
+                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_6rem_2rem] gap-2 text-xs text-muted-foreground md:grid"><span>{t("orders.size")}</span><span>{t("orders.colour")}</span><span>{t("common.quantity")}</span><span /></div>
                 {it.rows.map((r, i) => {
                   const e: { quantity?: string; kind?: string } = showErrors ? rowErr(r) : {};
                   return (
                     <div key={r.key} data-testid="variant-row" className="grid gap-2 rounded-md border p-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_6rem_2rem] md:items-start md:border-0 md:p-0">
                       <div className="space-y-1">
-                        <Select aria-label={`Variant ${i + 1} size`} value={r.size} onValueChange={(v) => patchRow(it.id, r.key, { size: v })} options={[{ value: NONE, label: "No size" }, ...sizes, { value: CUSTOM, label: "Custom size…" }]} />
-                        {r.size === CUSTOM ? <Input aria-label={`Variant ${i + 1} custom size`} placeholder="Custom size" value={r.customSize} onChange={(ev) => patchRow(it.id, r.key, { customSize: ev.target.value })} /> : null}
+                        <Select aria-label={t("orders.variantV1Size", { v1: i + 1 })} value={r.size} onValueChange={(v) => patchRow(it.id, r.key, { size: v })} options={[{ value: NONE, label: t("orders.noSize") }, ...sizes, { value: CUSTOM, label: t("orders.customSize") }]} />
+                        {r.size === CUSTOM ? <Input aria-label={t("orders.variantV1CustomSize", { v1: i + 1 })} placeholder={t("orders.customSize2")} value={r.customSize} onChange={(ev) => patchRow(it.id, r.key, { customSize: ev.target.value })} /> : null}
                       </div>
                       <div className="space-y-1">
-                        <Select aria-label={`Variant ${i + 1} colour`} value={r.color} onValueChange={(v) => patchRow(it.id, r.key, { color: v })} options={[{ value: NONE, label: "No colour" }, ...fabricColors.map((c) => ({ value: c.id, label: c.name })), { value: CUSTOM, label: "Custom colour…" }]} />
+                        <Select aria-label={t("orders.variantV1Colour", { v1: i + 1 })} value={r.color} onValueChange={(v) => patchRow(it.id, r.key, { color: v })} options={[{ value: NONE, label: t("orders.noColour") }, ...fabricColors.map((c) => ({ value: c.id, label: c.name })), { value: CUSTOM, label: t("orders.customColour") }]} />
                         {r.color === CUSTOM ? (
                           <div className="grid grid-cols-3 gap-1">
-                            <Input aria-label={`Variant ${i + 1} custom colour name`} placeholder="Name" value={r.customColor} onChange={(ev) => patchRow(it.id, r.key, { customColor: ev.target.value })} />
-                            <Input aria-label={`Variant ${i + 1} pantone`} placeholder="Pantone" value={r.pantone} onChange={(ev) => patchRow(it.id, r.key, { pantone: ev.target.value })} />
-                            <Input aria-label={`Variant ${i + 1} hex`} placeholder="#RRGGBB" value={r.hex} onChange={(ev) => patchRow(it.id, r.key, { hex: ev.target.value })} />
+                            <Input aria-label={t("orders.variantV1CustomColourName", { v1: i + 1 })} placeholder={t("common.name")} value={r.customColor} onChange={(ev) => patchRow(it.id, r.key, { customColor: ev.target.value })} />
+                            <Input aria-label={t("orders.variantV1Pantone", { v1: i + 1 })} placeholder={t("orders.pantone")} value={r.pantone} onChange={(ev) => patchRow(it.id, r.key, { pantone: ev.target.value })} />
+                            <Input aria-label={t("orders.variantV1Hex", { v1: i + 1 })} placeholder="#RRGGBB" value={r.hex} onChange={(ev) => patchRow(it.id, r.key, { hex: ev.target.value })} />
                           </div>
                         ) : r.color !== NONE ? <ColorSwatch name={fabricColors.find((c) => c.id === r.color)?.name ?? "Colour"} hex={fabricColors.find((c) => c.id === r.color)?.hex} size="sm" showLabel={false} /> : null}
                         {e.kind ? <p role="alert" className="text-xs text-danger">{e.kind}</p> : null}
                       </div>
-                      <div><Input aria-label={`Variant ${i + 1} quantity`} inputMode="numeric" aria-invalid={!!e.quantity} value={r.quantity} onChange={(ev) => patchRow(it.id, r.key, { quantity: ev.target.value })} />{e.quantity ? <p role="alert" className="mt-1 text-xs text-danger">{e.quantity}</p> : null}</div>
-                      <IconButton size="sm" label={`Remove variant ${i + 1}`} icon={<Trash2 />} onClick={() => patchItem(it.id, (x) => ({ ...x, rows: x.rows.filter((y) => y.key !== r.key) }))} />
+                      <div><Input aria-label={t("orders.variantV1Quantity", { v1: i + 1 })} inputMode="numeric" aria-invalid={!!e.quantity} value={r.quantity} onChange={(ev) => patchRow(it.id, r.key, { quantity: ev.target.value })} />{e.quantity ? <p role="alert" className="mt-1 text-xs text-danger">{e.quantity}</p> : null}</div>
+                      <IconButton size="sm" label={t("orders.removeVariantV1", { v1: i + 1 })} icon={<Trash2 />} onClick={() => patchItem(it.id, (x) => ({ ...x, rows: x.rows.filter((y) => y.key !== r.key) }))} />
                     </div>
                   );
                 })}
-                <Button type="button" variant="secondary" size="sm" onClick={() => patchItem(it.id, (x) => ({ ...x, rows: [...x.rows, { key: ++seq, size: NONE, customSize: "", color: NONE, customColor: "", pantone: "", hex: "", quantity: "" }] }))}><Plus /> Add variant</Button>
+                <Button type="button" variant="secondary" size="sm" onClick={() => patchItem(it.id, (x) => ({ ...x, rows: [...x.rows, { key: ++seq, size: NONE, customSize: "", color: NONE, customColor: "", pantone: "", hex: "", quantity: "" }] }))}><Plus />{" "}{t("orders.addVariant")}</Button>
               </div>
               ) : null}
             </CardContent>
@@ -148,7 +150,7 @@ export function VariantsEditor({ order, fabricColors, onSave, saveLabel = "Save 
       })}
       <div className="flex items-center gap-3">
         <Button loading={save.isPending} disabled={!dirty || disabledExtra} onClick={() => void submit()}>{saveLabel}</Button>
-        <span className="text-xs text-muted-foreground" aria-live="polite">{dirty ? "Unsaved changes" : "Saved"}. Totals are checked by the server when you confirm.</span>
+        <span className="text-xs text-muted-foreground" aria-live="polite">{dirty ? t("orders.unsavedChanges") : t("orders.saved")}{t("orders.totalsCheckedSuffix")}</span>
       </div>
     </div>
   );
@@ -156,6 +158,7 @@ export function VariantsEditor({ order, fabricColors, onSave, saveLabel = "Save 
 
 /** Read-only variant table for confirmed orders (frozen specification) with the per-variant counters. */
 export function VariantsTable({ items }: { items: OrderItem[] }) {
+  const { t } = useI18n();
   return (
     <div className="space-y-4">
       {items.map((it) => (
@@ -165,8 +168,8 @@ export function VariantsTable({ items }: { items: OrderItem[] }) {
             <QuantitySummary orderQuantity={it.quantity} variantTotal={it.variantTotal} />
             {it.notes ? <p className="text-sm text-muted-foreground">{it.notes}</p> : null}
             <div className="relative overflow-x-auto">
-              <table className="w-full min-w-[32rem] text-sm"><caption className="sr-only">Variants of {it.productName}</caption>
-                <thead className="text-xs text-muted-foreground"><tr><th scope="col" className="py-1.5 text-start font-medium">Variant</th><th scope="col" className="text-end font-medium">Ordered</th><th scope="col" className="text-end font-medium">Allocated to batches</th><th scope="col" className="text-end font-medium">Completed</th><th scope="col" className="text-end font-medium">Rejected</th></tr></thead>
+              <table className="w-full min-w-[32rem] text-sm"><caption className="sr-only">{t("orders.variantsOfProductname", { productName: it.productName })}</caption>
+                <thead className="text-xs text-muted-foreground"><tr><th scope="col" className="py-1.5 text-start font-medium">{t("orders.variant")}</th><th scope="col" className="text-end font-medium">{t("orders.ordered")}</th><th scope="col" className="text-end font-medium">{t("orders.allocatedToBatches")}</th><th scope="col" className="text-end font-medium">{t("orders.completed")}</th><th scope="col" className="text-end font-medium">{t("orders.rejected")}</th></tr></thead>
                 <tbody>{it.variants.map((v) => (
                   <tr key={v.id} className="border-t"><th scope="row" className="py-1.5 text-start font-medium"><span className="inline-flex items-center gap-2">{v.colorName || v.customColorName ? <ColorSwatch name={v.colorName ?? v.customColorName ?? ""} hex={v.hex} size="sm" showLabel={false} /> : null}{v.label}</span></th>
                     <td className="text-end tabular-nums">{v.quantity}</td><td className="text-end tabular-nums">{v.allocatedQuantity}</td><td className="text-end tabular-nums">{v.completedQuantity}</td><td className="text-end tabular-nums">{v.rejectedQuantity}</td></tr>

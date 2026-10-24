@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils/cn";
-import { QUALITY_STAGES } from "./content";
+import { QUALITY_STAGES as QUALITY_STAGES_SRC } from "./content";
+import { useI18n } from "@/i18n/provider";
 
 /**
  * Four production stages joined by one line.
@@ -11,6 +12,8 @@ import { QUALITY_STAGES } from "./content";
  * Reduced motion / no IntersectionObserver: shown complete immediately.
  */
 export function QualityLine() {
+  const { t, loc } = useI18n();
+  const QUALITY_STAGES = loc(QUALITY_STAGES_SRC);
   const ref = useRef<HTMLOListElement>(null);
   const [active, setActive] = useState(false);
   const [perItem, setPerItem] = useState(false);
@@ -55,10 +58,10 @@ export function QualityLine() {
                 <span className={cn("block size-full origin-top bg-pub-brand transition-transform ease-out lg:origin-left", perItem ? "duration-1000" : "duration-700", next ? "scale-100" : "scale-y-0 lg:scale-x-0 lg:scale-y-100")} style={perItem ? undefined : { ...delay, transitionDelay: active ? `${i * 650 + 250}ms` : "0ms" }} />
               </span>
             )}
-            <p className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-pub-muted">Stage {String(i + 1).padStart(2, "0")}</p>
+            <p className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-pub-muted">{t("site.stageV1", { v1: String(i + 1).padStart(2, "0") })}</p>
             <h3 className="mt-3 text-3xl font-semibold uppercase tracking-tight sm:mt-4 sm:text-4xl">{q.stage}</h3>
             <p className="mt-2 max-w-xs text-sm text-pub-muted sm:mt-3">{q.check}</p>
-            <p className={cn("mt-4 flex items-center gap-2 text-xs uppercase tracking-[0.14em] transition-colors duration-500 sm:mt-6", on ? "text-pub-brand" : "text-pub-muted/60")} style={delay}>Quality check</p>
+            <p className={cn("mt-4 flex items-center gap-2 text-xs uppercase tracking-[0.14em] transition-colors duration-500 sm:mt-6", on ? "text-pub-brand" : "text-pub-muted/60")} style={delay}>{t("site.qualityCheck")}</p>
           </li>
         );
       })}

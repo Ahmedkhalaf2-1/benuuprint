@@ -105,6 +105,10 @@ Backend requirements (outside this repo): `CORS_ORIGINS` must include `https://b
 - Because the BFF calls the public API URL from the same VPS, the VPS must be able to resolve and reach `api.benuuprint.com` (normal public DNS is enough).
 - Refresh behaviour is unchanged: one coordinated refresh, 401 triggers a single refresh and one retry, 403 never triggers refresh or logout.
 
+## Language (English / Arabic)
+
+The site and both apps are bilingual. The language is stored in the non-sensitive `bp_locale` cookie (no URL prefix), see [I18N.md](./I18N.md). Because the root layout reads that cookie, application pages are rendered per request (dynamic); this needs no extra server setting. The Arabic font is bundled (`@fontsource/ibm-plex-sans-arabic`), so the production build needs no Google Fonts access.
+
 ## SEO
 
 Canonical, Open Graph, `metadataBase`, sitemap and robots are emitted only from `NEXT_PUBLIC_SITE_URL`. With it set to `https://benuuprint.com` at build time, all absolute URLs use that origin. With it unset nothing is emitted (there is never a localhost fallback).

@@ -12,13 +12,14 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/features/auth/auth-provider";
 import { CommandCenter } from "@/features/command-center/command-center";
 import { useListParams } from "@/hooks/use-list-params";
-import { formatDate, formatMoney, formatNumber, humanizeCode } from "@/lib/utils/format";
+
 import { queryKeys } from "@/lib/query/keys";
 import { useAlerts, useCommercialKpis, useDeliveryKpis, useManagementBoard, useQualityKpis, useScheduler, useWorkloadStaff } from "./hooks";
 import { currencyKeys, formatMinutes, formatPercent } from "./logic";
 import { AlertRowItem, BottlenecksSection, CapacitySection, CommercialSection, DeliverySection, NeedsAttentionSection, OrdersSection, PERM, PipelineSection, ProductionSection, QualitySection, RecentAlertsSection, RiskSection, WipSection, WorkloadSection } from "./sections";
 import { EtaText, Metric, PositiveEmpty, QuerySection, RangeControl, RankedBars, RefreshButton, useRange } from "./ui";
 import { DEPARTMENTS, type BoardRow } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 const ALL = "__all";
 
@@ -33,20 +34,21 @@ const Header = ({ title, description, extra }: { title: string; description: str
 
 /** /dashboard — the Management Dashboard. Every section is its own query, so one failing or forbidden endpoint only affects that card. */
 export function ManagementDashboard() {
+  const { t } = useI18n();
   const { can } = useAuth();
   const { range, set } = useRange();
   const kpis = can(PERM.kpis);
   if (!can(PERM.dashboard)) return <AccessDeniedState />;
   return (
     <>
-      <Header title="Command Center" description="What needs your attention now — and what to do about it." />
+      <Header title={t("management.commandCenter")} description={t("management.whatNeedsYourAttentionNowAnd")} />
       <div className="space-y-6">
         <CommandCenter />
         {kpis ? <div id="needs-attention" className="scroll-mt-4"><NeedsAttentionSection /></div> : null}
         <RiskSection range={range} />
         {kpis || can(PERM.quality) || can(PERM.commercial) || can(PERM.workload) ? (
           <div className="space-y-4">
-            <div><h2 className="text-lg font-semibold">Management intelligence</h2><div className="mt-2"><RangeControl range={range} onChange={set} /><p className="mt-1 text-xs text-muted-foreground">The range applies to KPIs; current-state figures (blocked now, queues, workload) always show now.</p></div></div>
+            <div><h2 className="text-lg font-semibold">{t("management.managementIntelligence")}</h2><div className="mt-2"><RangeControl range={range} onChange={set} /><p className="mt-1 text-xs text-muted-foreground">{t("management.theRangeAppliesToKpisCurrent")}</p></div></div>
             <div className="grid gap-4 xl:grid-cols-2">
               {kpis ? <ProductionSection range={range} /> : null}
               {kpis ? <BottlenecksSection range={range} limit={5} /> : null}
@@ -73,6 +75,7 @@ function Guard({ perm, children }: { perm: string | string[]; children: React.Re
 
 /** /management/production — the management board (jobs, delays, risk, ETA), bottlenecks and WIP. Jobs open the real Factory Job screen. */
 export function ProductionInsightsPage() {
+  const { t, fmt } = useI18n();
   const { can } = useAuth();
   const { range, set } = useRange();
   const { params, update } = useListParams({ pageSize: 20 });
@@ -81,23 +84,23 @@ export function ProductionInsightsPage() {
   const setF = (k: string, v: string | undefined) => update({ filters: { [k]: v === ALL ? undefined : v } });
   return (
     <Guard perm={PERM.kpis}>
-      <Header title="Production overview" description="Live jobs across departments with delays, risk and estimated completion. Open a job to act on it." />
+      <Header title={t("management.productionOverview")} description={t("management.liveJobsAcrossDepartmentsWithDelays")} />
       <div className="space-y-4">
-        <QuerySection title="Live jobs" query={q} testId="management-board" action={<Link href="/production" className="text-xs text-brand hover:underline">Operational board</Link>}>
+        <QuerySection title={t("management.liveJobs")} query={q} testId="management-board" action={<Link href="/production" className="text-xs text-brand hover:underline">{t("management.operationalBoard")}</Link>}>
           {(d) => (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <Select aria-label="Department" className="h-8 w-40" value={f.department ?? ALL} onValueChange={(v) => setF("department", v)} options={[{ value: ALL, label: "All departments" }, ...DEPARTMENTS.map((x) => ({ value: x, label: humanizeCode(x) }))]} />
-                <Select aria-label="Priority" className="h-8 w-36" value={f.priority ?? ALL} onValueChange={(v) => setF("priority", v)} options={[{ value: ALL, label: "Any priority" }, ...["LOW", "NORMAL", "HIGH", "URGENT"].map((x) => ({ value: x, label: humanizeCode(x) }))]} />
-                <Select aria-label="Kind" className="h-8 w-32" value={f.kind ?? ALL} onValueChange={(v) => setF("kind", v)} options={[{ value: ALL, label: "Samples + bulk" }, { value: "SAMPLE", label: "Samples" }, { value: "BULK", label: "Bulk" }]} />
-                <label className="flex items-center gap-2 text-sm"><Switch aria-label="Delayed" checked={f.delayed === "true"} onCheckedChange={(c) => setF("delayed", c ? "true" : undefined)} /> Delayed</label>
-                <label className="flex items-center gap-2 text-sm"><Switch aria-label="Blocked" checked={f.blocked === "true"} onCheckedChange={(c) => setF("blocked", c ? "true" : undefined)} /> Blocked</label>
-                {f.stageCode ? <button type="button" className="text-xs text-brand hover:underline" onClick={() => setF("stageCode", undefined)}>Stage: {humanizeCode(f.stageCode)} ✕</button> : null}
+                <Select aria-label={t("management.department")} className="h-8 w-40" value={f.department ?? ALL} onValueChange={(v) => setF("department", v)} options={[{ value: ALL, label: t("management.allDepartments") }, ...DEPARTMENTS.map((x) => ({ value: x, label: fmt.code(x) }))]} />
+                <Select aria-label={t("common.priority")} className="h-8 w-36" value={f.priority ?? ALL} onValueChange={(v) => setF("priority", v)} options={[{ value: ALL, label: t("management.anyPriority") }, ...["LOW", "NORMAL", "HIGH", "URGENT"].map((x) => ({ value: x, label: fmt.code(x) }))]} />
+                <Select aria-label={t("management.kind")} className="h-8 w-32" value={f.kind ?? ALL} onValueChange={(v) => setF("kind", v)} options={[{ value: ALL, label: t("management.samplesBulk") }, { value: "SAMPLE", label: t("management.samples") }, { value: "BULK", label: t("management.bulk") }]} />
+                <label className="flex items-center gap-2 text-sm"><Switch aria-label={t("common.delayed")} checked={f.delayed === "true"} onCheckedChange={(c) => setF("delayed", c ? "true" : undefined)} />{" "}{t("common.delayed")}</label>
+                <label className="flex items-center gap-2 text-sm"><Switch aria-label={t("common.blocked")} checked={f.blocked === "true"} onCheckedChange={(c) => setF("blocked", c ? "true" : undefined)} />{" "}{t("common.blocked")}</label>
+                {f.stageCode ? <button type="button" className="text-xs text-brand hover:underline" onClick={() => setF("stageCode", undefined)}>{t("management.stageStagecode", { stageCode: fmt.code(f.stageCode) })}</button> : null}
               </div>
-              {d.data.length === 0 ? <EmptyState title="No jobs match" description="No live jobs match the current filters." className="py-8" /> : (
+              {d.data.length === 0 ? <EmptyState title={t("management.noJobsMatch")} description={t("management.noLiveJobsMatchTheCurrent")} className="py-8" /> : (
                 <div className="relative overflow-x-auto rounded-md border">
-                  <table className="w-full min-w-[60rem] text-sm"><caption className="sr-only">Live jobs</caption>
-                    <thead className="bg-surface-muted text-xs text-muted-foreground"><tr>{["Job", "Customer", "Status", "Current stage", "Progress", "Delay / risk", d.etaIncluded ? "Estimated completion" : null].filter(Boolean).map((h) => <th key={h} scope="col" className="h-9 px-3 text-start font-medium">{h}</th>)}</tr></thead>
+                  <table className="w-full min-w-[60rem] text-sm"><caption className="sr-only">{t("management.liveJobs")}</caption>
+                    <thead className="bg-surface-muted text-xs text-muted-foreground"><tr>{[t.text("Job"), t.text("Customer"), t.text("Status"), t.text("Current stage"), t.text("Progress"), t.text("Delay / risk"), d.etaIncluded ? "Estimated completion" : null].filter(Boolean).map((h) => <th key={h} scope="col" className="h-9 px-3 text-start font-medium">{h}</th>)}</tr></thead>
                     <tbody>{d.data.map((r) => <BoardRowView key={r.jobId} r={r} eta={d.etaIncluded} />)}</tbody>
                   </table>
                 </div>
@@ -115,43 +118,45 @@ export function ProductionInsightsPage() {
 }
 
 function BoardRowView({ r, eta }: { r: BoardRow; eta: boolean }) {
+  const { t, fmt } = useI18n();
   return (
     <tr className="border-t align-top" data-testid="board-row" data-blocked={r.blocked} data-delayed={r.delayed}>
-      <td className="px-3 py-2"><Link href={`/production/jobs/${r.jobId}`} className="font-mono text-xs font-semibold hover:text-brand hover:underline">{r.jobNumber}</Link><span className="block text-xs text-muted-foreground">{r.productName} · {r.kind === "BULK" ? `bulk${r.batchNumber ? ` ${r.batchNumber}` : ""}` : "sample"}</span><PriorityBadge priority={r.priority} className="mt-1" /></td>
+      <td className="px-3 py-2"><Link href={`/production/jobs/${r.jobId}`} className="font-mono text-xs font-semibold hover:text-brand hover:underline">{r.jobNumber}</Link><span className="block text-xs text-muted-foreground">{r.productName} · {r.kind === "BULK" ? t("management.bulkV1", { v1: r.batchNumber ? ` ${r.batchNumber}` : "" }) : t("management.sample")}</span><PriorityBadge priority={r.priority} className="mt-1" /></td>
       <td className="px-3 py-2">{r.customerName}<span className="block text-xs text-muted-foreground">{r.brandName}</span></td>
       <td className="px-3 py-2"><StatusBadge status={r.status} /></td>
-      <td className="px-3 py-2">{r.currentStages.length ? r.currentStages.map((s) => <span key={s.stageId} className="block"><Link href={`/production/jobs/${r.jobId}?stage=${s.stageId}`} className="hover:text-brand hover:underline">{s.stageName}</Link><span className="text-xs text-muted-foreground"> · {humanizeCode(s.status)}{s.dueAt ? ` · due ${formatDate(s.dueAt)}` : ""}</span></span>) : <span className="text-muted-foreground">—</span>}</td>
-      <td className="px-3 py-2 tabular-nums">{r.progress.stagesCompleted}/{r.progress.stagesRequired} stages{r.progress.plannedQuantity != null ? <span className="block text-xs text-muted-foreground">{r.progress.completedQuantity}/{r.progress.plannedQuantity} units</span> : null}</td>
+      <td className="px-3 py-2">{r.currentStages.length ? r.currentStages.map((s) => <span key={s.stageId} className="block"><Link href={`/production/jobs/${r.jobId}?stage=${s.stageId}`} className="hover:text-brand hover:underline">{s.stageName}</Link><span className="text-xs text-muted-foreground"> · {fmt.code(s.status)}{s.dueAt ? t("management.dueDueat", { dueAt: fmt.date(s.dueAt) }) : ""}</span></span>) : <span className="text-muted-foreground">—</span>}</td>
+      <td className="px-3 py-2 tabular-nums">{t("management.stagesProgress", { done: r.progress.stagesCompleted, total: r.progress.stagesRequired })}{r.progress.plannedQuantity != null ? <span className="block text-xs text-muted-foreground">{t("management.unitsProgress", { done: r.progress.completedQuantity, total: r.progress.plannedQuantity })}</span> : null}</td>
       <td className="px-3 py-2">{r.blocked || r.delayed || r.projectedLate ? (
-        <span className="space-y-0.5">{r.blocked ? <span className="block text-xs font-medium text-tone-blocked-fg">Blocked</span> : null}{r.delayed ? <span className="block text-xs font-medium text-tone-danger-fg">Delayed{r.delayMinutes ? ` ${formatMinutes(r.delayMinutes)}` : ""}</span> : null}{r.delayReasons.length ? <span className="block text-xs text-muted-foreground">{r.delayReasons.map((x) => humanizeCode(x)).join(", ")}</span> : null}{r.projectedLate ? <span className="block text-xs font-medium text-tone-warning-fg">Projected late</span> : null}</span>
-      ) : <span className="text-xs text-muted-foreground">On track</span>}</td>
+        <span className="space-y-0.5">{r.blocked ? <span className="block text-xs font-medium text-tone-blocked-fg">{t("common.blocked")}</span> : null}{r.delayed ? <span className="block text-xs font-medium text-tone-danger-fg">{t("common.delayed")}{r.delayMinutes ? ` ${formatMinutes(r.delayMinutes)}` : ""}</span> : null}{r.delayReasons.length ? <span className="block text-xs text-muted-foreground">{r.delayReasons.map((x) => fmt.code(x)).join(", ")}</span> : null}{r.projectedLate ? <span className="block text-xs font-medium text-tone-warning-fg">{t("management.projectedLate")}</span> : null}</span>
+      ) : <span className="text-xs text-muted-foreground">{t("management.onTrack")}</span>}</td>
       {eta ? <td className="px-3 py-2"><EtaText at={r.estimatedCompletionAt} quality={r.etaDataQuality} compact /></td> : null}
     </tr>
   );
 }
 
 export function QualityPage() {
+  const { t, fmt } = useI18n();
   const { range, set } = useRange();
   const q = useQualityKpis(range);
   return (
     <Guard perm={PERM.quality}>
-      <Header title="Quality" description="Inspection results, rework and rejected units." extra={null} />
+      <Header title={t("management.quality")} description={t("management.inspectionResultsReworkAndRejectedUnits")} extra={null} />
       <div className="mb-4"><RangeControl range={range} onChange={set} timezone={q.data?.timezone} /></div>
       <div className="space-y-4">
         <QualitySection range={range} />
-        <QuerySection title="Where inspections fail" query={q} testId="failures">
+        <QuerySection title={t("management.whereInspectionsFail")} query={q} testId="failures">
           {(d) => (
             <div className="grid gap-6 lg:grid-cols-2">
-              <div><p className="mb-2 text-sm font-medium">By stage</p>{d.failuresByStage.length === 0 ? <PositiveEmpty>No failed inspections in this range.</PositiveEmpty> : <RankedBars label="Failures by stage" rows={d.failuresByStage.map((s) => ({ key: s.stageCode, label: s.stageName, value: s.failures, text: `${s.failures} failed${s.failedUnits ? ` · ${s.failedUnits} units` : ""}` }))} />}</div>
-              <div><p className="mb-2 text-sm font-medium">By product</p>{d.failuresByProduct.length === 0 ? <PositiveEmpty>No failures by product.</PositiveEmpty> : <RankedBars label="Failures by product" rows={d.failuresByProduct.map((s) => ({ key: s.productTypeId, label: s.productName, value: s.failures, text: `${s.failures} failed` }))} />}</div>
+              <div><p className="mb-2 text-sm font-medium">{t("management.byStage")}</p>{d.failuresByStage.length === 0 ? <PositiveEmpty>{t("management.noFailedInspectionsInThisRange")}</PositiveEmpty> : <RankedBars label={t("management.failuresByStage")} rows={d.failuresByStage.map((s) => ({ key: s.stageCode, label: s.stageName, value: s.failures, text: t("management.failuresFailedV2", { failures: s.failures, v2: s.failedUnits ? ` · ${s.failedUnits} units` : "" }) }))} />}</div>
+              <div><p className="mb-2 text-sm font-medium">{t("management.byProduct")}</p>{d.failuresByProduct.length === 0 ? <PositiveEmpty>{t("management.noFailuresByProduct")}</PositiveEmpty> : <RankedBars label={t("management.failuresByProduct")} rows={d.failuresByProduct.map((s) => ({ key: s.productTypeId, label: s.productName, value: s.failures, text: t("management.failuresFailed", { failures: s.failures }) }))} />}</div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:col-span-2">
-                <Metric label="Inspected units" value={formatNumber(d.inspections.inspectedUnits)} />
-                <Metric label="Failed units" value={formatNumber(d.inspections.failedUnits)} />
-                <Metric label="Repeat-failure rate" testId="repeat-rate" value={formatPercent(d.repeatFailure.ratePercent)} hint={d.repeatFailure.jobStagesWithFailure ? `${d.repeatFailure.repeated} of ${d.repeatFailure.jobStagesWithFailure} failed stages repeated` : "No failed stages in range"} />
-                <Metric label="Rework-flagged units" value={formatNumber(d.reworkFlaggedUnits)} />
+                <Metric label={t("management.inspectedUnits")} value={fmt.number(d.inspections.inspectedUnits)} />
+                <Metric label={t("management.failedUnits")} value={fmt.number(d.inspections.failedUnits)} />
+                <Metric label={t("management.repeatFailureRate")} testId="repeat-rate" value={formatPercent(d.repeatFailure.ratePercent)} hint={d.repeatFailure.jobStagesWithFailure ? t("management.repeatedOfJobstageswithfailureFailedStagesRe", { repeated: d.repeatFailure.repeated, jobStagesWithFailure: d.repeatFailure.jobStagesWithFailure }) : t("management.noFailedStagesInRange")} />
+                <Metric label={t("management.reworkFlaggedUnits")} value={fmt.number(d.reworkFlaggedUnits)} />
               </div>
               {d.rework.note ? <p className="text-xs text-muted-foreground lg:col-span-2">{d.rework.note}</p> : null}
-              {d.notDerived?.length ? <p className="text-xs text-muted-foreground lg:col-span-2" data-testid="not-derived">Not reported: {d.notDerived.join("; ")}</p> : null}
+              {d.notDerived?.length ? <p className="text-xs text-muted-foreground lg:col-span-2" data-testid="not-derived">{t("management.notReportedV1", { v1: d.notDerived.join("; ") })}</p> : null}
             </div>
           )}
         </QuerySection>
@@ -161,21 +166,22 @@ export function QualityPage() {
 }
 
 export function CommercialPage() {
+  const { t, fmt } = useI18n();
   const { range, set } = useRange();
   const q = useCommercialKpis(range);
   return (
     <Guard perm={PERM.commercial}>
-      <Header title="Commercial" description="Accepted quotations, verified payments and balances — per currency, never combined." />
+      <Header title={t("management.commercial")} description={t("management.acceptedQuotationsVerifiedPaymentsAndBalance")} />
       <div className="mb-4"><RangeControl range={range} onChange={set} timezone={q.data?.timezone} /></div>
       <div className="space-y-4">
         <CommercialSection range={range} />
-        <QuerySection title="Verified payments in range" query={q} testId="verified-in-range" description={q.data?.definitions?.verifiedInRange}>
+        <QuerySection title={t("management.verifiedPaymentsInRange")} query={q} testId="verified-in-range" description={q.data?.definitions?.verifiedInRange}>
           {(d) => (
             <div className="space-y-3">
-              {d.verifiedInRange.length === 0 ? <p className="text-sm text-muted-foreground">No payments were verified in this range.</p> : (
-                <ul className="divide-y rounded-md border" aria-label="Verified payments by currency">{d.verifiedInRange.map((v) => <li key={`${v.currency}-${v.target}`} data-testid="verified-row" className="flex items-baseline justify-between gap-3 px-3 py-2 text-sm"><span>{v.currency} · {humanizeCode(v.target)}<span className="ms-2 text-xs text-muted-foreground">{v.payments} payments</span></span><span className="font-semibold tabular-nums">{formatMoney(v.total, v.currency)}</span></li>)}</ul>
+              {d.verifiedInRange.length === 0 ? <p className="text-sm text-muted-foreground">{t("management.noPaymentsWereVerifiedInThis")}</p> : (
+                <ul className="divide-y rounded-md border" aria-label={t("management.verifiedPaymentsByCurrency")}>{d.verifiedInRange.map((v) => <li key={`${v.currency}-${v.target}`} data-testid="verified-row" className="flex items-baseline justify-between gap-3 px-3 py-2 text-sm"><span>{v.currency} · {fmt.code(v.target)}<span className="ms-2 text-xs text-muted-foreground">{t("management.paymentsPayments", { payments: v.payments })}</span></span><span className="font-semibold tabular-nums">{fmt.money(v.total, v.currency)}</span></li>)}</ul>
               )}
-              <p className="text-xs text-muted-foreground" data-testid="currencies">Currencies: {currencyKeys(d.byCurrency).join(", ") || "none"} — amounts in different currencies are listed separately and never added together.</p>
+              <p className="text-xs text-muted-foreground" data-testid="currencies">{t("management.currencies")}{" "}{currencyKeys(d.byCurrency).join(", ") || t("management.none")}{" "}{t("management.amountsInDifferentCurrenciesAreListed")}</p>
             </div>
           )}
         </QuerySection>
@@ -185,16 +191,17 @@ export function CommercialPage() {
 }
 
 export function DeliveryInsightsPage() {
+  const { t, fmt } = useI18n();
   const { range, set } = useRange();
   const q = useDeliveryKpis(range);
   return (
     <Guard perm={PERM.kpis}>
-      <Header title="Delivery" description="Shipments in flight, failures, and commitments past their date." />
+      <Header title={t("management.delivery")} description={t("management.shipmentsInFlightFailuresAndCommitments")} />
       <div className="mb-4"><RangeControl range={range} onChange={set} timezone={q.data?.timezone} /></div>
       <div className="space-y-4">
         <DeliverySection range={range} />
-        <QuerySection title="Commitments" query={q} testId="commitments" description={q.data?.definitions?.overdueDeliveryCommitments}>
-          {(d) => <div className="grid grid-cols-2 gap-2 sm:grid-cols-3"><Metric label="Orders past target date" value={formatNumber(d.overdueDeliveryCommitments.ordersPastTargetDate)} tone={d.overdueDeliveryCommitments.ordersPastTargetDate ? "warning" : "good"} href="/orders?delayed=true" /><Metric label="Shipments past scheduled date" value={formatNumber(d.overdueDeliveryCommitments.shipmentsPastScheduledDate)} tone={d.overdueDeliveryCommitments.shipmentsPastScheduledDate ? "warning" : "good"} href="/delivery?open=true" /><Metric label="Ready to ship" value={formatNumber(d.shipments.ready)} href="/delivery?status=READY" /></div>}
+        <QuerySection title={t("management.commitments")} query={q} testId="commitments" description={q.data?.definitions?.overdueDeliveryCommitments}>
+          {(d) => <div className="grid grid-cols-2 gap-2 sm:grid-cols-3"><Metric label={t("management.ordersPastTargetDate")} value={fmt.number(d.overdueDeliveryCommitments.ordersPastTargetDate)} tone={d.overdueDeliveryCommitments.ordersPastTargetDate ? "warning" : "good"} href="/orders?delayed=true" /><Metric label={t("management.shipmentsPastScheduledDate")} value={fmt.number(d.overdueDeliveryCommitments.shipmentsPastScheduledDate)} tone={d.overdueDeliveryCommitments.shipmentsPastScheduledDate ? "warning" : "good"} href="/delivery?open=true" /><Metric label={t("management.readyToShip")} value={fmt.number(d.shipments.ready)} href="/delivery?status=READY" /></div>}
         </QuerySection>
         <OrdersSection range={range} />
       </div>
@@ -203,33 +210,34 @@ export function DeliveryInsightsPage() {
 }
 
 export function WorkloadPage() {
+  const { t, fmt } = useI18n();
   const { can } = useAuth();
   const { params, update } = useListParams({ pageSize: 20 });
   const dept = params.filters.department;
   const staff = useWorkloadStaff({ page: params.page, pageSize: params.pageSize, department: dept }, can(PERM.workload));
   return (
     <Guard perm={[PERM.workload, PERM.capacity]}>
-      <Header title="Workload & capacity" description="Who is loaded with what, and whether configured capacity covers the planned demand." />
+      <Header title={t("management.workloadCapacity")} description={t("management.whoIsLoadedWithWhatAnd")} />
       <div className="space-y-4">
         {can(PERM.workload) ? <WorkloadSection /> : null}
         {can(PERM.capacity) ? <CapacitySection department={dept} /> : null}
         {can(PERM.workload) ? (
-          <QuerySection title="Staff workload" query={staff} testId="staff-workload" description={staff.data?.note}
-            action={<Select aria-label="Department" className="h-8 w-40" value={dept ?? ALL} onValueChange={(v) => update({ filters: { department: v === ALL ? undefined : v } })} options={[{ value: ALL, label: "All departments" }, ...DEPARTMENTS.map((x) => ({ value: x, label: humanizeCode(x) }))]} />}>
-            {(d) => d.data.length === 0 ? <EmptyState title="No staff" description="No staff match." className="py-8" /> : (
+          <QuerySection title={t("management.staffWorkload")} query={staff} testId="staff-workload" description={staff.data?.note}
+            action={<Select aria-label={t("management.department")} className="h-8 w-40" value={dept ?? ALL} onValueChange={(v) => update({ filters: { department: v === ALL ? undefined : v } })} options={[{ value: ALL, label: t("management.allDepartments") }, ...DEPARTMENTS.map((x) => ({ value: x, label: fmt.code(x) }))]} />}>
+            {(d) => d.data.length === 0 ? <EmptyState title={t("management.noStaff")} description={t("management.noStaffMatch")} className="py-8" /> : (
               <div className="space-y-2">
-                <div className="relative overflow-x-auto rounded-md border"><table className="w-full min-w-max text-sm"><caption className="sr-only">Workload per staff member</caption>
-                  <thead className="bg-surface-muted text-xs text-muted-foreground"><tr><th scope="col" className="h-9 px-3 text-start font-medium">Staff</th>{["Active", "Ready", "In progress", "Blocked", "Overdue", "Completed", "On-time", "Avg completion", "Capacity / day"].map((h) => <th key={h} scope="col" className="px-3 text-end font-medium">{h}</th>)}</tr></thead>
+                <div className="relative overflow-x-auto rounded-md border"><table className="w-full min-w-max text-sm"><caption className="sr-only">{t("management.workloadPerStaffMember")}</caption>
+                  <thead className="bg-surface-muted text-xs text-muted-foreground"><tr><th scope="col" className="h-9 px-3 text-start font-medium">{t("management.staff")}</th>{[t.text("Active"), t.text("Ready"), t.text("In progress"), t.text("Blocked"), t.text("Overdue"), t.text("Completed"), "On-time", t.text("Avg completion"), t.text("Capacity / day")].map((h) => <th key={h} scope="col" className="px-3 text-end font-medium">{h}</th>)}</tr></thead>
                   <tbody>{d.data.map((s) => (
                     <tr key={s.userId} className="border-t" data-testid="staff-row">
-                      <th scope="row" className="px-3 py-1.5 text-start font-medium">{s.name}<span className="block text-xs font-normal text-muted-foreground">{s.roles.map((r) => humanizeCode(r)).join(", ")}</span></th>
+                      <th scope="row" className="px-3 py-1.5 text-start font-medium">{s.name}<span className="block text-xs font-normal text-muted-foreground">{s.roles.map((r) => fmt.code(r)).join(", ")}</span></th>
                       <td className="px-3 text-end tabular-nums">{s.activeAssignments}</td><td className="px-3 text-end tabular-nums">{s.readyAssignments}</td><td className="px-3 text-end tabular-nums">{s.inProgressAssignments}</td>
                       <td className={`px-3 text-end tabular-nums ${s.blockedAssignments ? "font-semibold text-danger" : ""}`}>{s.blockedAssignments}</td>
                       <td className={`px-3 text-end tabular-nums ${s.overdueAssignments ? "font-semibold text-danger" : ""}`}>{s.overdueAssignments}</td>
                       <td className="px-3 text-end tabular-nums">{s.stagesCompleted}</td>
                       <td className="px-3 text-end tabular-nums">{formatPercent(s.onTimeCompletionRate, 0)}</td>
                       <td className="px-3 text-end tabular-nums">{formatMinutes(s.averageCompletionMinutes)}</td>
-                      <td className="px-3 text-end tabular-nums">{s.capacityMinutesPerDay === null ? <span className="text-muted-foreground" title="No staff capacity configured">—</span> : `${s.capacityMinutesPerDay}m`}</td>
+                      <td className="px-3 text-end tabular-nums">{s.capacityMinutesPerDay === null ? <span className="text-muted-foreground" title={t("management.noStaffCapacityConfigured")}>—</span> : `${s.capacityMinutesPerDay}m`}</td>
                     </tr>))}</tbody></table></div>
                 <Pagination meta={d.meta} onPageChange={(page) => update({ page })} onPageSizeChange={(pageSize) => update({ pageSize })} />
               </div>
@@ -245,6 +253,7 @@ const ALERT_TYPES = ["BLOCKED_STAGE", "DELAYED_STAGE", "OVERDUE_JOB", "OVERDUE_O
 
 /** Read-only: the backend raises, de-duplicates, escalates and resolves alerts; this page only reflects them (there is no acknowledge/resolve endpoint). */
 export function AlertsPage() {
+  const { t, fmt } = useI18n();
   const { can } = useAuth();
   const { params, update } = useListParams({ pageSize: 20 });
   const f = params.filters;
@@ -253,24 +262,24 @@ export function AlertsPage() {
   const setF = (k: string, v: string | undefined) => update({ filters: { [k]: v === ALL ? undefined : v } });
   return (
     <Guard perm={PERM.alerts}>
-      <Header title="Operational alerts" description="Problems detected by the scheduler, with their escalation state." />
+      <Header title={t("management.operationalAlerts")} description={t("management.problemsDetectedByTheSchedulerWith")} />
       <div className="space-y-4">
-        <QuerySection title="Scheduler" query={health} testId="scheduler">
+        <QuerySection title={t("management.scheduler")} query={health} testId="scheduler">
           {(h) => (
             <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
-              <span className={h.enabled ? "font-medium text-tone-success-fg" : "font-medium text-danger"} data-testid="scheduler-state">{h.enabled ? "Automation is running" : "Automation is disabled"}</span>
-              <span className="text-muted-foreground">Outbox every {h.intervals.outbox}s · dispatch every {h.intervals.dispatch}s · alert evaluation every {h.intervals.alerts}s</span>
-              <span className="text-muted-foreground">{h.runningNow.length ? `Running now: ${h.runningNow.join(", ")}` : "Idle"}</span>
+              <span className={h.enabled ? "font-medium text-tone-success-fg" : "font-medium text-danger"} data-testid="scheduler-state">{h.enabled ? t("management.automationIsRunning") : t("management.automationIsDisabled")}</span>
+              <span className="text-muted-foreground">{t("management.outboxEveryOutboxSDispatchEvery", { outbox: h.intervals.outbox, dispatch: h.intervals.dispatch, alerts: h.intervals.alerts })}</span>
+              <span className="text-muted-foreground">{h.runningNow.length ? t("management.runningNowV1", { v1: h.runningNow.join(", ") }) : t("management.idle")}</span>
             </div>
           )}
         </QuerySection>
-        <QuerySection title="Alerts" query={q} testId="alerts"
+        <QuerySection title={t("management.alerts")} query={q} testId="alerts"
           action={<>
-            <Select aria-label="State" className="h-8 w-32" value={f.status ?? "OPEN"} onValueChange={(v) => setF("status", v === "OPEN" ? undefined : v)} options={[{ value: "OPEN", label: "Open" }, { value: "RESOLVED", label: "Resolved" }]} />
-            <Select aria-label="Severity" className="h-8 w-36" value={f.severity ?? ALL} onValueChange={(v) => setF("severity", v)} options={[{ value: ALL, label: "Any severity" }, ...["CRITICAL", "WARNING", "INFO"].map((v) => ({ value: v, label: humanizeCode(v) }))]} />
-            <Select aria-label="Type" className="h-8 w-48" value={f.type ?? ALL} onValueChange={(v) => setF("type", v)} options={[{ value: ALL, label: "Any type" }, ...ALERT_TYPES.map((v) => ({ value: v, label: humanizeCode(v) }))]} />
+            <Select aria-label={t("management.state")} className="h-8 w-32" value={f.status ?? "OPEN"} onValueChange={(v) => setF("status", v === "OPEN" ? undefined : v)} options={[{ value: "OPEN", label: t("management.open") }, { value: "RESOLVED", label: t("management.resolved") }]} />
+            <Select aria-label={t("management.severity")} className="h-8 w-36" value={f.severity ?? ALL} onValueChange={(v) => setF("severity", v)} options={[{ value: ALL, label: t("management.anySeverity") }, ...["CRITICAL", "WARNING", "INFO"].map((v) => ({ value: v, label: fmt.code(v) }))]} />
+            <Select aria-label={t("common.type")} className="h-8 w-48" value={f.type ?? ALL} onValueChange={(v) => setF("type", v)} options={[{ value: ALL, label: t("management.anyType") }, ...ALERT_TYPES.map((v) => ({ value: v, label: fmt.code(v) }))]} />
           </>}>
-          {(d) => d.data.length === 0 ? <PositiveEmpty>{(f.status ?? "OPEN") === "OPEN" ? "No open alerts." : "No resolved alerts match."}</PositiveEmpty> : (
+          {(d) => d.data.length === 0 ? <PositiveEmpty>{(f.status ?? "OPEN") === "OPEN" ? t("management.noOpenAlerts") : t("management.noResolvedAlertsMatch")}</PositiveEmpty> : (
             <div><ul className="-mx-4 divide-y">{d.data.map((a) => <AlertRowItem key={a.id} a={a} />)}</ul><Pagination meta={d.meta} onPageChange={(page) => update({ page })} onPageSizeChange={(pageSize) => update({ pageSize })} /></div>
           )}
         </QuerySection>

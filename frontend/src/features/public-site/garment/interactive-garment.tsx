@@ -8,6 +8,7 @@ import { has3dModel } from "./renderer-policy";
 import { RenderBoundary } from "./render-boundary";
 import { useGarmentRenderer } from "./use-garment-renderer";
 import type { GarmentVisualProps } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 /** The 3D viewer (three.js + react-three-fiber + drei) is its own chunk: it is only fetched when a 3D garment is actually going to be shown. */
 const GarmentViewer = dynamic(() => import("./3d/garment-viewer"), { ssr: false });
@@ -20,6 +21,7 @@ const btn = "inline-flex h-8 min-w-8 items-center justify-center border border-p
  * the device is constrained, the viewer fails, or the garment has no 3D model yet. Same props either way.
  */
 export function InteractiveGarment({ modelSrc = null, ...props }: GarmentVisualProps & { modelSrc?: string | null }) {
+  const { t } = useI18n();
   const supported = has3dModel(props.productType);
   const { renderer, canOptIn, requestOptIn, reportFailure } = useGarmentRenderer(supported);
   const ref = useRef<HTMLDivElement>(null);
@@ -66,17 +68,17 @@ export function InteractiveGarment({ modelSrc = null, ...props }: GarmentVisualP
             </RenderBoundary>
           </div>
           {ready ? (
-            <div role="group" aria-label="3D view controls" className="absolute bottom-0 end-0 flex gap-1.5">
-              <button type="button" className={btn} aria-pressed={view === "front"} onClick={() => setView("front")}>Front</button>
-              <button type="button" className={btn} aria-pressed={view === "back"} onClick={() => setView("back")}>Back</button>
-              <button type="button" className={btn} aria-label="Zoom out" disabled={zoom === 0} onClick={() => setZoom((z) => (Math.max(0, z - 1) as 0 | 1 | 2))}>−</button>
-              <button type="button" className={btn} aria-label="Zoom in" disabled={zoom === 2} onClick={() => setZoom((z) => (Math.min(2, z + 1) as 0 | 1 | 2))}>+</button>
-              <button type="button" className={btn} onClick={() => { setView("front"); setZoom(1); setResetKey((k) => k + 1); }}>Reset</button>
+            <div role="group" aria-label={t("site.n3dViewControls")} className="absolute bottom-0 end-0 flex gap-1.5">
+              <button type="button" className={btn} aria-pressed={view === "front"} onClick={() => setView("front")}>{t("site.front")}</button>
+              <button type="button" className={btn} aria-pressed={view === "back"} onClick={() => setView("back")}>{t("common.back")}</button>
+              <button type="button" className={btn} aria-label={t("site.zoomOut")} disabled={zoom === 0} onClick={() => setZoom((z) => (Math.max(0, z - 1) as 0 | 1 | 2))}>−</button>
+              <button type="button" className={btn} aria-label={t("site.zoomIn")} disabled={zoom === 2} onClick={() => setZoom((z) => (Math.min(2, z + 1) as 0 | 1 | 2))}>+</button>
+              <button type="button" className={btn} onClick={() => { setView("front"); setZoom(1); setResetKey((k) => k + 1); }}>{t("site.reset")}</button>
             </div>
           ) : null}
         </>
       ) : null}
-      {canOptIn ? <button type="button" className={cn(btn, "absolute bottom-0 end-0")} onClick={requestOptIn}>View in 3D</button> : null}
+      {canOptIn ? <button type="button" className={cn(btn, "absolute bottom-0 end-0")} onClick={requestOptIn}>{t("site.viewIn3d")}</button> : null}
     </div>
   );
 }

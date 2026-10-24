@@ -1,5 +1,8 @@
+"use client";
+
 import { Ban, Check, Star } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { useI18n } from "@/i18n/provider";
 
 /**
  * Product <-> fabric GUIDANCE from the backend (isRecommended / isAllowed). It is information, not a frontend business
@@ -7,11 +10,12 @@ import { cn } from "@/lib/utils/cn";
  * Icon + text on every state so colour is never the only signal.
  */
 export function Compatibility({ isRecommended, isAllowed }: { isRecommended: boolean; isAllowed: boolean }) {
+  const { t } = useI18n();
   const state = !isAllowed ? "not-allowed" : isRecommended ? "recommended" : "allowed";
   const cfg = {
-    recommended: { label: "Recommended", Icon: Star, cls: "bg-tone-success-bg text-tone-success-fg" },
-    allowed: { label: "Allowed", Icon: Check, cls: "bg-tone-neutral-bg text-tone-neutral-fg" },
-    "not-allowed": { label: "Not allowed", Icon: Ban, cls: "bg-tone-danger-bg text-tone-danger-fg" },
+    recommended: { label: t("masterData.recommended"), Icon: Star, cls: "bg-tone-success-bg text-tone-success-fg" },
+    allowed: { label: t("masterData.allowed"), Icon: Check, cls: "bg-tone-neutral-bg text-tone-neutral-fg" },
+    "not-allowed": { label: t("masterData.notAllowed"), Icon: Ban, cls: "bg-tone-danger-bg text-tone-danger-fg" },
   }[state];
   return (
     <span data-compat={state} className={cn("inline-flex h-5 items-center gap-1 rounded-sm px-1.5 text-[0.75rem] font-medium leading-none", cfg.cls)}>

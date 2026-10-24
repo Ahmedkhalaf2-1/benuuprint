@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { errorMessage, isApiError } from "@/lib/api/errors";
 import type { PackagingReportBody } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 const NONE = "__none";
 const whole = (v: string) => /^\d+$/.test(v.trim());
@@ -24,26 +25,27 @@ export function buildPackagingBody(f: { packed: string; damaged: string; cartons
 
 /** Packed / damaged / cartons report for a PACKAGING stage. Append-only; the backend refuses over-reporting and (before the spec exists) any report. */
 export function PackagingReportForm({ variants, onReport }: { variants: Array<{ id: string; label: string }>; onReport: (b: PackagingReportBody) => Promise<unknown> }) {
+  const { t } = useI18n();
   const [f, setF] = useState({ packed: "", damaged: "", cartons: "", variant: "", notes: "" });
   const [error, setError] = useState<{ message: string; requestId?: string } | null>(null);
   const run = useMutation({ mutationFn: (b: PackagingReportBody) => onReport(b) });
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   return (
-    <form aria-label="Packaging report" className="space-y-2" data-testid="packaging-report-form" onSubmit={async (e) => {
+    <form aria-label={t("fulfillment.packagingReport")} className="space-y-2" data-testid="packaging-report-form" onSubmit={async (e) => {
       e.preventDefault(); setError(null);
       const body = buildPackagingBody(f);
-      if (!body) { setError({ message: "Report at least one packed or damaged unit (whole numbers)." }); return; }
-      try { await run.mutateAsync(body); setF({ packed: "", damaged: "", cartons: "", variant: "", notes: "" }); toast.success("Packaging reported"); } catch (err) { setError({ message: errorMessage(err), requestId: isApiError(err) ? err.requestId : undefined }); }
+      if (!body) { setError({ message: t("fulfillment.reportAtLeastOnePackedOr") }); return; }
+      try { await run.mutateAsync(body); setF({ packed: "", damaged: "", cartons: "", variant: "", notes: "" }); toast.success(t("fulfillment.packagingReported")); } catch (err) { setError({ message: errorMessage(err), requestId: isApiError(err) ? err.requestId : undefined }); }
     }}>
       {error ? <FormError {...error} /> : null}
       <div className="grid gap-2 sm:grid-cols-3">
-        <FormField id="pk-packed" label="Packed (good)"><Input id="pk-packed" inputMode="numeric" value={f.packed} onChange={(e) => set({ packed: e.target.value })} /></FormField>
-        <FormField id="pk-damaged" label="Damaged (scrapped)"><Input id="pk-damaged" inputMode="numeric" value={f.damaged} onChange={(e) => set({ damaged: e.target.value })} /></FormField>
-        <FormField id="pk-cartons" label="Cartons filled"><Input id="pk-cartons" inputMode="numeric" value={f.cartons} onChange={(e) => set({ cartons: e.target.value })} /></FormField>
+        <FormField id="pk-packed" label={t("fulfillment.packedGood")}><Input id="pk-packed" inputMode="numeric" value={f.packed} onChange={(e) => set({ packed: e.target.value })} /></FormField>
+        <FormField id="pk-damaged" label={t("fulfillment.damagedScrapped")}><Input id="pk-damaged" inputMode="numeric" value={f.damaged} onChange={(e) => set({ damaged: e.target.value })} /></FormField>
+        <FormField id="pk-cartons" label={t("fulfillment.cartonsFilled")}><Input id="pk-cartons" inputMode="numeric" value={f.cartons} onChange={(e) => set({ cartons: e.target.value })} /></FormField>
       </div>
-      {variants.length ? <FormField id="pk-variant" label="Variant (optional)"><Select id="pk-variant" value={f.variant || NONE} onValueChange={(v) => set({ variant: v === NONE ? "" : v })} options={[{ value: NONE, label: "Not specified" }, ...variants.map((v) => ({ value: v.id, label: v.label }))]} /></FormField> : null}
-      <FormField id="pk-notes" label="Notes"><Input id="pk-notes" value={f.notes} onChange={(e) => set({ notes: e.target.value })} /></FormField>
-      <Button type="submit" size="sm" loading={run.isPending}>Add packaging report</Button>
+      {variants.length ? <FormField id="pk-variant" label={t("fulfillment.variantOptional")}><Select id="pk-variant" value={f.variant || NONE} onValueChange={(v) => set({ variant: v === NONE ? "" : v })} options={[{ value: NONE, label: t("fulfillment.notSpecified") }, ...variants.map((v) => ({ value: v.id, label: v.label }))]} /></FormField> : null}
+      <FormField id="pk-notes" label={t("common.notes")}><Input id="pk-notes" value={f.notes} onChange={(e) => set({ notes: e.target.value })} /></FormField>
+      <Button type="submit" size="sm" loading={run.isPending}>{t("fulfillment.addPackagingReport")}</Button>
     </form>
   );
 }

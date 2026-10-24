@@ -1,9 +1,11 @@
+import { getActive } from "@/i18n/active";
 import type { CommercialSummary, SampleListItem } from "@/features/samples/types";
 import type { OrderFulfillment, OrderListItem } from "@/features/orders/types";
 import type { JobListItem } from "@/features/production/types";
 import type { Shipment } from "@/features/fulfillment/types";
 import type { AttentionItem } from "@/features/management/types";
 import { attentionHref } from "@/features/management/logic";
+import { localizedMap } from "@/i18n/active";
 
 export type QueueKey = "newRequests" | "needsReview" | "readyForQuotation" | "awaitingCustomer" | "awaitingPayment" | "readyForProduction" | "inProduction" | "readyForShipment" | "deliveryIssues";
 export type Group = "commercial" | "production" | "delivery";
@@ -105,7 +107,7 @@ export function classifyOrder(o: Pick<OrderListItem, "id" | "orderNumber" | "sta
     case "READY_FOR_DELIVERY": return can("shipments.manage") ? { ...base, queue: "readyForShipment", action: "Create shipment", href: to("shipments") } : null;
     case "PARTIALLY_SHIPPED": {
       const n = ctx.fulfillment?.shippableQuantity ?? 0;
-      return n > 0 && can("shipments.manage") ? { ...base, queue: "readyForShipment", action: `Create shipment (${n} units waiting)`, href: to("shipments") } : null;
+      return n > 0 && can("shipments.manage") ? { ...base, queue: "readyForShipment", action: getActive().t("dashboard.createShipmentUnitsWaiting", { n }), href: to("shipments") } : null;
     }
     default: return null;
   }
@@ -134,11 +136,11 @@ export function classifyShipment(s: Pick<Shipment, "id" | "shipmentNumber" | "st
 }
 
 /* ------------------------- Needs attention (Phase 6) ------------------------- */
-const ATTENTION_ACTIONS: Record<string, string> = {
+const ATTENTION_ACTIONS: Record<string, string> = localizedMap({
   BLOCKED_STAGE: "Resolve blocker", DELAYED_STAGE: "Review overdue stage", OVERDUE_JOB: "Review overdue job", OVERDUE_ORDER: "Review overdue order", FAILED_QC: "Review QC failure", OPEN_REWORK: "Follow up rework",
   PAYMENT_BLOCK: "Verify payment", COMMERCIAL_REAPPROVAL_REQUIRED: "Re-approve commercial terms", UNASSIGNED_READY_STAGE: "Assign staff", APPROACHING_DEADLINE: "Check approaching deadline",
   SHIPMENT_FAILED: "Handle failed delivery", DELIVERY_DELAY: "Chase delayed delivery", PACKAGING_DELAY: "Check packaging",
-};
+});
 export const attentionAction = (type: string) => ATTENTION_ACTIONS[type] ?? "Open";
 /** Which permission lets someone ACT on an attention category (the backend lets management readers SEE all of them). */
 const ATTENTION_ACT: Record<string, string[]> = {

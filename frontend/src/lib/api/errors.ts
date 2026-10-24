@@ -1,3 +1,4 @@
+import { getActive } from "@/i18n/active";
 import type { ApiErrorBody } from "@/types/api";
 
 export type ApiErrorKind =
@@ -139,8 +140,10 @@ export function isApiError(e: unknown): e is ApiError {
 /** Friendly one-liner for toasts / inline errors. */
 export function errorMessage(e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.kind === "rate_limited" && e.retryAfter) return `Too many attempts. Try again in ${e.retryAfter}s.`;
-    return e.messages.join(" ");
+    const { t } = getActive();
+    if (e.kind === "rate_limited" && e.retryAfter) return t("common.tooManyAttempts", { seconds: e.retryAfter });
+    // Frontend-authored fallbacks are translated; messages written by the backend pass through untouched (never string-replaced).
+    return e.messages.map((m) => t.text(m)).join(" ");
   }
-  return e instanceof Error ? e.message : "Unexpected error.";
+  return getActive().t.text(e instanceof Error ? e.message : "Unexpected error.");
 }

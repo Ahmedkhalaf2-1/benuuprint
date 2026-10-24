@@ -1,4 +1,7 @@
+"use client";
+
 import { ChevronsUp, ChevronUp, Minus } from "lucide-react";
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
 
 export type Priority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
@@ -11,6 +14,7 @@ const config: Record<Priority, { label: string; cls: string; Icon: typeof Minus 
 };
 
 export function PriorityBadge({ priority, className }: { priority: Priority | string; className?: string }) {
+  const { fmt } = useI18n();
   const c = config[priority as Priority] ?? config.NORMAL;
   const Icon = c.Icon;
   return (
@@ -23,7 +27,7 @@ export function PriorityBadge({ priority, className }: { priority: Priority | st
       )}
     >
       {Icon ? <Icon aria-hidden className="size-3" strokeWidth={2.5} /> : null}
-      {c.label}
+      {fmt.code(config[priority as Priority] ? priority : "NORMAL")}
     </span>
   );
 }

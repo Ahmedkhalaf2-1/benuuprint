@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { Dialog as D } from "radix-ui";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
+import { useI18n } from "@/i18n/provider";
 
 /** Side sheet built on Dialog (focus trap, Escape, scroll lock). `side` is logical: start/end. */
 export function Drawer({
@@ -21,6 +22,7 @@ export function Drawer({
   className?: string;
   children: ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
@@ -31,7 +33,7 @@ export function Drawer({
         >
           <div className="flex h-14 shrink-0 items-center justify-between border-b px-4">
             <D.Title className="text-base font-semibold">{title}</D.Title>
-            <D.Close aria-label="Close" className="rounded-sm p-1 text-muted-foreground hover:bg-white/5">
+            <D.Close aria-label={t("common.close")} className="rounded-sm p-1 text-muted-foreground hover:bg-white/5">
               <X aria-hidden className="size-4" />
             </D.Close>
           </div>

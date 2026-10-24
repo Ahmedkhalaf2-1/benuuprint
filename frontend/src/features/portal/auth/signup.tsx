@@ -1,6 +1,6 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@/lib/forms/resolver";
 import { CheckCircle2, MailCheck, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,6 +14,7 @@ import { isApiError } from "@/lib/api/errors";
 import { registerCustomer, resendVerification, verifyEmail } from "../api";
 import { Banner, PasswordInput, passwordSchema, portalErrorText } from "./forms";
 import { authHref, maskEmail, signupNext } from "./next-path";
+import { useI18n } from "@/i18n/provider";
 
 const GENERIC_RESEND = "If that email belongs to an account awaiting verification, a new verification link has been sent.";
 const COOLDOWN_SECONDS = 60;
@@ -43,6 +44,7 @@ type Values = z.infer<typeof schema>;
 
 /** Fields are exactly what the backend accepts: name, email, phone (optional), password, acceptedTerms, acceptedPrivacy. Confirm is client-only. */
 export function RegisterForm() {
+  const { t } = useI18n();
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next");
@@ -53,15 +55,15 @@ export function RegisterForm() {
     return (
       <div className="space-y-6" data-testid="account-created">
         <div className="flex size-12 items-center justify-center rounded-sm border border-brand/40 bg-brand-soft/50 text-brand"><CheckCircle2 aria-hidden className="size-6" /></div>
-        <div role="status"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">Account created</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">Account created</h1><p className="mt-2 text-sm text-muted-foreground">Your Benuu Print account is ready.</p></div>
-        <Button asChild size="lg" className="h-12 w-full"><Link href={authHref("/account/login", next)}>Sign in</Link></Button>
+        <div role="status"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">{t("customerAuth.accountCreated")}</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{t("customerAuth.accountCreated")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("customerAuth.yourBenuuPrintAccountIsReady")}</p></div>
+        <Button asChild size="lg" className="h-12 w-full"><Link href={authHref("/account/login", next)}>{t("customerAuth.signIn")}</Link></Button>
       </div>
     );
   }
   return (
     <form
       noValidate
-      aria-label="Create your account"
+      aria-label={t("customerAuth.createYourAccount")}
       className="space-y-4"
       onSubmit={handleSubmit(async (v) => {
         setError(null);
@@ -76,35 +78,35 @@ export function RegisterForm() {
           signupNext.set(next); // a safe path only; no session, no token, no password
           router.replace(authHref("/account/check-email", next, { email: v.email.trim() }));
         } catch (e) {
-          setError(isApiError(e) && e.kind === "conflict" ? { kind: "duplicate", text: "An account with this email already exists." } : { kind: "other", text: portalErrorText(e) });
+          setError(isApiError(e) && e.kind === "conflict" ? { kind: "duplicate", text: t("customerAuth.anAccountWithThisEmailAlready") } : { kind: "other", text: portalErrorText(e) });
         }
       })}
     >
       {error?.kind === "duplicate" ? (
         <div role="alert" data-testid="duplicate" className="space-y-2 rounded-md bg-tone-danger-bg px-3 py-3 text-sm text-tone-danger-fg">
           <p className="font-medium">{error.text}</p>
-          <p className="flex flex-wrap gap-x-4 gap-y-1"><Link className="underline" href={authHref("/account/login", next)}>Sign in</Link><Link className="underline" href="/account/forgot-password">Forgot password</Link></p>
+          <p className="flex flex-wrap gap-x-4 gap-y-1"><Link className="underline" href={authHref("/account/login", next)}>{t("customerAuth.signIn")}</Link><Link className="underline" href="/account/forgot-password">{t("customerAuth.forgotPassword")}</Link></p>
         </div>
       ) : error ? <Banner tone="error">{error.text}</Banner> : null}
-      <div className="space-y-1.5"><Label htmlFor="r-name">Full name</Label><Input id="r-name" autoComplete="name" autoFocus aria-invalid={!!errors.name} aria-describedby={errors.name ? "r-name-err" : undefined} {...register("name")} />{errors.name ? <p id="r-name-err" className="text-xs text-danger">{errors.name.message}</p> : null}</div>
-      <div className="space-y-1.5"><Label htmlFor="r-email">Email</Label><Input id="r-email" type="email" inputMode="email" autoComplete="email" aria-invalid={!!errors.email} aria-describedby={errors.email ? "r-email-err" : undefined} {...register("email")} />{errors.email ? <p id="r-email-err" className="text-xs text-danger">{errors.email.message}</p> : null}</div>
-      <div className="space-y-1.5"><Label htmlFor="r-phone">Phone <span className="font-normal text-muted-foreground">(optional)</span></Label><Input id="r-phone" type="tel" inputMode="tel" autoComplete="tel" {...register("phone")} /></div>
-      <PasswordInput id="r-password" label="Password" autoComplete="new-password" error={errors.password?.message} {...register("password")} />
-      <p className="-mt-2 text-xs text-muted-foreground">At least 12 characters, with a lowercase letter, an uppercase letter and a digit.</p>
-      <PasswordInput id="r-confirm" label="Repeat the password" autoComplete="new-password" error={errors.confirm?.message} {...register("confirm")} />
+      <div className="space-y-1.5"><Label htmlFor="r-name">{t("customerAuth.fullName")}</Label><Input id="r-name" autoComplete="name" autoFocus aria-invalid={!!errors.name} aria-describedby={errors.name ? "r-name-err" : undefined} {...register("name")} />{errors.name ? <p id="r-name-err" className="text-xs text-danger">{errors.name.message}</p> : null}</div>
+      <div className="space-y-1.5"><Label htmlFor="r-email">{t("common.email")}</Label><Input id="r-email" type="email" inputMode="email" autoComplete="email" aria-invalid={!!errors.email} aria-describedby={errors.email ? "r-email-err" : undefined} {...register("email")} />{errors.email ? <p id="r-email-err" className="text-xs text-danger">{errors.email.message}</p> : null}</div>
+      <div className="space-y-1.5"><Label htmlFor="r-phone">{t("common.phone")}{" "}<span className="font-normal text-muted-foreground">{t("common.optional")}</span></Label><Input id="r-phone" type="tel" inputMode="tel" autoComplete="tel" {...register("phone")} /></div>
+      <PasswordInput id="r-password" label={t("common.password")} autoComplete="new-password" error={errors.password?.message} {...register("password")} />
+      <p className="-mt-2 text-xs text-muted-foreground">{t("customerAuth.atLeast12CharactersWithA")}</p>
+      <PasswordInput id="r-confirm" label={t("customerAuth.repeatThePassword")} autoComplete="new-password" error={errors.confirm?.message} {...register("confirm")} />
       <div className="space-y-3 pt-1">
         {([["acceptedTerms", "Terms of Service", "/terms"], ["acceptedPrivacy", "Privacy Policy", "/privacy"]] as const).map(([name, label, href]) => (
           <div key={name}>
             <div className="flex items-start gap-3">
               <Controller control={control} name={name} render={({ field }) => <Checkbox id={`r-${name}`} checked={field.value} onCheckedChange={(c) => field.onChange(c === true)} aria-invalid={!!errors[name]} aria-describedby={errors[name] ? `r-${name}-err` : undefined} className="mt-0.5 size-5" />} />
-              <Label htmlFor={`r-${name}`} className="font-normal leading-snug">I accept the <Link href={href} target="_blank" rel="noopener" className="text-brand underline">{label}</Link></Label>
+              <Label htmlFor={`r-${name}`} className="font-normal leading-snug">{t("customerAuth.iAcceptThe")}{" "}<Link href={href} target="_blank" rel="noopener" className="text-brand underline">{label}</Link></Label>
             </div>
             {errors[name] ? <p id={`r-${name}-err`} className="mt-1 ps-8 text-xs text-danger">{errors[name]!.message}</p> : null}
           </div>
         ))}
       </div>
-      <Button type="submit" size="lg" className="h-12 w-full" loading={isSubmitting}>{isSubmitting ? "Creating account…" : "Create account"}</Button>
-      <p className="text-center text-sm text-muted-foreground">Already have an account? <Link href={authHref("/account/login", next)} className="text-brand hover:underline">Sign in</Link></p>
+      <Button type="submit" size="lg" className="h-12 w-full" loading={isSubmitting}>{isSubmitting ? t("customerAuth.creatingAccount") : t("customerAuth.createAccount")}</Button>
+      <p className="text-center text-sm text-muted-foreground">{t("customerAuth.alreadyHaveAnAccount")}{" "}<Link href={authHref("/account/login", next)} className="text-brand hover:underline">{t("customerAuth.signIn")}</Link></p>
     </form>
   );
 }
@@ -112,6 +114,7 @@ export function RegisterForm() {
 /* --------------------------------------------- resend + check email -------------------------------------- */
 /** Resend with a cooldown. The message is the backend's identical-for-everyone wording: nothing implies whether an account exists. */
 function ResendControl({ email, onEmail }: { email: string | null; onEmail?: (e: string) => void }) {
+  const { t } = useI18n();
   const cooldown = useCooldown();
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
@@ -132,15 +135,16 @@ function ResendControl({ email, onEmail }: { email: string | null; onEmail?: (e:
   };
   return (
     <div className="space-y-3" data-testid="resend">
-      {!email ? <div className="space-y-1.5"><Label htmlFor="rs-email">Your email</Label><Input id="rs-email" type="email" inputMode="email" autoComplete="email" value={typed} onChange={(e) => setTyped(e.target.value)} /></div> : null}
+      {!email ? <div className="space-y-1.5"><Label htmlFor="rs-email">{t("customerAuth.yourEmail")}</Label><Input id="rs-email" type="email" inputMode="email" autoComplete="email" value={typed} onChange={(e) => setTyped(e.target.value)} /></div> : null}
       {message ? <Banner tone="success"><span data-testid="resend-message">{message}</span></Banner> : null}
       {error ? <Banner tone="error">{error}</Banner> : null}
-      <Button type="button" size="lg" variant="secondary" className="h-12 w-full" loading={busy} disabled={cooldown.left > 0} onClick={() => void send()}>{cooldown.left > 0 ? `Resend available in ${cooldown.left}s` : "Resend verification"}</Button>
+      <Button type="button" size="lg" variant="secondary" className="h-12 w-full" loading={busy} disabled={cooldown.left > 0} onClick={() => void send()}>{cooldown.left > 0 ? t("customerAuth.resendAvailableInLeftS", { left: cooldown.left }) : t("customerAuth.resendVerification")}</Button>
     </div>
   );
 }
 
 export function CheckEmailPanel() {
+  const { t } = useI18n();
   const params = useSearchParams();
   const email = params.get("email")?.trim() || null;
   const next = params.get("next");
@@ -148,13 +152,13 @@ export function CheckEmailPanel() {
     <div className="space-y-6">
       <div className="flex size-12 items-center justify-center rounded-sm border bg-surface-sunken text-brand"><MailCheck aria-hidden className="size-6" /></div>
       <div>
-        <p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">Check your email</p>
-        <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">Verify your email</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{email ? <>We sent a verification link to <strong data-testid="masked-email" className="text-foreground">{maskEmail(email)}</strong>.</> : "We sent you a verification link."} Open it to verify your email, then sign in.</p>
-        <p className="mt-2 text-sm text-muted-foreground">Can&apos;t see it? Check your spam or junk folder.</p>
+        <p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">{t("customerAuth.checkYourEmail")}</p>
+        <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{t("customerAuth.verifyYourEmail")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{email ? <>{t("customerAuth.weSentAVerificationLinkTo")}{" "}<strong data-testid="masked-email" className="text-foreground">{maskEmail(email)}</strong>.</> : t("customerAuth.weSentYouAVerificationLink")}{" "}{t("customerAuth.openItToVerifyYourEmail")}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("customerAuth.canTSeeItCheckYour")}</p>
       </div>
       <ResendControl email={email} />
-      <Button asChild variant="ghost" className="h-12 w-full"><Link href={authHref("/account/login", next)}>Back to sign in</Link></Button>
+      <Button asChild variant="ghost" className="h-12 w-full"><Link href={authHref("/account/login", next)}>{t("customerAuth.backToSignIn")}</Link></Button>
     </div>
   );
 }
@@ -164,6 +168,7 @@ type State = "verifying" | "verified" | "invalid" | "error";
 
 /** Reads the one-time token from the URL, removes it from the address bar straight away, sends it once, and never keeps it. */
 export function VerifyEmailPanel() {
+  const { t } = useI18n();
   const params = useSearchParams();
   const token = params.get("token") ?? "";
   const next = params.get("next");
@@ -189,23 +194,23 @@ export function VerifyEmailPanel() {
   return (
     <div className="space-y-6" data-testid="verify" data-state={state}>
       {state === "verifying" ? (
-        <div role="status" aria-live="polite"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">Verifying</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">Verifying your email…</h1><p className="mt-2 text-sm text-muted-foreground">One moment.</p></div>
+        <div role="status" aria-live="polite"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">{t("customerAuth.verifying")}</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{t("customerAuth.verifyingYourEmail")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("customerAuth.oneMoment")}</p></div>
       ) : state === "verified" ? (
         <>
           <div className="flex size-12 items-center justify-center rounded-sm border border-brand/40 bg-brand-soft/50 text-brand"><CheckCircle2 aria-hidden className="size-6" /></div>
-          <div role="status"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">Email verified</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">Your account is ready</h1><p className="mt-2 text-sm text-muted-foreground">Your Benuu Print account is ready. Sign in to continue.</p></div>
-          <Button asChild size="lg" className="h-12 w-full"><Link href={authHref("/account/login", dest, { verified: "1" })} onClick={() => signupNext.clear()}>Sign in</Link></Button>
+          <div role="status"><p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">{t("customerAuth.emailVerified")}</p><h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{t("customerAuth.yourAccountIsReady")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("customerAuth.yourBenuuPrintAccountIsReady2")}</p></div>
+          <Button asChild size="lg" className="h-12 w-full"><Link href={authHref("/account/login", dest, { verified: "1" })} onClick={() => signupNext.clear()}>{t("customerAuth.signIn")}</Link></Button>
         </>
       ) : (
         <>
           <div className="flex size-12 items-center justify-center rounded-sm border bg-surface-sunken text-danger"><XCircle aria-hidden className="size-6" /></div>
           <div role="alert">
-            <p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">{state === "error" ? "Something went wrong" : "Link not valid"}</p>
-            <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{state === "error" ? "We couldn't verify your email" : "This link is invalid or has expired"}</h1>
-            <p className="mt-2 text-sm text-muted-foreground">{state === "error" ? detail : "The verification link may have expired or already been used. If you already verified your email, you can sign in."}</p>
+            <p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-brand">{state === "error" ? t("customerAuth.somethingWentWrong") : t("customerAuth.linkNotValid")}</p>
+            <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{state === "error" ? t("customerAuth.weCouldnTVerifyYourEmail") : t("customerAuth.thisLinkIsInvalidOrHas")}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{state === "error" ? detail : t("customerAuth.theVerificationLinkMayHaveExpired")}</p>
           </div>
           <ResendControl email={null} />
-          <Button asChild variant="ghost" className="h-12 w-full"><Link href={authHref("/account/login", dest)}>Back to sign in</Link></Button>
+          <Button asChild variant="ghost" className="h-12 w-full"><Link href={authHref("/account/login", dest)}>{t("customerAuth.backToSignIn")}</Link></Button>
         </>
       )}
     </div>

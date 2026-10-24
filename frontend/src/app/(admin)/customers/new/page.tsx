@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+import { localizedTitle } from "@/i18n/server";
 import { PageHeader } from "@/components/layout/page-header";
 import { RequirePermission } from "@/features/auth/require-permission";
 import { CustomerForm } from "@/features/customers/customer-form";
 
-export const metadata: Metadata = { title: "New customer" };
+export const generateMetadata = () => localizedTitle("New customer");
 
 export default function Page() {
   return (

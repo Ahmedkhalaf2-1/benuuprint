@@ -17,7 +17,7 @@ import { useConfiguratorOptions } from "@/features/master-data/hooks";
 import { StaffAssignDialog } from "@/features/samples/assign-sales-dialog";
 import { useSample } from "@/features/samples/hooks";
 import { isApiError } from "@/lib/api/errors";
-import { formatDate, formatDateTime, formatNumber } from "@/lib/utils/format";
+
 import * as api from "./api";
 import { BatchesPanel } from "./batches-panel";
 import { HistoryPanel } from "./history-panel";
@@ -32,12 +32,14 @@ import { ProductionPanel } from "./production-panel";
 import { ReadinessCard, ReapprovalBanner } from "./readiness";
 import { SpecPanel } from "./spec-panel";
 import { VariantsEditor, VariantsTable } from "./variants-editor";
+import { useI18n } from "@/i18n/provider";
 
 const TERMINAL = ["CANCELLED", "COMPLETED", "DELIVERED"];
 const TABS = ["overview", "variants", "spec", "batches", "production", "packaging", "shipments", "tracking", "commercial", "history"] as const;
 type Tab = (typeof TABS)[number];
 
 export function OrderDetailPage({ id }: { id: string }) {
+  const { t, fmt } = useI18n();
   const { can } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -60,7 +62,7 @@ export function OrderDetailPage({ id }: { id: string }) {
   if (q.isLoading) return <DetailSkeleton />;
   if (q.error) {
     if (isApiError(q.error) && q.error.kind === "forbidden") return <AccessDeniedState />;
-    if (isApiError(q.error) && (q.error.kind === "not_found" || q.error.kind === "validation")) return <ErrorState title="Order not found" error={q.error} className="py-20" />;
+    if (isApiError(q.error) && (q.error.kind === "not_found" || q.error.kind === "validation")) return <ErrorState title={t("orders.orderNotFound")} error={q.error} className="py-20" />;
     return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   }
   const o = q.data;
@@ -81,75 +83,75 @@ export function OrderDetailPage({ id }: { id: string }) {
   return (
     <>
       <DetailHeader
-        breadcrumbs={[{ label: "Orders", href: "/orders" }, { label: o.orderNumber }]}
-        reference={`${o.orderNumber}${o.revisionNumber > 1 ? ` · revision ${o.revisionNumber}` : ""}`}
-        title={o.items[0]?.productName ?? "Order"}
+        breadcrumbs={[{ label: t("orders.orders"), href: "/orders" }, { label: o.orderNumber }]}
+        reference={`${o.orderNumber}${o.revisionNumber > 1 ? t("common.revisionSuffix", { n: o.revisionNumber }) : ""}`}
+        title={o.items[0]?.productName ?? t("common.order")}
         status={<><StatusBadge status={status} /><PriorityBadge priority={o.priority} /><StatusBadge status={o.paymentState} /></>}
         meta={
           <span className="flex flex-wrap gap-x-4 gap-y-0.5">
-            <span>Customer <Link href={`/customers/${o.customer.id}`} className="font-medium text-foreground hover:text-brand hover:underline">{o.customer.name}</Link></span>
-            <span>Brand <Link href={`/brands/${o.brand.id}`} className="font-medium text-foreground hover:text-brand hover:underline">{o.brand.name}</Link></span>
-            <span>Sample <Link href={`/samples/${o.sourceSampleId}`} className="font-mono text-xs font-semibold text-foreground hover:text-brand hover:underline">{o.sampleNumber}</Link></span>
-            {o.reorderOfOrderId ? <span>Reorder of <Link href={`/orders/${o.reorderOfOrderId}`} className="font-mono text-xs font-semibold text-foreground hover:text-brand hover:underline">{o.reorderOfOrderNumber}</Link></span> : null}
+            <span>{t("common.customer")}{" "}<Link href={`/customers/${o.customer.id}`} className="font-medium text-foreground hover:text-brand hover:underline">{o.customer.name}</Link></span>
+            <span>{t("common.brand2")}{" "}<Link href={`/brands/${o.brand.id}`} className="font-medium text-foreground hover:text-brand hover:underline">{o.brand.name}</Link></span>
+            <span>{t("common.sample")}{" "}<Link href={`/samples/${o.sourceSampleId}`} className="font-mono text-xs font-semibold text-foreground hover:text-brand hover:underline">{o.sampleNumber}</Link></span>
+            {o.reorderOfOrderId ? <span>{t("orders.reorderOf")}{" "}<Link href={`/orders/${o.reorderOfOrderId}`} className="font-mono text-xs font-semibold text-foreground hover:text-brand hover:underline">{o.reorderOfOrderNumber}</Link></span> : null}
           </span>
         }
         actions={
           <>
-            {manage && isDraft ? <Button onClick={() => setAction(meta("submit"))}>{meta("submit").label}</Button> : null}
-            {can("orders.confirm") && status === "PENDING_CONFIRMATION" ? <Button onClick={() => setDialog("confirm")}>Confirm order</Button> : null}
-            {manage && status === "PENDING_CONFIRMATION" ? <Button variant="secondary" onClick={() => setAction(meta("request-changes"))}>{meta("request-changes").label}</Button> : null}
-            {manage && status === "CONFIRMED" ? <Button onClick={() => setAction(meta("ready"))}>{meta("ready").label}</Button> : null}
-            {canRevise ? <Button variant="secondary" onClick={() => setDialog("revise")}>Revise</Button> : null}
-            {manage && status === "ON_HOLD" ? <Button onClick={() => setAction(meta("resume"))}>Resume</Button> : null}
-            {manage && open && confirmed && status !== "ON_HOLD" ? <Button variant="secondary" onClick={() => setAction(meta("hold"))}>Put on hold</Button> : null}
-            {manage && open ? <Button variant="secondary" onClick={() => setDialog("priority")}>Priority</Button> : null}
-            {manage && open ? <Button variant="secondary" onClick={() => setDialog("assign")}><UserPlus /> Sales owner</Button> : null}
-            {can("orders.reorder") && confirmed ? <Button variant="secondary" onClick={() => setDialog("reorder")}>Reorder</Button> : null}
-            {can("orders.override") && ["PRODUCTION_COMPLETED", "READY_FOR_PACKAGING", "PACKAGING", "READY_FOR_DELIVERY", "PARTIALLY_SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"].includes(status) ? <Button variant="secondary" className="border-danger text-danger" onClick={() => setAction(meta("force-complete"))}>Force complete (override)</Button> : null}
-            {can("orders.cancel") && open ? <Button variant="secondary" className="text-danger" onClick={() => setAction(meta("cancel"))}>Cancel order</Button> : null}
+            {manage && isDraft ? <Button onClick={() => setAction(meta("submit"))}>{t.text(meta("submit").label)}</Button> : null}
+            {can("orders.confirm") && status === "PENDING_CONFIRMATION" ? <Button onClick={() => setDialog("confirm")}>{t("orders.confirmOrder")}</Button> : null}
+            {manage && status === "PENDING_CONFIRMATION" ? <Button variant="secondary" onClick={() => setAction(meta("request-changes"))}>{t.text(meta("request-changes").label)}</Button> : null}
+            {manage && status === "CONFIRMED" ? <Button onClick={() => setAction(meta("ready"))}>{t.text(meta("ready").label)}</Button> : null}
+            {canRevise ? <Button variant="secondary" onClick={() => setDialog("revise")}>{t("orders.revise")}</Button> : null}
+            {manage && status === "ON_HOLD" ? <Button onClick={() => setAction(meta("resume"))}>{t("orders.resume")}</Button> : null}
+            {manage && open && confirmed && status !== "ON_HOLD" ? <Button variant="secondary" onClick={() => setAction(meta("hold"))}>{t("orders.putOnHold")}</Button> : null}
+            {manage && open ? <Button variant="secondary" onClick={() => setDialog("priority")}>{t("common.priority")}</Button> : null}
+            {manage && open ? <Button variant="secondary" onClick={() => setDialog("assign")}><UserPlus />{" "}{t("orders.salesOwner")}</Button> : null}
+            {can("orders.reorder") && confirmed ? <Button variant="secondary" onClick={() => setDialog("reorder")}>{t("orders.reorder")}</Button> : null}
+            {can("orders.override") && ["PRODUCTION_COMPLETED", "READY_FOR_PACKAGING", "PACKAGING", "READY_FOR_DELIVERY", "PARTIALLY_SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"].includes(status) ? <Button variant="secondary" className="border-danger text-danger" onClick={() => setAction(meta("force-complete"))}>{t("orders.forceCompleteOverride")}</Button> : null}
+            {can("orders.cancel") && open ? <Button variant="secondary" className="text-danger" onClick={() => setAction(meta("cancel"))}>{t("orders.cancelOrder")}</Button> : null}
           </>
         }
       />
-      {status === "ON_HOLD" && o.holdReason ? <p role="status" className="mb-4 rounded-md bg-tone-warning-bg px-3 py-2 text-sm text-tone-warning-fg"><span className="font-medium">On hold:</span> {o.holdReason}</p> : null}
-      {status === "CANCELLED" ? <p role="status" className="mb-4 rounded-md bg-tone-neutral-bg px-3 py-2 text-sm text-tone-neutral-fg"><span className="font-medium">Cancelled</span>{o.cancelledAt ? ` ${formatDateTime(o.cancelledAt)}` : ""}{o.cancellationReason ? `: ${o.cancellationReason}` : ""}</p> : null}
+      {status === "ON_HOLD" && o.holdReason ? <p role="status" className="mb-4 rounded-md bg-tone-warning-bg px-3 py-2 text-sm text-tone-warning-fg"><span className="font-medium">{t("orders.onHold")}</span> {o.holdReason}</p> : null}
+      {status === "CANCELLED" ? <p role="status" className="mb-4 rounded-md bg-tone-neutral-bg px-3 py-2 text-sm text-tone-neutral-fg"><span className="font-medium">{t("orders.cancelled")}</span>{o.cancelledAt ? ` ${fmt.dateTime(o.cancelledAt)}` : ""}{o.cancellationReason ? `: ${o.cancellationReason}` : ""}</p> : null}
 
       {showCommercial ? <ReapprovalBanner orderId={o.id} /> : null}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="mb-4" aria-label="Order sections">
-          {tabs.map((t) => <TabsTrigger key={t} value={t}>{t === "history" ? "Activity" : t === "spec" ? "Production spec" : t === "tracking" ? "Customer tracking" : t.charAt(0).toUpperCase() + t.slice(1)}</TabsTrigger>)}
+        <TabsList className="mb-4" aria-label={t("orders.orderSections")}>
+          {tabs.map((tb) => <TabsTrigger key={tb} value={tb}>{tb === "history" ? t.text("Activity") : tb === "spec" ? t.text("Production spec") : tb === "tracking" ? t.text("Customer tracking") : t.text(tb.charAt(0).toUpperCase() + tb.slice(1))}</TabsTrigger>)}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
           <ReadinessCard order={o} />
           {confirmed ? <FulfillmentCard order={o} showShipments={showShipments} /> : null}
           <Card aria-labelledby="ov-t">
-            <CardHeader><CardTitle><span id="ov-t">Overview</span></CardTitle></CardHeader>
+            <CardHeader><CardTitle><span id="ov-t">{t("common.overview")}</span></CardTitle></CardHeader>
             <CardContent>
               <InfoGrid>
-                <InfoItem label="Total quantity"><span className="tabular-nums">{formatNumber(o.totalQuantity)}</span></InfoItem>
-                <InfoItem label="Completed / rejected"><span className="tabular-nums">{formatNumber(o.completedQuantity)} / {formatNumber(o.rejectedQuantity)}</span></InfoItem>
-                <InfoItem label="Progress"><span className="tabular-nums">{o.progressPercent}%</span></InfoItem>
-                <InfoItem label="Target delivery">{o.targetDeliveryDate ? <>{formatDate(o.targetDeliveryDate)}{o.isDelayed ? <span className="ms-2 text-xs font-medium text-tone-danger-fg">Delayed</span> : null}</> : null}</InfoItem>
-                <InfoItem label="Sales owner">{o.assignedSalesUserId ? "Assigned" : "Unassigned"}</InfoItem>
-                <InfoItem label="Payment"><StatusBadge status={o.paymentState} /></InfoItem>
-                <InfoItem label="Created">{formatDateTime(o.createdAt)}</InfoItem>
-                <InfoItem label="Confirmed">{o.confirmedAt ? formatDateTime(o.confirmedAt) : null}</InfoItem>
-                <InfoItem label="Production started">{o.productionStartDate ? formatDateTime(o.productionStartDate) : null}</InfoItem>
-                <InfoItem label="Internal notes" className="sm:col-span-2 lg:col-span-3">{o.internalNotes ? <span className="whitespace-pre-wrap">{o.internalNotes}</span> : null}</InfoItem>
+                <InfoItem label={t("orders.totalQuantity")}><span className="tabular-nums">{fmt.number(o.totalQuantity)}</span></InfoItem>
+                <InfoItem label={t("orders.completedRejected")}><span className="tabular-nums">{fmt.number(o.completedQuantity)} / {fmt.number(o.rejectedQuantity)}</span></InfoItem>
+                <InfoItem label={t("orders.progress")}><span className="tabular-nums">{o.progressPercent}%</span></InfoItem>
+                <InfoItem label={t("orders.targetDelivery")}>{o.targetDeliveryDate ? <>{fmt.date(o.targetDeliveryDate)}{o.isDelayed ? <span className="ms-2 text-xs font-medium text-tone-danger-fg">{t("common.delayed")}</span> : null}</> : null}</InfoItem>
+                <InfoItem label={t("orders.salesOwner")}>{o.assignedSalesUserId ? t("orders.assigned") : t("common.unassigned")}</InfoItem>
+                <InfoItem label={t("orders.payment")}><StatusBadge status={o.paymentState} /></InfoItem>
+                <InfoItem label={t("common.created")}>{fmt.dateTime(o.createdAt)}</InfoItem>
+                <InfoItem label={t("orders.confirmed")}>{o.confirmedAt ? fmt.dateTime(o.confirmedAt) : null}</InfoItem>
+                <InfoItem label={t("orders.productionStarted")}>{o.productionStartDate ? fmt.dateTime(o.productionStartDate) : null}</InfoItem>
+                <InfoItem label={t("common.internalNotes")} className="sm:col-span-2 lg:col-span-3">{o.internalNotes ? <span className="whitespace-pre-wrap">{o.internalNotes}</span> : null}</InfoItem>
               </InfoGrid>
             </CardContent>
           </Card>
           <Card aria-labelledby="ref-t" data-testid="approved-reference">
-            <CardHeader><CardTitle><span id="ref-t">Approved production reference</span></CardTitle><span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Lock aria-hidden className="size-3" /> Frozen — read only</span></CardHeader>
+            <CardHeader><CardTitle><span id="ref-t">{t("orders.approvedProductionReference")}</span></CardTitle><span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Lock aria-hidden className="size-3" />{" "}{t("orders.frozenReadOnly")}</span></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <p>Bulk production is based on the <strong>approved reference</strong> of <Link href={`/samples/${o.sourceSampleId}?tab=production`} className="font-mono text-xs font-semibold text-brand hover:underline">{o.sampleNumber}</Link> (revision {o.approvedReference.revision}), never on the pre-production specification.</p>
+              <p>{t("orders.bulkProductionIsBasedOnThe")}{" "}<strong>{t("orders.approvedReference2")}</strong>{" "}{t("orders.of")}{" "}<Link href={`/samples/${o.sourceSampleId}?tab=production`} className="font-mono text-xs font-semibold text-brand hover:underline">{o.sampleNumber}</Link>{" "}{t("orders.revisionRevisionNeverOnThePre", { revision: o.approvedReference.revision })}</p>
               <InfoGrid>
-                <InfoItem label="Kind">Approved reference</InfoItem>
-                <InfoItem label="Frozen">{formatDateTime(o.approvedReference.createdAt)}</InfoItem>
-                <InfoItem label="Fingerprint"><span className="font-mono text-xs">{o.approvedReference.specHash.slice(0, 16)}…</span></InfoItem>
-                <InfoItem label="Built by job">{o.approvedReference.sourceFactoryJobNumber}</InfoItem>
+                <InfoItem label={t("orders.kind")}>{t("orders.approvedReference")}</InfoItem>
+                <InfoItem label={t("orders.frozen")}>{fmt.dateTime(o.approvedReference.createdAt)}</InfoItem>
+                <InfoItem label={t("orders.fingerprint")}><span className="font-mono text-xs">{o.approvedReference.specHash.slice(0, 16)}…</span></InfoItem>
+                <InfoItem label={t("orders.builtByJob")}>{o.approvedReference.sourceFactoryJobNumber}</InfoItem>
               </InfoGrid>
-              {o.currentSpec ? <p className="rounded-md bg-surface-muted px-3 py-2" data-testid="current-spec">Order specification <strong>revision {o.currentSpec.revision}</strong> is frozen ({formatNumber(o.currentSpec.totalQuantity)} units, fingerprint <span className="font-mono text-xs">{o.currentSpec.specHash.slice(0, 12)}…</span>). It is what the factory is committed to; change it only through a revision.</p> : <p className="text-muted-foreground">The order specification is frozen when the order is confirmed.</p>}
+              {o.currentSpec ? <p className="rounded-md bg-surface-muted px-3 py-2" data-testid="current-spec">{t("orders.orderSpecification")}{" "}<strong>{t("orders.revisionRevision", { revision: o.currentSpec.revision })}</strong>{" "}{t("orders.isFrozenTotalquantityUnitsFingerprint", { totalQuantity: fmt.number(o.currentSpec.totalQuantity) })}{" "}<span className="font-mono text-xs">{o.currentSpec.specHash.slice(0, 12)}…</span>{t("orders.itIsWhatTheFactoryIs")}</p> : <p className="text-muted-foreground">{t("orders.theOrderSpecificationIsFrozenWhen")}</p>}
             </CardContent>
           </Card>
         </TabsContent>
@@ -157,7 +159,7 @@ export function OrderDetailPage({ id }: { id: string }) {
         <TabsContent value="variants" className="space-y-3">
           {isDraft && manage ? <VariantsEditor key={o.items.map((i) => i.id).join()} order={o} fabricColors={fabricColors} /> : (
             <>
-              {confirmed ? <p role="status" className="flex items-center gap-2 rounded-md bg-surface-muted px-3 py-2 text-sm"><Lock aria-hidden className="size-4" /> Quantities and variants are frozen by the order specification. {canRevise ? "Use Revise to change them before production starts." : "Changes go through a revision."}</p> : status === "PENDING_CONFIRMATION" ? <p role="status" className="rounded-md bg-surface-muted px-3 py-2 text-sm">Variants are locked while the order awaits confirmation. Use “Request changes” to edit them.</p> : null}
+              {confirmed ? <p role="status" className="flex items-center gap-2 rounded-md bg-surface-muted px-3 py-2 text-sm"><Lock aria-hidden className="size-4" />{" "}{t("orders.quantitiesAndVariantsAreFrozenBy")}{" "}{canRevise ? t("orders.useReviseToChangeThemBefore") : t("orders.changesGoThroughARevision")}</p> : status === "PENDING_CONFIRMATION" ? <p role="status" className="rounded-md bg-surface-muted px-3 py-2 text-sm">{t("orders.variantsAreLockedWhileTheOrder")}</p> : null}
               <VariantsTable items={o.items} />
             </>
           )}
@@ -169,7 +171,7 @@ export function OrderDetailPage({ id }: { id: string }) {
         {showPackaging ? <TabsContent value="packaging"><PackagingPanel order={o} /></TabsContent> : null}
         {showShipments ? <TabsContent value="shipments"><ShipmentsPanel order={o} /></TabsContent> : null}
         {showTracking ? <TabsContent value="tracking"><TrackingPanel orderId={o.id} /></TabsContent> : null}
-        {showCommercial ? <TabsContent value="commercial"><CommercialSection target={{ kind: "order", id: o.id }} canStart={open && !["IN_PRODUCTION", "PARTIALLY_COMPLETED", "PRODUCTION_COMPLETED"].includes(status)} startHint="Quotations can be created until production is released." /></TabsContent> : null}
+        {showCommercial ? <TabsContent value="commercial"><CommercialSection target={{ kind: "order", id: o.id }} canStart={open && !["IN_PRODUCTION", "PARTIALLY_COMPLETED", "PRODUCTION_COMPLETED"].includes(status)} startHint={t("orders.quotationsCanBeCreatedUntilProduction")} /></TabsContent> : null}
         <TabsContent value="history"><HistoryPanel orderId={o.id} /></TabsContent>
       </Tabs>
 
@@ -178,7 +180,7 @@ export function OrderDetailPage({ id }: { id: string }) {
       {dialog === "revise" ? <ReviseDialog order={o} fabricColors={fabricColors} onClose={() => setDialog(null)} /> : null}
       {dialog === "priority" ? <PriorityDialog order={o} onClose={() => setDialog(null)} /> : null}
       {dialog === "reorder" ? <ReorderDialog order={o} onClose={() => setDialog(null)} /> : null}
-      {dialog === "assign" ? <StaffAssignDialog title="Assign sales owner" description={`${o.orderNumber} — currently ${o.assignedSalesUserId ? "assigned" : "unassigned"}.`} currentId={o.assignedSalesUserId} onClose={() => setDialog(null)} onAssign={async (userId) => { await api.updateOrder(o.id, { assignedSalesUserId: userId }); inv.order(o.id); }} /> : null}
+      {dialog === "assign" ? <StaffAssignDialog title={t("orders.assignSalesOwner")} description={t("orders.ordernumberCurrentlyV2", { orderNumber: o.orderNumber, v2: o.assignedSalesUserId ? "assigned" : "unassigned" })} currentId={o.assignedSalesUserId} onClose={() => setDialog(null)} onAssign={async (userId) => { await api.updateOrder(o.id, { assignedSalesUserId: userId }); inv.order(o.id); }} /> : null}
     </>
   );
 }

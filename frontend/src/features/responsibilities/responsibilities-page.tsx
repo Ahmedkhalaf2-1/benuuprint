@@ -17,8 +17,10 @@ import { useAttention, useOverview, useResponsibilityInvalidation } from "./hook
 import { GROUP_TITLE, REASON_TEXT, groupAreas } from "./labels";
 import { WorkerDrilldown } from "./worker-drilldown";
 import type { ResponsibilityOverviewItem } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 function AreaCard({ a, canManage, onChange, onApply, onClear, onWorker }: { a: ResponsibilityOverviewItem; canManage: boolean; onChange: () => void; onApply: () => void; onClear: () => void; onWorker: (id: string, name: string) => void }) {
+  const { t } = useI18n();
   const configured = !!a.globalDefault;
   const attention = a.health === "NEEDS_ATTENTION";
   const reason = a.globalDefault?.reason ?? a.reason;
@@ -30,23 +32,23 @@ function AreaCard({ a, canManage, onChange, onApply, onClear, onWorker }: { a: R
           <p className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-muted-foreground">{a.stageKey}</p>
           <h3 className="text-lg font-semibold uppercase tracking-[-0.01em]">{a.label}</h3>
         </div>
-        {attention ? <span className="inline-flex h-6 items-center gap-1 rounded-sm bg-tone-warning-bg px-2 text-xs font-semibold text-tone-warning-fg"><AlertTriangle aria-hidden className="size-3.5" />Needs attention</span> : !configured ? <span className="inline-flex h-6 items-center rounded-sm bg-surface-sunken px-2 text-xs font-medium text-muted-foreground">Not configured</span> : null}
+        {attention ? <span className="inline-flex h-6 items-center gap-1 rounded-sm bg-tone-warning-bg px-2 text-xs font-semibold text-tone-warning-fg"><AlertTriangle aria-hidden className="size-3.5" />{t("common.needsAttention")}</span> : !configured ? <span className="inline-flex h-6 items-center rounded-sm bg-surface-sunken px-2 text-xs font-medium text-muted-foreground">{t("responsibilities.notConfigured")}</span> : null}
       </div>
       {attention && a.globalDefault ? (
-        <p role="alert" data-testid="area-attention" className="text-sm text-tone-warning-fg"><span className="font-semibold">{a.globalDefault.primaryUser.name}</span> {reason ? REASON_TEXT[reason] ?? "can no longer take this work" : "can no longer take this work"}. New {a.label} work is left unassigned until you choose someone else.</p>
+        <p role="alert" data-testid="area-attention" className="text-sm text-tone-warning-fg"><span className="font-semibold">{a.globalDefault.primaryUser.name}</span> {reason ? REASON_TEXT[reason] ?? t("responsibilities.canNoLongerTakeThisWork") : t("responsibilities.canNoLongerTakeThisWork")}{t("responsibilities.newWorkLeftUnassigned", { label: a.label })}</p>
       ) : configured && a.effectiveUser ? (
         <div>
           <button type="button" onClick={() => onWorker(a.effectiveUser!.id, a.effectiveUser!.name)} className="text-start text-xl font-semibold hover:text-brand hover:underline" data-testid="area-owner">{a.effectiveUser.name}</button>
-          <p className="text-sm text-muted-foreground">{a.eligibleRoleCodes.length ? `${a.eligibleRoleCodes.join(", ").replace(/_/g, " ").toLowerCase()} · ` : ""}<span data-testid="area-load">{a.activeWork} {unit}</span> · Factory default</p>
+          <p className="text-sm text-muted-foreground">{a.eligibleRoleCodes.length ? `${a.eligibleRoleCodes.join(", ").replace(/_/g, " ").toLowerCase()} · ` : ""}<span data-testid="area-load">{a.activeWork} {unit}</span>{" "}{t("responsibilities.factoryDefault2")}</p>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground" data-testid="area-empty">No default responsible worker is configured. New {a.label} work stays unassigned.</p>
+        <p className="text-sm text-muted-foreground" data-testid="area-empty">{t("responsibilities.noDefaultResponsibleWorkerIsConfigured", { label: a.label })}</p>
       )}
       {canManage ? (
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant={configured && !attention ? "secondary" : "primary"} onClick={onChange}>{attention ? "Assign another worker" : configured ? "Change responsible" : "Set responsible"}</Button>
-          {configured ? <Button size="sm" variant="secondary" onClick={onApply}>Apply to active work</Button> : null}
-          {configured ? <Button size="sm" variant="ghost" onClick={onClear}>Clear default</Button> : null}
+          <Button size="sm" variant={configured && !attention ? "secondary" : "primary"} onClick={onChange}>{attention ? t("responsibilities.assignAnotherWorker") : configured ? t("responsibilities.changeResponsible") : t("responsibilities.setResponsible")}</Button>
+          {configured ? <Button size="sm" variant="secondary" onClick={onApply}>{t("responsibilities.applyToActiveWork")}</Button> : null}
+          {configured ? <Button size="sm" variant="ghost" onClick={onClear}>{t("responsibilities.clearDefault")}</Button> : null}
         </div>
       ) : null}
     </Card>
@@ -54,6 +56,7 @@ function AreaCard({ a, canManage, onChange, onApply, onClear, onWorker }: { a: R
 }
 
 export function ResponsibilitiesPage() {
+  const { t } = useI18n();
   const { can } = useAuth();
   const canManage = can("responsibilities.manage");
   const overview = useOverview();
@@ -73,12 +76,12 @@ export function ResponsibilitiesPage() {
 
   return (
     <>
-      <PageHeader title="Factory Responsibilities" description="Choose who normally owns each stage. New production work is assigned automatically." />
+      <PageHeader title={t("responsibilities.factoryResponsibilities")} description={t("responsibilities.chooseWhoNormallyOwnsEachStage")} />
       {rules > 0 || unassigned > 0 ? (
         <div className="mb-6 grid gap-3 sm:grid-cols-2" data-testid="attention-summary">
-          {rules > 0 ? <Card variant="attention" className="p-4"><p className="text-3xl font-semibold tabular-nums">{rules}</p><p className="text-sm font-medium">Responsibilities need attention</p><p className="text-xs text-muted-foreground">A rule points at someone who is disabled or no longer eligible.</p></Card> : null}
+          {rules > 0 ? <Card variant="attention" className="p-4"><p className="text-3xl font-semibold tabular-nums">{rules}</p><p className="text-sm font-medium">{t("responsibilities.responsibilitiesNeedAttention")}</p><p className="text-xs text-muted-foreground">{t("responsibilities.aRulePointsAtSomeoneWho")}</p></Card> : null}
           {unassigned > 0 ? (
-            <Card variant="attention" className="p-4" id="unassigned"><p className="text-3xl font-semibold tabular-nums">{unassigned}</p><p className="text-sm font-medium">Unassigned active stages</p>
+            <Card variant="attention" className="p-4" id="unassigned"><p className="text-3xl font-semibold tabular-nums">{unassigned}</p><p className="text-sm font-medium">{t("responsibilities.unassignedActiveStages")}</p>
               {feed?.unassignedActiveStages?.byStageKey?.length ? <p className="mt-1 flex flex-wrap gap-1.5 text-xs text-muted-foreground">{feed.unassignedActiveStages.byStageKey.map((b) => <span key={b.stageKey} className="rounded-sm bg-surface-sunken px-1.5 py-0.5">{b.label ?? areas.find((a) => a.stageKey === b.stageKey)?.label ?? b.stageKey}{b.count != null ? ` · ${b.count}` : ""}</span>)}</p> : null}
             </Card>
           ) : null}
@@ -93,25 +96,25 @@ export function ResponsibilitiesPage() {
             </div>
           </section>
         ))}
-        {areas.length === 0 ? <p className="text-sm text-muted-foreground">No operational areas were returned.</p> : null}
+        {areas.length === 0 ? <p className="text-sm text-muted-foreground">{t("responsibilities.noOperationalAreasWereReturned")}</p> : null}
       </div>
-      <p className="mt-8 text-xs text-muted-foreground">Changing a default only affects future work. Existing assignments keep their owners until you apply it to active work. <Link href="/customers" className="inline-flex items-center gap-1 text-brand hover:underline">Customer-specific overrides live on each customer <ArrowRight aria-hidden className="size-3" /></Link></p>
+      <p className="mt-8 text-xs text-muted-foreground">{t("responsibilities.changingADefaultOnlyAffectsFuture")}{" "}<Link href="/customers" className="inline-flex items-center gap-1 text-brand hover:underline">{t("responsibilities.customerSpecificOverridesLiveOnEach")}{" "}<ArrowRight aria-hidden className="rtl:-scale-x-100 size-3" /></Link></p>
 
       {picking ? (
         <WorkerPickerDialog
-          title={`${picking.label} — who is responsible?`} stageLabel={picking.label} eligibleRoleCodes={picking.eligibleRoleCodes} currentUserId={picking.globalDefault?.primaryUser.id}
-          scopeText={(name) => `${picking.globalDefault ? `${picking.globalDefault.primaryUser.name} → ${name}. ` : ""}Future ${picking.label} work will be assigned to ${name}.`}
+          title={t("responsibilities.labelWhoIsResponsible", { label: picking.label })} stageLabel={picking.label} eligibleRoleCodes={picking.eligibleRoleCodes} currentUserId={picking.globalDefault?.primaryUser.id}
+          scopeText={(name) => `${picking.globalDefault ? t("responsibilities.scopeFromTo", { from: picking.globalDefault.primaryUser.name, to: name }) : ""}${t("responsibilities.futureWorkAssignedTo", { label: picking.label, name })}`}
           onSave={(userId) => api.setGlobal(picking.stageKey, { userId })}
-          onClose={(saved) => { const a = picking; setPicking(null); if (saved) { invalidate(); toast.success(`${a.label} responsibility saved`); setApplying({ area: a, intro: `Future ${a.label} work will go to the new owner. Existing work keeps its current owner unless you apply the change.` }); } }}
+          onClose={(saved) => { const a = picking; setPicking(null); if (saved) { invalidate(); toast.success(t("responsibilities.labelResponsibilitySaved", { label: a.label })); setApplying({ area: a, intro: t("responsibilities.defaultFollowsIntro", { label: a.label }) }); } }}
         />
       ) : null}
       {applying ? <ApplyActiveDialog stageKey={applying.area.stageKey} stageLabel={applying.area.label} intro={applying.intro} onClose={() => setApplying(null)} /> : null}
       {clearing ? (
         <Dialog open onOpenChange={(o) => !o && setClearing(null)}>
-          <DialogContent title={`Clear the ${clearing.label} default?`} description="Future work for this area will be left unassigned. Existing assignments are not touched.">
+          <DialogContent title={t("responsibilities.clearTheLabelDefault", { label: clearing.label })} description={t("responsibilities.futureWorkForThisAreaWill")}>
             <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setClearing(null)}>Cancel</Button>
-              <Button variant="danger" onClick={async () => { try { await api.clearGlobal(clearing.stageKey); invalidate(); toast.success("Default cleared"); setClearing(null); } catch (e) { toast.error(errorMessage(e)); } }}>Clear default</Button>
+              <Button variant="secondary" onClick={() => setClearing(null)}>{t("common.cancel")}</Button>
+              <Button variant="danger" onClick={async () => { try { await api.clearGlobal(clearing.stageKey); invalidate(); toast.success(t("responsibilities.defaultCleared")); setClearing(null); } catch (e) { toast.error(errorMessage(e)); } }}>{t("responsibilities.clearDefault")}</Button>
             </div>
           </DialogContent>
         </Dialog>

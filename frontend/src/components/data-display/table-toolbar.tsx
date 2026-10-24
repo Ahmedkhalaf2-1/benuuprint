@@ -1,6 +1,9 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
+import { useI18n } from "@/i18n/provider";
 
 export function TableToolbar({ search, onSearchChange, searchPlaceholder, filters, actions }: { search: string; onSearchChange: (v: string) => void; searchPlaceholder?: string; filters?: ReactNode; actions?: ReactNode }) {
   return (
@@ -14,10 +17,11 @@ export function TableToolbar({ search, onSearchChange, searchPlaceholder, filter
 
 /** Row of filter controls with a single reset action; the values themselves live in the URL. */
 export function FilterBar({ children, activeCount, onReset }: { children: ReactNode; activeCount: number; onReset: () => void }) {
+  const { t } = useI18n();
   return (
-    <div role="group" aria-label="Filters" className="flex flex-wrap items-center gap-2">
+    <div role="group" aria-label={t("common.filters")} className="flex flex-wrap items-center gap-2">
       {children}
-      {activeCount > 0 ? <Button variant="ghost" size="sm" onClick={onReset}>Clear filters ({activeCount})</Button> : null}
+      {activeCount > 0 ? <Button variant="ghost" size="sm" onClick={onReset}>{t("common.clearFiltersActivecount", { activeCount })}</Button> : null}
     </div>
   );
 }

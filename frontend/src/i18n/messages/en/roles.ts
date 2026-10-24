@@ -1,0 +1,18 @@
+export const roles = {
+  ADMIN: "Admin",
+  COURIER: "Courier",
+  CUTTING: "Cutting",
+  DELIVERY: "Delivery",
+  FACTORY_MANAGER: "Factory Manager",
+  FINANCE: "Finance",
+  PACKAGING: "Packaging",
+  PATTERN_MAKER: "Pattern Maker",
+  PRINTING: "Printing",
+  PRODUCTION: "Production",
+  PRODUCTION_MANAGER: "Production Manager",
+  QC: "Quality Control",
+  SALES: "Sales",
+  SEWING: "Sewing",
+  STAFF: "Staff",
+  SUPER_ADMIN: "Super Admin",
+};

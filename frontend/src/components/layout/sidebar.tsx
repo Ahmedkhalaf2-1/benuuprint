@@ -7,17 +7,19 @@ import { filterNav } from "@/features/navigation/nav-config";
 import { useAuth } from "@/features/auth/auth-provider";
 import { cn } from "@/lib/utils/cn";
 import { Brand } from "./brand";
+import { useI18n } from "@/i18n/provider";
 
 export function SidebarNav({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
+  const { t } = useI18n();
   const pathname = usePathname();
   const auth = useAuth();
   const sections = filterNav(auth);
 
   return (
-    <nav aria-label="Main" className="flex-1 overflow-y-auto px-2 py-3">
+    <nav aria-label={t("common.main")} className="flex-1 overflow-y-auto px-2 py-3">
       {sections.map((section) => (
         <div key={section.title} className="mb-4">
-          {collapsed ? <div className="mx-2 mb-1.5 h-px bg-border" aria-hidden /> : <h2 className="px-2.5 pb-1.5 font-mono text-[0.625rem] font-medium uppercase tracking-[0.2em] text-muted-foreground/80">{section.title}</h2>}
+          {collapsed ? <div className="mx-2 mb-1.5 h-px bg-border" aria-hidden /> : <h2 className="px-2.5 pb-1.5 font-mono text-[0.625rem] font-medium uppercase tracking-[0.2em] text-muted-foreground/80">{t.text(section.title)}</h2>}
           <ul className="space-y-0.5">
             {section.items.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -33,10 +35,10 @@ export function SidebarNav({ collapsed = false, onNavigate }: { collapsed?: bool
                   )}
                 >
                   <item.icon aria-hidden className={cn("size-4 shrink-0 transition-colors", active && "text-brand")} />
-                  {collapsed ? <span className="sr-only">{item.label}</span> : <span className="truncate">{item.label}</span>}
+                  {collapsed ? <span className="sr-only">{t.text(item.label)}</span> : <span className="truncate">{t.text(item.label)}</span>}
                 </Link>
               );
-              return <li key={item.href}>{collapsed ? <Tooltip content={item.label}>{link}</Tooltip> : link}</li>;
+              return <li key={item.href}>{collapsed ? <Tooltip content={t.text(item.label)}>{link}</Tooltip> : link}</li>;
             })}
           </ul>
         </div>

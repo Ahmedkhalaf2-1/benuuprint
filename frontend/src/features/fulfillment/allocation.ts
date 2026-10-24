@@ -1,3 +1,4 @@
+import { getActive } from "@/i18n/active";
 import type { Shipment } from "./types";
 
 export interface VariantRef { id: string; label: string; quantity: number }
@@ -33,9 +34,9 @@ export function checkAllocation(rows: AllocationRow[], entered: Record<string, s
     const n = Number(raw);
     if (n === 0) continue;
     total += n;
-    if (n > r.remaining) errors[r.id] = `At most ${r.remaining} left`;
+    if (n > r.remaining) errors[r.id] = getActive().t("fulfillment.atMostLeft", { n: r.remaining });
   }
-  const totalError = total === 0 ? "Enter at least one quantity" : shippable !== undefined && total > shippable ? `Only ${shippable} packed units can ship now` : undefined;
+  const totalError = total === 0 ? getActive().t("fulfillment.enterAtLeastOneQuantity") : shippable !== undefined && total > shippable ? getActive().t("fulfillment.onlyPackedCanShip", { n: shippable }) : undefined;
   return { total, errors, totalError, valid: total > 0 && Object.keys(errors).length === 0 && !totalError };
 }
 

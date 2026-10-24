@@ -1,5 +1,8 @@
+"use client";
+
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
-import { humanizeCode } from "@/lib/utils/format";
+
 import { statusTone, toneClasses, toneShape, type DotShape } from "./status";
 
 const shapeClass: Record<DotShape, string> = {
@@ -9,7 +12,13 @@ const shapeClass: Record<DotShape, string> = {
   diamond: "rotate-45 rounded-[1px]",
 };
 
+/**
+ * The status code is the contract; only its display text is localised. In English the backend-provided label (if any) is kept as-is.
+ * In other locales the canonical translation of the code wins, falling back to the label / humanised code.
+ */
 export function StatusBadge({ status, label, className }: { status: string; label?: string; className?: string }) {
+  const { locale, t, fmt } = useI18n();
+  const text = locale === "en" ? (label ?? fmt.code(status)) : (t.dyn("codes", status) ?? label ?? fmt.code(status));
   const tone = statusTone[status] ?? "neutral";
   const c = toneClasses[tone];
   return (
@@ -22,7 +31,7 @@ export function StatusBadge({ status, label, className }: { status: string; labe
       )}
     >
       <span aria-hidden className={cn("size-1.5 shrink-0", c.dot, shapeClass[toneShape[tone]])} />
-      {label ?? humanizeCode(status)}
+      {text}
     </span>
   );
 }

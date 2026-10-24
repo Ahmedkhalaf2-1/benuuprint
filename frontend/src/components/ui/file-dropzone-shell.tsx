@@ -3,6 +3,7 @@
 import { UploadCloud } from "lucide-react";
 import { useRef, useState, type DragEvent } from "react";
 import { cn } from "@/lib/utils/cn";
+import { useI18n } from "@/i18n/provider";
 
 /**
  * UI shell only. It hands the chosen File objects to `onFiles` and nothing else: files are never
@@ -23,6 +24,7 @@ export function FileDropzoneShell({
   hint?: string;
   className?: string;
 }) {
+  const { t } = useI18n();
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
 
@@ -42,11 +44,8 @@ export function FileDropzoneShell({
       className={cn("flex flex-col items-center gap-1 rounded-lg border border-dashed bg-surface-muted px-4 py-8 text-center", over && "border-brand bg-brand-soft", disabled && "opacity-60", className)}
     >
       <UploadCloud aria-hidden className="size-6 text-muted-foreground" />
-      <p className="text-sm">
-        Drop files here or{" "}
-        <button type="button" disabled={disabled} onClick={() => input.current?.click()} className="font-medium text-brand underline-offset-2 hover:underline">
-          browse
-        </button>
+      <p className="text-sm">{t("common.dropFilesHereOr")}{" "}
+        <button type="button" disabled={disabled} onClick={() => input.current?.click()} className="font-medium text-brand underline-offset-2 hover:underline">{t("common.browse")}</button>
       </p>
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
       <input

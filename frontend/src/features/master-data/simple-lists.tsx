@@ -9,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SearchInput } from "@/components/ui/search-input";
 import { useListParams } from "@/hooks/use-list-params";
-import { humanizeCode } from "@/lib/utils/format";
+import { humanizeCode, tx } from "@/lib/utils/format";
 import { useAccessories, useComponentOptions, usePrintMethods, useSizeScales } from "./hooks";
 import { ADMIN_MANAGED, ReferenceListPage } from "./reference-list-page";
 import { rowStatus } from "./status";
 import { COMPONENT_CATEGORIES, type Accessory, type ComponentOption, type PrintMethod } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 const dash = <span className="text-muted-foreground">—</span>;
 const code = (c: string) => <span className="font-mono text-xs font-semibold">{c}</span>;
@@ -23,7 +24,7 @@ const printColumns: ColumnDef<PrintMethod, unknown>[] = [
   { header: "Code", accessorKey: "code", meta: { sortKey: "code" }, cell: ({ row }) => code(row.original.code) },
   { header: "Name", accessorKey: "name", meta: { sortKey: "name" }, cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
   { header: "Type", accessorKey: "type", cell: ({ row }) => <Badge variant="outline">{humanizeCode(row.original.type)}</Badge> },
-  { header: "Full colour", accessorKey: "supportsFullColor", cell: ({ row }) => (row.original.supportsFullColor ? "Yes" : "No") },
+  { header: "Full colour", accessorKey: "supportsFullColor", cell: ({ row }) => tx(row.original.supportsFullColor ? "Yes" : "No") },
   { header: "Max colours", accessorKey: "maxColors", cell: ({ row }) => row.original.maxColors ?? dash },
   { header: "Min quantity", accessorKey: "minQuantity", cell: ({ row }) => row.original.minQuantity ?? dash },
   { header: "Setup fee", accessorKey: "setupFee", cell: ({ row }) => (row.original.setupFee ? <span className="tabular-nums">{row.original.setupFee}</span> : dash) },
@@ -32,15 +33,16 @@ const printColumns: ColumnDef<PrintMethod, unknown>[] = [
 ];
 
 export function PrintMethodsPage() {
+  const { t, fmt } = useI18n();
   return (
     <ReferenceListPage
-      title="Print methods"
-      description="Decoration methods and their production limits."
-      caption="Print methods"
+      title={t("masterData.printMethods")}
+      description={t("masterData.decorationMethodsAndTheirProductionLimits")}
+      caption={t("masterData.printMethods")}
       columns={printColumns}
       useList={usePrintMethods}
-      emptyTitle="No print methods configured"
-      filters={[{ param: "type", label: "Types", options: ["PRINT", "EMBROIDERY", "OTHER"].map((t) => ({ value: t, label: humanizeCode(t) })) }]}
+      emptyTitle={t("masterData.noPrintMethodsConfigured")}
+      filters={[{ param: "type", label: t("masterData.types"), options: ["PRINT", "EMBROIDERY", "OTHER"].map((t) => ({ value: t, label: fmt.code(t) })) }]}
     />
   );
 }
@@ -56,13 +58,15 @@ const accessoryColumns: ColumnDef<Accessory, unknown>[] = [
 ];
 
 export function AccessoriesPage() {
-  return <ReferenceListPage title="Accessories" description="Trims and hardware that can be added to a garment." caption="Accessories" columns={accessoryColumns} useList={useAccessories} emptyTitle="No accessories configured" />;
+  const { t } = useI18n();
+  return <ReferenceListPage title={t("masterData.accessories")} description={t("masterData.trimsAndHardwareThatCanBe")} caption={t("masterData.accessories")} columns={accessoryColumns} useList={useAccessories} emptyTitle={t("masterData.noAccessoriesConfigured")} />;
 }
 
 /* ---------------- labels & packaging components (grouped by category) ---------------- */
 const MAX = 100;
 
 export function ComponentsPage() {
+  const { t, fmt } = useI18n();
   const { params, update } = useListParams({ pageSize: MAX });
   const q = useComponentOptions({ pageSize: MAX, sortBy: "sortOrder", sortOrder: "asc", search: params.search || undefined, includeArchived: params.filters.includeArchived === "true" || undefined });
   const groups = useMemo(() => {
@@ -72,15 +76,15 @@ export function ComponentsPage() {
 
   return (
     <>
-      <PageHeader title="Labels & packaging" description="Label, packaging and other components, grouped by type." />
-      <div className="mb-4 max-w-sm"><SearchInput value={params.search} onValueChange={(search) => update({ search })} placeholder="Search code or name…" /></div>
+      <PageHeader title={t("masterData.labelsPackaging")} description={t("masterData.labelPackagingAndOtherComponentsGrouped")} />
+      <div className="mb-4 max-w-sm"><SearchInput value={params.search} onValueChange={(search) => update({ search })} placeholder={t("masterData.searchCodeOrName")} /></div>
       {q.isLoading ? <Card><TableSkeleton columns={4} rows={5} /></Card> : q.error ? <Card><ErrorState error={q.error} onRetry={() => q.refetch()} /></Card> : groups.length === 0 ? (
-        <Card><EmptyState title={params.search ? "No matching components" : "No components configured"} description={params.search ? "Nothing matches the search." : ADMIN_MANAGED} /></Card>
+        <Card><EmptyState title={params.search ? t("masterData.noMatchingComponents") : t("masterData.noComponentsConfigured")} description={params.search ? t("masterData.nothingMatchesTheSearch") : ADMIN_MANAGED} /></Card>
       ) : (
         <div className="space-y-4">
           {groups.map((g) => (
             <Card key={g.category} aria-labelledby={`comp-${g.category}`}>
-              <CardHeader><CardTitle><span id={`comp-${g.category}`}>{humanizeCode(g.category)}</span></CardTitle><span className="text-xs text-muted-foreground">{g.rows.length}</span></CardHeader>
+              <CardHeader><CardTitle><span id={`comp-${g.category}`}>{fmt.code(g.category)}</span></CardTitle><span className="text-xs text-muted-foreground">{g.rows.length}</span></CardHeader>
               <ul className="divide-y">
                 {g.rows.map((c: ComponentOption) => (
                   <li key={c.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5">
@@ -92,7 +96,7 @@ export function ComponentsPage() {
               </ul>
             </Card>
           ))}
-          {q.data && q.data.meta.total > MAX ? <p className="text-xs text-muted-foreground">Showing the first {MAX} of {q.data.meta.total}. Use search to narrow down.</p> : null}
+          {q.data && q.data.meta.total > MAX ? <p className="text-xs text-muted-foreground">{t("masterData.showingTheFirstMaxOfTotal", { MAX, total: q.data.meta.total })}</p> : null}
         </div>
       )}
     </>
@@ -101,12 +105,13 @@ export function ComponentsPage() {
 
 /* ---------------- size scales ---------------- */
 export function SizesPage() {
+  const { t } = useI18n();
   const q = useSizeScales({ pageSize: 100, sortBy: "sortOrder", sortOrder: "asc" });
   return (
     <>
-      <PageHeader title="Size scales" description="Size scales and their options, in the order the factory uses them." />
+      <PageHeader title={t("masterData.sizeScales")} description={t("masterData.sizeScalesAndTheirOptionsIn")} />
       {q.isLoading ? <Card><TableSkeleton columns={3} rows={3} /></Card> : q.error ? <Card><ErrorState error={q.error} onRetry={() => q.refetch()} /></Card> : q.data && q.data.data.length === 0 ? (
-        <Card><EmptyState title="No size scales configured" description={ADMIN_MANAGED} /></Card>
+        <Card><EmptyState title={t("masterData.noSizeScalesConfigured")} description={ADMIN_MANAGED} /></Card>
       ) : (
         <div className="space-y-4">
           {q.data?.data.map((s) => {
@@ -119,12 +124,12 @@ export function SizesPage() {
                 </CardHeader>
                 <CardContent>
                   {s.description ? <p className="mb-3 text-sm text-muted-foreground">{s.description}</p> : null}
-                  <ol aria-label={`${s.name} sizes in order`} className="flex flex-wrap gap-2">
+                  <ol aria-label={t("masterData.nameSizesInOrder", { name: s.name })} className="flex flex-wrap gap-2">
                     {sizes.map((z) => (
                       <li key={z.id} className="flex min-w-16 flex-col items-center rounded-md border bg-surface px-3 py-1.5 text-center">
                         <span className="text-sm font-semibold">{z.name}</span>
                         <span className="font-mono text-[0.6875rem] text-muted-foreground">{z.code}</span>
-                        {!z.isActive || z.archivedAt ? <span className="mt-0.5 text-[0.6875rem] text-muted-foreground">{z.archivedAt ? "Archived" : "Inactive"}</span> : null}
+                        {!z.isActive || z.archivedAt ? <span className="mt-0.5 text-[0.6875rem] text-muted-foreground">{z.archivedAt ? t("masterData.archived") : t("masterData.inactive")}</span> : null}
                       </li>
                     ))}
                   </ol>

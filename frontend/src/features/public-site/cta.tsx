@@ -1,24 +1,29 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
+import { useI18n } from "@/i18n/provider";
 import { CONTACT_HREF, CUSTOMER_LOGIN_HREF, START_SAMPLE_HREF } from "./content";
 
 const base = "group inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap px-6 text-sm font-medium tracking-wide transition-colors active:translate-y-px";
 
 /** Primary conversion CTA: always the real customer sample flow. */
-export function StartSampleLink({ children = "Start a Sample", className }: { children?: ReactNode; className?: string }) {
+export function StartSampleLink({ children, className }: { children?: ReactNode; className?: string }) {
+  const { t } = useI18n();
   return (
     <Link href={START_SAMPLE_HREF} className={cn(base, "bg-pub-brand-deep text-white hover:bg-pub-brand-deeper", className)}>
-      {children}
-      <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-0.5" />
+      {children ?? t("site.startASample")}
+      <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
     </Link>
   );
 }
 
 /** Customer login: always the customer portal login, never the staff one. */
-export function CustomerLoginLink({ children = "Customer Login", className }: { children?: ReactNode; className?: string }) {
-  return <Link href={CUSTOMER_LOGIN_HREF} className={cn(base, "border border-pub-line text-pub-text hover:border-pub-muted", className)}>{children}</Link>;
+export function CustomerLoginLink({ children, className }: { children?: ReactNode; className?: string }) {
+  const { t } = useI18n();
+  return <Link href={CUSTOMER_LOGIN_HREF} className={cn(base, "border border-pub-line text-pub-text hover:border-pub-muted", className)}>{children ?? t("site.customerLogin")}</Link>;
 }
 
 export function GhostAnchor({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
@@ -26,6 +31,7 @@ export function GhostAnchor({ href, children, className }: { href: string; child
 }
 
 /** Talk to us: the contact page (not the customer login). */
-export function ContactLink({ children = "Talk to us", className }: { children?: ReactNode; className?: string }) {
-  return <Link href={CONTACT_HREF} className={cn(base, "border border-pub-line text-pub-text hover:border-pub-muted", className)}>{children}</Link>;
+export function ContactLink({ children, className }: { children?: ReactNode; className?: string }) {
+  const { t } = useI18n();
+  return <Link href={CONTACT_HREF} className={cn(base, "border border-pub-line text-pub-text hover:border-pub-muted", className)}>{children ?? t("site.talkToUs")}</Link>;
 }

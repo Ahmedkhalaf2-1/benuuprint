@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
 import { Checkbox } from "./checkbox";
 import { fieldClass } from "./input";
@@ -11,7 +12,7 @@ export function MultiSelect({
   value,
   onValueChange,
   options,
-  placeholder = "Select…",
+  placeholder,
   className,
   "aria-label": ariaLabel,
 }: {
@@ -22,8 +23,9 @@ export function MultiSelect({
   className?: string;
   "aria-label"?: string;
 }) {
+  const { t } = useI18n();
   const selected = options.filter((o) => value.includes(o.value));
-  const summary = selected.length === 0 ? placeholder : selected.length <= 2 ? selected.map((o) => o.label).join(", ") : `${selected.length} selected`;
+  const summary = selected.length === 0 ? (placeholder ? t.text(placeholder) : t("common.selectEllipsis")) : selected.length <= 2 ? selected.map((o) => t.text(o.label)).join(t("common.listSeparator")) : t("common.selectedCount", { n: selected.length });
   return (
     <Popover>
       <PopoverTrigger aria-label={ariaLabel} className={cn(fieldClass, "flex h-9 items-center justify-between gap-2 text-start", selected.length === 0 && "text-muted-foreground", className)}>
@@ -40,7 +42,7 @@ export function MultiSelect({
                 checked={value.includes(o.value)}
                 onCheckedChange={(c) => onValueChange(c === true ? [...value, o.value] : value.filter((v) => v !== o.value))}
               />
-              {o.label}
+              {t.text(o.label)}
             </label>
           );
         })}

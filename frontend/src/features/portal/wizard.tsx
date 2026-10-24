@@ -15,6 +15,7 @@ import { BrandStep, DecorationStep, ExtrasStep, FabricStep, FilesStep, NotesStep
 import type { SampleBody } from "./types";
 import { STEPS, type StepKey } from "./wizard-config";
 import { StepNav } from "./wizard-ui";
+import { useI18n } from "@/i18n/provider";
 
 export { STEPS, type StepKey } from "./wizard-config";
 
@@ -23,6 +24,7 @@ export { STEPS, type StepKey } from "./wizard-config";
  * through their own endpoints immediately). "Save draft" works with incomplete data; leaving a step saves its edits first.
  */
 export function SampleWizard({ id }: { id: string }) {
+  const { t } = useI18n();
   const sp = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -55,32 +57,32 @@ export function SampleWizard({ id }: { id: string }) {
 
   if (q.isLoading || options.isLoading) return <PageSkeleton />;
   if (q.error) {
-    if (isApiError(q.error) && (q.error.kind === "not_found" || q.error.kind === "validation")) return <EmptyState title="Sample not found" description="We couldn't find that sample request." action={<Button asChild variant="secondary"><Link href="/account/samples">Back to my samples</Link></Button>} className="py-20" />;
+    if (isApiError(q.error) && (q.error.kind === "not_found" || q.error.kind === "validation")) return <EmptyState title={t("customer.sampleNotFound")} description={t("customer.weCouldnTFindThatSample2")} action={<Button asChild variant="secondary"><Link href="/account/samples">{t("customer.backToMySamples")}</Link></Button>} className="py-20" />;
     return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   }
   if (options.error || !options.data) return <ErrorState error={options.error} onRetry={() => options.refetch()} />;
   const sample = q.data;
   if (!sample) return null;
-  if (!sample.editable) return <EmptyState title="This request can no longer be edited" description="It has already been submitted. You can still follow its progress." action={<Button asChild><Link href={`/account/samples/${sample.id}`}>View request</Link></Button>} className="py-20" />;
+  if (!sample.editable) return <EmptyState title={t("customer.thisRequestCanNoLongerBe")} description={t("customer.itHasAlreadyBeenSubmittedYou")} action={<Button asChild><Link href={`/account/samples/${sample.id}`}>{t("customer.viewRequest")}</Link></Button>} className="py-20" />;
 
   const patch = async (body: SampleBody) => { await api.updateSample(id, body); invalidate(id); };
   const props = { sample, options: options.data, stepRef, patch, changed: () => invalidate(id) };
   const saveDraft = async () => {
     if (stepRef.current) { setSaving(true); const ok = await stepRef.current.save(); setSaving(false); if (!ok) return; }
-    toast.success("Draft saved");
+    toast.success(t("customer.draftSaved"));
   };
   const Body = { brand: BrandStep, product: ProductStep, fabric: FabricStep, size: SizeStep, decoration: DecorationStep, extras: ExtrasStep, files: FilesStep, notes: NotesStep }[step.key as Exclude<StepKey, "review">];
 
   return (
     <div className="space-y-8">
-      <div><p className="text-sm"><Link href="/account/samples" className="text-muted-foreground hover:text-foreground hover:underline">← My samples</Link></p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em]">Your sample request <span className="ms-2 whitespace-nowrap font-mono text-sm font-normal text-brand">{sample.sampleNumber}</span></h1>
-        <p className="text-sm text-muted-foreground">Tell us what you want to manufacture. Your progress is saved as a draft.</p></div>
+      <div><p className="text-sm"><Link href="/account/samples" className="text-muted-foreground hover:text-foreground hover:underline">{t("customer.mySamples")}</Link></p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em]">{t("customer.yourSampleRequest")}{" "}<span className="ms-2 whitespace-nowrap font-mono text-sm font-normal text-brand">{sample.sampleNumber}</span></h1>
+        <p className="text-sm text-muted-foreground">{t("customer.tellUsWhatYouWantTo2")}</p></div>
       <StepNav current={idx} onGo={(i) => { setEditing(null); void go(i); }} />
       {editing && step.key !== "review" ? (
         <div role="status" className="bp-enter-item flex flex-wrap items-center justify-between gap-3 rounded-md border border-brand/35 bg-brand-soft/40 px-4 py-2.5 text-sm" data-testid="editing-banner">
-          <span>You are editing from your review. Your changes are saved when you return.</span>
-          <Button size="sm" variant="secondary" onClick={() => void backToReview()}><ArrowLeft /> Return to review</Button>
+          <span>{t("customer.youAreEditingFromYourReview")}</span>
+          <Button size="sm" variant="secondary" onClick={() => void backToReview()}><ArrowLeft className="rtl:-scale-x-100" />{" "}{t("customer.returnToReview")}</Button>
         </div>
       ) : null}
       <div key={step.key} className="bp-enter rounded-lg border bg-surface p-5 sm:p-7" data-testid="step-body" data-step={step.key}>
@@ -88,10 +90,10 @@ export function SampleWizard({ id }: { id: string }) {
       </div>
       <div className="sticky bottom-[4.25rem] z-20 -mx-4 border-t bg-surface-sunken px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0" data-testid="wizard-actions">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button variant="secondary" className="h-11 sm:h-9" disabled={idx === 0 || saving} onClick={() => void go(idx - 1)}>Back</Button>
+          <Button variant="secondary" className="h-11 sm:h-9" disabled={idx === 0 || saving} onClick={() => void go(idx - 1)}>{t("common.back")}</Button>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" className="h-11 sm:h-9" loading={saving} onClick={() => void saveDraft()}>Save draft</Button>
-            {step.key !== "review" ? <Button className="h-11 sm:h-9" loading={saving} onClick={() => void go(idx + 1)}>Save &amp; continue</Button> : <span ref={setSlot} data-testid="submit-slot" className="contents" />}
+            <Button variant="secondary" className="h-11 sm:h-9" loading={saving} onClick={() => void saveDraft()}>{t("common.saveDraft")}</Button>
+            {step.key !== "review" ? <Button className="h-11 sm:h-9" loading={saving} onClick={() => void go(idx + 1)}>{t("customer.saveContinue")}</Button> : <span ref={setSlot} data-testid="submit-slot" className="contents" />}
           </div>
         </div>
       </div>

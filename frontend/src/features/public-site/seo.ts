@@ -1,10 +1,11 @@
 import type { Metadata, MetadataRoute } from "next";
+import { getI18n } from "@/i18n/server";
 import { env } from "@/lib/config/env";
 import { PRIVATE_PATHS, PUBLIC_ROUTES } from "./routes";
 
 export const SITE_NAME = "Benuu Print";
 const HOME_TITLE = "Benuu Print — Custom apparel manufacturing, sample to delivery";
-const DESCRIPTION = "Custom apparel manufacturing from first sample to full-scale production — built around quality, visibility, and control.";
+export const DESCRIPTION = "Custom apparel manufacturing from first sample to full-scale production — built around quality, visibility, and control.";
 
 /** Site-wide metadata for the `(public)` group: it opts the public site back into indexing (the root layout is noindex). */
 export const publicGroupMetadata: Metadata = {
@@ -12,23 +13,31 @@ export const publicGroupMetadata: Metadata = {
   ...(env.siteUrl ? { metadataBase: new URL(env.siteUrl) } : {}),
 };
 
-/** Per-page metadata. Canonical and OG url are emitted only when NEXT_PUBLIC_SITE_URL is configured (never localhost). */
-export function pageMetadata({ path, title, description }: { path: string; title: string; description: string }): Metadata {
-  const full = path === "/" ? HOME_TITLE : `${title} · ${SITE_NAME}`;
+/**
+ * Per-page metadata, localised from the locale cookie (routes are not locale-prefixed, so there are deliberately no hreflang
+ * alternates). Canonical and OG url are emitted only when NEXT_PUBLIC_SITE_URL is configured (never localhost).
+ * `title` / `description` are the English source strings; Arabic comes from `phrases`.
+ */
+export async function pageMetadata({ path, title, description }: { path: string; title: string; description: string }): Promise<Metadata> {
+  const { t } = await getI18n();
+  const home = t.text(HOME_TITLE);
+  const pageTitle = t.text(title);
+  const desc = t.text(description);
+  const full = path === "/" ? home : `${pageTitle} · ${t("common.brand")}`;
   return {
-    title: path === "/" ? { absolute: HOME_TITLE } : title,
-    description,
+    title: path === "/" ? { absolute: home } : pageTitle,
+    description: desc,
     ...(env.siteUrl ? { alternates: { canonical: path } } : {}),
-    openGraph: { type: "website", siteName: SITE_NAME, title: full, description, ...(env.siteUrl ? { url: path } : {}) },
-    twitter: { card: "summary_large_image", title: full, description },
+    openGraph: { type: "website", siteName: SITE_NAME, title: full, description: desc, ...(env.siteUrl ? { url: path } : {}) },
+    twitter: { card: "summary_large_image", title: full, description: desc },
   };
 }
 
-export const homeMetadata: Metadata = pageMetadata({ path: "/", title: HOME_TITLE, description: DESCRIPTION });
+export const homeMetadata = () => pageMetadata({ path: "/", title: HOME_TITLE, description: DESCRIPTION });
 
 /** Organization data limited to what is actually known: no address, phone, socials or dates. */
-export function organizationJsonLd(siteUrl: string = env.siteUrl) {
-  return { "@context": "https://schema.org", "@type": "Organization", name: SITE_NAME, description: DESCRIPTION, ...(siteUrl ? { url: siteUrl } : {}) };
+export function organizationJsonLd(siteUrl: string = env.siteUrl, description: string = DESCRIPTION) {
+  return { "@context": "https://schema.org", "@type": "Organization", name: SITE_NAME, description, ...(siteUrl ? { url: siteUrl } : {}) };
 }
 
 /** Public marketing pages only. Without a configured site origin there are no absolute URLs to publish, so the list is empty. */

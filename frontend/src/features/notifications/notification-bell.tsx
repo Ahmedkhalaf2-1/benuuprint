@@ -12,12 +12,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryKeys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils/cn";
-import { formatDateTime } from "@/lib/utils/format";
+
 import {
   fetchUnreadCount, listNotifications, markAllNotificationsRead, markNotificationRead, type StaffNotification,
 } from "./notifications-api";
+import { useI18n } from "@/i18n/provider";
 
 export function NotificationBell() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
 
@@ -49,10 +51,9 @@ export function NotificationBell() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0">
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <h2 className="text-sm font-semibold">Notifications</h2>
+          <h2 className="text-sm font-semibold">{t("notifications.notifications")}</h2>
           <Button variant="ghost" size="sm" disabled={count === 0} loading={markAll.isPending} onClick={() => markAll.mutate()}>
-            <CheckCheck /> Mark all read
-          </Button>
+            <CheckCheck />{" "}{t("notifications.markAllRead")}</Button>
         </div>
         <div className="max-h-96 overflow-y-auto">
           {latest.isLoading ? (
@@ -60,7 +61,7 @@ export function NotificationBell() {
           ) : latest.error ? (
             <ErrorState error={latest.error} onRetry={() => latest.refetch()} className="py-6" />
           ) : !latest.data || latest.data.data.length === 0 ? (
-            <p className="px-3 py-8 text-center text-sm text-muted-foreground">You&apos;re all caught up.</p>
+            <p className="px-3 py-8 text-center text-sm text-muted-foreground">{t("notifications.youReAllCaughtUp")}</p>
           ) : (
             <ul className="divide-y">
               {latest.data.data.map((n) => (
@@ -70,7 +71,7 @@ export function NotificationBell() {
           )}
         </div>
         <div className="border-t px-3 py-2 text-center">
-          <Link href="/notifications" onClick={() => setOpen(false)} className="text-sm font-medium text-brand hover:underline">View all</Link>
+          <Link href="/notifications" onClick={() => setOpen(false)} className="text-sm font-medium text-brand hover:underline">{t("notifications.viewAll")}</Link>
         </div>
       </PopoverContent>
     </Popover>
@@ -78,6 +79,7 @@ export function NotificationBell() {
 }
 
 function NotificationRow({ n, onRead }: { n: StaffNotification; onRead: () => void }) {
+  const { fmt } = useI18n();
   const isUnread = !n.readAt;
   return (
     <li>
@@ -88,7 +90,7 @@ function NotificationRow({ n, onRead }: { n: StaffNotification; onRead: () => vo
           <SeverityBadge severity={n.severity} iconOnly className="ms-auto" />
         </span>
         {n.body ? <span className="line-clamp-2 text-xs text-muted-foreground">{n.body}</span> : null}
-        <span className="text-[0.6875rem] text-muted-foreground">{formatDateTime(n.createdAt)}</span>
+        <span className="text-[0.6875rem] text-muted-foreground">{fmt.dateTime(n.createdAt)}</span>
       </button>
     </li>
   );

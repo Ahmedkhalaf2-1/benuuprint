@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+import { localizedTitle } from "@/i18n/server";
 import { ModulePlaceholder } from "@/components/feedback/module-placeholder";
 
-export const metadata: Metadata = { title: "Quotations" };
+export const generateMetadata = () => localizedTitle("Quotations");
 
 export default function Page() {
   return <ModulePlaceholder title="Quotations" description="Quotations and commercial approval." />;

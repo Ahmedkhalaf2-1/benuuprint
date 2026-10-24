@@ -3,6 +3,7 @@
 import { Command } from "cmdk";
 import { Dialog as D } from "radix-ui";
 import { useEffect, type ReactNode } from "react";
+import { useI18n } from "@/i18n/provider";
 
 export interface CommandItem {
   id: string;
@@ -33,6 +34,7 @@ export function CommandMenu({
   emptyText?: string;
   onQueryChange?: (q: string) => void;
 }) {
+  const { t } = useI18n();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) {
@@ -49,12 +51,12 @@ export function CommandMenu({
       <D.Portal>
         <D.Overlay className="fixed inset-0 z-50 bg-black/70" />
         <D.Content aria-describedby={undefined} className="fixed start-1/2 top-[15vh] z-50 w-[calc(100vw-2rem)] max-w-lg overflow-hidden rounded-lg border bg-surface shadow-lg ltr:-translate-x-1/2 rtl:translate-x-1/2">
-          <D.Title className="sr-only">Command menu</D.Title>
-          <Command label="Command menu" loop>
+          <D.Title className="sr-only">{t("common.commandMenu")}</D.Title>
+          <Command label={t("common.commandMenu")} loop>
             <Command.Input
               autoFocus
               onValueChange={onQueryChange}
-              placeholder="Type a command…"
+              placeholder={t("common.typeACommand")}
               className="h-12 w-full border-b bg-transparent px-4 text-sm outline-none placeholder:text-muted-foreground"
             />
             <Command.List className="max-h-80 overflow-y-auto p-1">

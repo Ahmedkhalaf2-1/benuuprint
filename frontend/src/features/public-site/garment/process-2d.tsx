@@ -1,8 +1,11 @@
+"use client";
+
 import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils/cn";
 import { DecorationMark } from "./garment-2d";
 import { PLACEMENT_ZONE, SILHOUETTE } from "./silhouettes";
 import type { GarmentKind, ProcessStage } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 export const PROCESS_STAGE_LABELS = ["Your idea", "Fabric · colour · decoration", "Quotation", "Sample production", "Approved · scaling", "Packed · shipped"] as const;
 
@@ -17,12 +20,13 @@ const COPY_SLOTS = [[62, -100], [150, -100], [62, 0], [150, 0], [62, 100], [150,
  * A 3D version receives the same `stage` and drives camera, material and scene state instead.
  */
 export function ProcessGarment2D({ stage, productType = "tshirt", className }: { stage: ProcessStage; productType?: GarmentKind; className?: string }) {
+  const { t, locale } = useI18n();
   const shape = SILHOUETTE[productType];
   const zone = PLACEMENT_ZONE[productType];
   const garmentTransform = stage === 2 ? "translate(-76px, 8px) scale(0.72)" : stage === 4 ? "translate(-98px, 0px) scale(0.6)" : "translate(0px, 0px) scale(1)";
   const showGarment = stage <= 2 || stage === 4;
   return (
-    <svg viewBox="0 0 400 400" role="img" aria-label={`Stage ${stage + 1} of 6: ${PROCESS_STAGE_LABELS[stage]}`} className={cn("size-full", className)} fill="none" data-process-stage={stage}>
+    <svg viewBox="0 0 400 400" role="img" aria-label={t("site.stageV1Of6V2", { v1: stage + 1, v2: t.text(PROCESS_STAGE_LABELS[stage]) })} className={cn("size-full", className)} fill="none" data-process-stage={stage}>
       <defs>
         <pattern id="pg-weave" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#1b2420" /><rect width="3" height="6" fill="#26312c" /></pattern>
       </defs>
@@ -94,7 +98,7 @@ export function ProcessGarment2D({ stage, productType = "tshirt", className }: {
         <rect x="288" y="82" width="72" height="22" fill="var(--pub-brand-deep)" /><text x="324" y="97" textAnchor="middle" fontSize="9" letterSpacing="2" fill="#fff" style={MONO}>SHIPPED</text>
       </g>
 
-      <text x="200" y="394" textAnchor="middle" fontSize="9" letterSpacing="3" fill="var(--pub-muted)" style={MONO}>{PROCESS_STAGE_LABELS[stage].toUpperCase()}</text>
+      <text x="200" y="394" textAnchor="middle" fontSize="9" letterSpacing={locale === "ar" ? 0 : 3} fill="var(--pub-muted)" style={MONO}>{locale === "ar" ? t.text(PROCESS_STAGE_LABELS[stage]) : PROCESS_STAGE_LABELS[stage].toUpperCase()}</text>
     </svg>
   );
 }

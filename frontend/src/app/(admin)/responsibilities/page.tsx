@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+import { localizedTitle } from "@/i18n/server";
 import { ResponsibilitiesPage } from "@/features/responsibilities/responsibilities-page";
 
-export const metadata: Metadata = { title: "Factory Responsibilities" };
+export const generateMetadata = () => localizedTitle("Factory Responsibilities");
 
 export default function Page() {
   return <ResponsibilitiesPage />;

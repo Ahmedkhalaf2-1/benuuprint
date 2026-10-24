@@ -3,6 +3,7 @@
  * Today every component renders the 2D fallback. The 3D phase replaces the implementation behind these same
  * exports (dynamic import, static/poster fallback, reduced-motion handling all live inside the swap), not the callers.
  */
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
 import { Garment2D } from "./garment-2d";
 import { InteractiveGarment } from "./interactive-garment";
@@ -31,6 +32,7 @@ export function GarmentPreview({ caption, ...props }: GarmentVisualProps & { cap
 
 /** Sample builder preview with technical staging (grid, placement zone). Renders the interactive 3D tee where supported, else the 2D visual. */
 export function BuilderGarmentPreview({ modelSrc, ...props }: GarmentVisualProps & { modelSrc?: string | null }) {
+  const { t } = useI18n();
   const zone = PLACEMENT_ZONE[props.productType];
   return (
     <div className="relative aspect-square w-full" data-builder-preview>
@@ -42,7 +44,7 @@ export function BuilderGarmentPreview({ modelSrc, ...props }: GarmentVisualProps
         ) : null}
       </svg>
       <div className="absolute inset-[6%]"><InteractiveGarment {...props} modelSrc={modelSrc} /></div>
-      <p className="absolute bottom-0 start-0 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-pub-muted">Preview · {props.decoration === "sublimation" ? "All-over" : zone.label}</p>
+      <p className="absolute bottom-0 start-0 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-pub-muted">{t("site.previewZone", { zone: props.decoration === "sublimation" ? t("site.allOver") : t.text(zone.label) })}</p>
     </div>
   );
 }

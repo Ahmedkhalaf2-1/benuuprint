@@ -12,10 +12,11 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { errorMessage, isApiError } from "@/lib/api/errors";
 import { isMoneyInput, lineAmount, previewTotals, fromMinor } from "@/lib/utils/money";
-import { humanizeCode } from "@/lib/utils/format";
+
 import * as api from "./api";
 import { useCommercialInvalidation } from "./hooks";
 import { LINE_TYPES, type CommercialTarget, type LineType, type QuotationVersion } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 interface Row { key: number; type: LineType; description: string; quantity: string; unitPrice: string }
 let seq = 0;
@@ -41,6 +42,7 @@ export function validateRows(rows: Pick<Row, "type" | "description" | "quantity"
 }
 
 export function QuotationEditor({ mode, onClose }: { mode: EditorMode; onClose: () => void }) {
+  const { t, fmt } = useI18n();
   const inv = useCommercialInvalidation(mode.target);
   const base = mode.kind === "create" ? null : mode.kind === "version" ? mode.from : mode.version;
   const [rows, setRows] = useState<Row[]>(base ? fromVersion(base) : [blank()]);
@@ -79,7 +81,7 @@ export function QuotationEditor({ mode, onClose }: { mode: EditorMode; onClose: 
     if (!ok || !discountOk || !taxOk) return;
     try {
       await save.mutateAsync();
-      toast.success(mode.kind === "edit" ? "Draft updated" : mode.kind === "version" ? "New version created (draft)" : "Quotation created (draft)");
+      toast.success(mode.kind === "edit" ? t("quotations.draftUpdated") : mode.kind === "version" ? t("quotations.newVersionCreatedDraft") : t("quotations.quotationCreatedDraft"));
       onClose();
     } catch (e) {
       setError({ message: errorMessage(e), requestId: isApiError(e) ? e.requestId : undefined });
@@ -87,50 +89,50 @@ export function QuotationEditor({ mode, onClose }: { mode: EditorMode; onClose: 
   };
 
   const update = (key: number, patch: Partial<Row>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
-  const title = mode.kind === "create" ? "New quotation" : mode.kind === "version" ? `New version (from v${mode.from.versionNumber})` : `Edit draft v${mode.version.versionNumber}`;
+  const title = mode.kind === "create" ? t("quotations.newQuotation") : mode.kind === "version" ? t("quotations.newVersionFrom", { n: mode.from.versionNumber }) : t("quotations.editDraftVersion", { n: mode.version.versionNumber });
 
   return (
     <Dialog open onOpenChange={(o) => !o && !save.isPending && onClose()}>
-      <DialogContent title={title} description={mode.kind === "version" && mode.from.status === "SENT" ? "A sent version cannot be edited. Creating a new version supersedes it immediately; the history is kept." : "Amounts are calculated by the server. The totals below are a preview."} className="max-w-3xl">
+      <DialogContent title={title} description={mode.kind === "version" && mode.from.status === "SENT" ? t("quotations.aSentVersionCannotBeEdited") : t("quotations.amountsAreCalculatedByTheServer")} className="max-w-3xl">
         <form noValidate onSubmit={(e) => { e.preventDefault(); void submit(); }} className="space-y-4">
           {error ? <FormError {...error} /> : null}
-          <div className="space-y-2" role="group" aria-label="Line items">
-            <div className="hidden grid-cols-[9rem_minmax(0,1fr)_5.5rem_7rem_6.5rem_2rem] gap-2 text-xs text-muted-foreground md:grid"><span>Type</span><span>Description</span><span>Quantity</span><span>Unit price</span><span className="text-end">Amount</span><span /></div>
+          <div className="space-y-2" role="group" aria-label={t("quotations.lineItems")}>
+            <div className="hidden grid-cols-[9rem_minmax(0,1fr)_5.5rem_7rem_6.5rem_2rem] gap-2 text-xs text-muted-foreground md:grid"><span>{t("common.type")}</span><span>{t("common.description")}</span><span>{t("common.quantity")}</span><span>{t("quotations.unitPrice")}</span><span className="text-end">{t("quotations.amount")}</span><span /></div>
             {rows.map((r, i) => {
               const e = showErrors ? errors[i] : undefined;
               const amt = lineAmount(r);
               return (
                 <div key={r.key} data-testid="line-row" className="grid gap-2 rounded-md border p-2 md:grid-cols-[9rem_minmax(0,1fr)_5.5rem_7rem_6.5rem_2rem] md:items-start md:border-0 md:p-0">
-                  <Select aria-label={`Line ${i + 1} type`} value={r.type} onValueChange={(v) => update(r.key, { type: v as LineType })} options={LINE_TYPES.map((t) => ({ value: t, label: humanizeCode(t) }))} />
-                  <FormField id={`l-${r.key}-d`} label={`Line ${i + 1} description`} error={e?.description} className="[&>label]:sr-only"><Input id={`l-${r.key}-d`} aria-invalid={!!e?.description} value={r.description} onChange={(ev) => update(r.key, { description: ev.target.value })} /></FormField>
-                  <FormField id={`l-${r.key}-q`} label={`Line ${i + 1} quantity`} error={e?.quantity} className="[&>label]:sr-only"><Input id={`l-${r.key}-q`} inputMode="decimal" aria-invalid={!!e?.quantity} value={r.quantity} onChange={(ev) => update(r.key, { quantity: ev.target.value })} /></FormField>
-                  <FormField id={`l-${r.key}-u`} label={`Line ${i + 1} unit price`} error={e?.unitPrice} className="[&>label]:sr-only"><Input id={`l-${r.key}-u`} inputMode="decimal" aria-invalid={!!e?.unitPrice} value={r.unitPrice} onChange={(ev) => update(r.key, { unitPrice: ev.target.value })} /></FormField>
-                  <p className="flex h-9 items-center justify-end text-sm tabular-nums text-muted-foreground" aria-label={`Line ${i + 1} amount preview`}>{amt === null ? "—" : fromMinor(amt)}</p>
-                  <IconButton size="sm" label={`Remove line ${i + 1}`} icon={<Trash2 />} disabled={rows.length === 1} onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} />
+                  <Select aria-label={t("quotations.lineV1Type", { v1: i + 1 })} value={r.type} onValueChange={(v) => update(r.key, { type: v as LineType })} options={LINE_TYPES.map((t) => ({ value: t, label: fmt.code(t) }))} />
+                  <FormField id={`l-${r.key}-d`} label={t("quotations.lineV1Description", { v1: i + 1 })} error={e?.description} className="[&>label]:sr-only"><Input id={`l-${r.key}-d`} aria-invalid={!!e?.description} value={r.description} onChange={(ev) => update(r.key, { description: ev.target.value })} /></FormField>
+                  <FormField id={`l-${r.key}-q`} label={t("quotations.lineV1Quantity", { v1: i + 1 })} error={e?.quantity} className="[&>label]:sr-only"><Input id={`l-${r.key}-q`} inputMode="decimal" aria-invalid={!!e?.quantity} value={r.quantity} onChange={(ev) => update(r.key, { quantity: ev.target.value })} /></FormField>
+                  <FormField id={`l-${r.key}-u`} label={t("quotations.lineV1UnitPrice", { v1: i + 1 })} error={e?.unitPrice} className="[&>label]:sr-only"><Input id={`l-${r.key}-u`} inputMode="decimal" aria-invalid={!!e?.unitPrice} value={r.unitPrice} onChange={(ev) => update(r.key, { unitPrice: ev.target.value })} /></FormField>
+                  <p className="flex h-9 items-center justify-end text-sm tabular-nums text-muted-foreground" aria-label={t("quotations.lineV1AmountPreview", { v1: i + 1 })}>{amt === null ? "—" : fromMinor(amt)}</p>
+                  <IconButton size="sm" label={t("quotations.removeLineV1", { v1: i + 1 })} icon={<Trash2 />} disabled={rows.length === 1} onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} />
                 </div>
               );
             })}
-            {showErrors && rows.length === 0 ? <p role="alert" className="text-xs text-danger">Add at least one line.</p> : null}
-            <Button type="button" variant="secondary" size="sm" onClick={() => setRows((rs) => [...rs, blank()])}><Plus /> Add line</Button>
+            {showErrors && rows.length === 0 ? <p role="alert" className="text-xs text-danger">{t("quotations.addAtLeastOneLine")}</p> : null}
+            <Button type="button" variant="secondary" size="sm" onClick={() => setRows((rs) => [...rs, blank()])}><Plus />{" "}{t("quotations.addLine")}</Button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <FormField id="q-discount" label="Discount (amount)" error={showErrors && !discountOk ? "Amount ≥ 0 with up to 2 decimals" : undefined}><Input id="q-discount" inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value)} /></FormField>
-            <FormField id="q-tax" label="Tax (%)" error={showErrors && !taxOk ? "0–100 with up to 2 decimals" : undefined}><Input id="q-tax" inputMode="decimal" value={tax} onChange={(e) => setTax(e.target.value)} /></FormField>
-            <FormField id="q-valid" label="Valid until" hint="The offer cannot be accepted after this moment."><Input id="q-valid" type="datetime-local" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></FormField>
-            {mode.kind === "create" ? <FormField id="q-currency" label="Currency" hint="ISO code, e.g. EGP. Leave empty for the system default."><Input id="q-currency" maxLength={3} value={currency} onChange={(e) => setCurrency(e.target.value)} /></FormField> : null}
-            <FormField id="q-notes" label="Notes" className="sm:col-span-3"><Textarea id="q-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></FormField>
+            <FormField id="q-discount" label={t("quotations.discountAmount")} error={showErrors && !discountOk ? "Amount ≥ 0 with up to 2 decimals" : undefined}><Input id="q-discount" inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value)} /></FormField>
+            <FormField id="q-tax" label={t("quotations.tax")} error={showErrors && !taxOk ? "0–100 with up to 2 decimals" : undefined}><Input id="q-tax" inputMode="decimal" value={tax} onChange={(e) => setTax(e.target.value)} /></FormField>
+            <FormField id="q-valid" label={t("quotations.validUntil")} hint={t("quotations.theOfferCannotBeAcceptedAfter")}><Input id="q-valid" type="datetime-local" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></FormField>
+            {mode.kind === "create" ? <FormField id="q-currency" label={t("quotations.currency")} hint={t("quotations.isoCodeEGEgpLeave")}><Input id="q-currency" maxLength={3} value={currency} onChange={(e) => setCurrency(e.target.value)} /></FormField> : null}
+            <FormField id="q-notes" label={t("common.notes")} className="sm:col-span-3"><Textarea id="q-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></FormField>
           </div>
 
-          <dl className="ms-auto grid max-w-xs grid-cols-[1fr_auto] gap-x-4 gap-y-1 rounded-md bg-surface-muted p-3 text-sm" aria-label="Totals preview">
-            <dt className="text-muted-foreground">Subtotal</dt><dd className="text-end tabular-nums">{preview?.subtotal ?? "—"}</dd>
-            <dt className="text-muted-foreground">Discount</dt><dd className="text-end tabular-nums">{preview ? `− ${preview.discount}` : "—"}</dd>
-            <dt className="text-muted-foreground">Tax</dt><dd className="text-end tabular-nums">{preview?.tax ?? "—"}</dd>
-            <dt className="font-semibold">Total (preview)</dt><dd className="text-end font-semibold tabular-nums">{preview?.total ?? "—"}</dd>
+          <dl className="ms-auto grid max-w-xs grid-cols-[1fr_auto] gap-x-4 gap-y-1 rounded-md bg-surface-muted p-3 text-sm" aria-label={t("quotations.totalsPreview")}>
+            <dt className="text-muted-foreground">{t("quotations.subtotal")}</dt><dd className="text-end tabular-nums">{preview?.subtotal ?? "—"}</dd>
+            <dt className="text-muted-foreground">{t("quotations.discount")}</dt><dd className="text-end tabular-nums">{preview ? `− ${preview.discount}` : "—"}</dd>
+            <dt className="text-muted-foreground">{t("quotations.tax2")}</dt><dd className="text-end tabular-nums">{preview?.tax ?? "—"}</dd>
+            <dt className="font-semibold">{t("quotations.totalPreview")}</dt><dd className="text-end font-semibold tabular-nums">{preview?.total ?? "—"}</dd>
           </dl>
-          <p className="text-xs text-muted-foreground">Preview only: the server calculates and stores the authoritative totals.</p>
+          <p className="text-xs text-muted-foreground">{t("quotations.previewOnlyTheServerCalculatesAnd")}</p>
 
-          <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={onClose} disabled={save.isPending}>Cancel</Button><Button type="submit" loading={save.isPending}>{mode.kind === "edit" ? "Save draft" : mode.kind === "version" ? "Create version" : "Create quotation"}</Button></div>
+          <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={onClose} disabled={save.isPending}>{t("common.cancel")}</Button><Button type="submit" loading={save.isPending}>{mode.kind === "edit" ? t("quotations.saveDraft") : mode.kind === "version" ? t("quotations.createVersion") : t("quotations.createQuotation")}</Button></div>
         </form>
       </DialogContent>
     </Dialog>

@@ -6,6 +6,7 @@ import { FileDropzoneShell } from "@/components/ui/file-dropzone-shell";
 import { errorMessage } from "@/lib/api/errors";
 import type { Asset } from "@/features/master-data/types";
 import { uploadAsset } from "./api";
+import { useI18n } from "@/i18n/provider";
 
 export const UPLOAD_HINT = "PNG, JPEG, GIF, WebP or PDF · up to 20 MB by default (limits are enforced by the server). Files are stored privately.";
 
@@ -14,6 +15,7 @@ export const UPLOAD_HINT = "PNG, JPEG, GIF, WebP or PDF · up to 20 MB by defaul
  * the file name and the server's validation message. (fetch exposes no upload progress, so a busy indicator is shown.)
  */
 export function FileUploader({ assetType, onUploaded, disabled, hint = UPLOAD_HINT }: { assetType: string; onUploaded: (asset: Asset, file: File) => Promise<void> | void; disabled?: boolean; hint?: string }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   return (
@@ -36,7 +38,7 @@ export function FileUploader({ assetType, onUploaded, disabled, hint = UPLOAD_HI
           }
         }}
       />
-      {busy ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 aria-hidden className="size-4 animate-spin" /> Uploading {busy}…</p> : null}
+      {busy ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 aria-hidden className="size-4 animate-spin" />{" "}{t("samples.uploadingBusy", { busy })}</p> : null}
       {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
     </div>
   );

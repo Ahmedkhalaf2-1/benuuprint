@@ -17,6 +17,7 @@ import { humanizeCode } from "@/lib/utils/format";
 import * as api from "./api";
 import { useResponsibilityInvalidation } from "./hooks";
 import type { ApplyMode } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 const errState = (e: unknown) => ({ message: errorMessage(e), requestId: isApiError(e) ? e.requestId : undefined });
 
@@ -28,6 +29,7 @@ export function WorkerPickerDialog({ title, stageLabel, eligibleRoleCodes, curre
   title: string; stageLabel: string; eligibleRoleCodes: string[]; currentUserId?: string | null; scopeText: (name: string) => string;
   saveLabel?: string; onSave: (userId: string) => Promise<unknown>; onClose: (savedUserId?: string) => void;
 }) {
+  const { t } = useI18n();
   const { can } = useAuth();
   const canSearch = can("users.read");
   const [search, setSearch] = useState("");
@@ -38,19 +40,19 @@ export function WorkerPickerDialog({ title, stageLabel, eligibleRoleCodes, curre
   const list = filterEligible(staff.data?.data ?? [], eligibleRoleCodes);
   return (
     <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
-      <DialogContent title={title} description={eligibleRoleCodes.length ? `Eligible roles: ${eligibleRoleCodes.map(humanizeCode).join(", ")}.` : `Who should own ${stageLabel}?`} className="max-h-[90vh] overflow-y-auto">
+      <DialogContent title={title} description={eligibleRoleCodes.length ? t("responsibilities.eligibleRolesV1", { v1: eligibleRoleCodes.map(humanizeCode).join(", ") }) : t("responsibilities.whoShouldOwnStagelabel", { stageLabel })} className="max-h-[90vh] overflow-y-auto">
         <div className="space-y-3">
           {error ? <FormError {...error} /> : null}
           {canSearch ? (
             <>
-              <SearchInput value={search} onValueChange={setSearch} placeholder="Search staff by name or email…" aria-label="Search staff" />
-              <ul role="radiogroup" aria-label="Eligible staff" className="max-h-60 overflow-y-auto rounded-md border">
-                {staff.isLoading ? <li className="px-3 py-2 text-sm text-muted-foreground">Searching…</li> : list.length === 0 ? <li className="px-3 py-2 text-sm text-muted-foreground">No eligible staff match.</li> : list.map((s) => {
+              <SearchInput value={search} onValueChange={setSearch} placeholder={t("common.searchStaffByNameOrEmail")} aria-label={t("common.searchStaff")} />
+              <ul role="radiogroup" aria-label={t("responsibilities.eligibleStaff")} className="max-h-60 overflow-y-auto rounded-md border">
+                {staff.isLoading ? <li className="px-3 py-2 text-sm text-muted-foreground">{t("common.searching")}</li> : list.length === 0 ? <li className="px-3 py-2 text-sm text-muted-foreground">{t("responsibilities.noEligibleStaffMatch")}</li> : list.map((s) => {
                   const on = picked?.id === s.id;
                   return (
                     <li key={s.id}>
                       <button type="button" role="radio" aria-checked={on} onClick={() => setPicked({ id: s.id, name: s.name })} className={cn("flex w-full flex-col px-3 py-2 text-start text-sm hover:bg-white/5", on && "bg-brand-soft/40 shadow-[inset_2px_0_0_var(--brand)]")}>
-                        <span className="font-medium">{s.name}{s.id === currentUserId ? <span className="ms-2 text-xs font-normal text-muted-foreground">current</span> : null}</span>
+                        <span className="font-medium">{s.name}{s.id === currentUserId ? <span className="ms-2 text-xs font-normal text-muted-foreground">{t("responsibilities.current")}</span> : null}</span>
                         <span className="text-xs text-muted-foreground">{roleCodes(s).map(humanizeCode).join(", ") || s.email}</span>
                       </button>
                     </li>
@@ -58,10 +60,10 @@ export function WorkerPickerDialog({ title, stageLabel, eligibleRoleCodes, curre
                 })}
               </ul>
             </>
-          ) : <p className="text-sm text-muted-foreground">Listing staff needs the users permission, which your role does not have.</p>}
+          ) : <p className="text-sm text-muted-foreground">{t("responsibilities.listingStaffNeedsTheUsersPermission")}</p>}
           {picked ? <p role="status" data-testid="scope-text" className="rounded-md bg-surface-sunken px-3 py-2 text-sm">{scopeText(picked.name)}</p> : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => onClose()} disabled={busy}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={() => onClose()} disabled={busy}>{t("common.cancel")}</Button>
             <Button type="button" disabled={!picked || picked.id === currentUserId} loading={busy} onClick={async () => {
               if (!picked) return; setBusy(true); setError(null);
               try { await onSave(picked.id); onClose(picked.id); } catch (e) { setError(errState(e)); } finally { setBusy(false); }
@@ -80,6 +82,7 @@ const MODES: Array<{ mode: ApplyMode; title: string; text: string }> = [
 
 /** Applies the current rule to work that already exists. The backend offers no preview, so the result is shown after it runs. */
 export function ApplyActiveDialog({ stageKey, stageLabel, customer, intro, onClose }: { stageKey: string; stageLabel: string; customer?: { id: string; name: string }; intro?: string; onClose: () => void }) {
+  const { t, fmt } = useI18n();
   const { can } = useAuth();
   const invalidate = useResponsibilityInvalidation();
   const [mode, setMode] = useState<ApplyMode>("UNASSIGNED_ONLY");
@@ -90,44 +93,44 @@ export function ApplyActiveDialog({ stageKey, stageLabel, customer, intro, onClo
   const allowed = can("responsibilities.manage") && can("jobs.assign");
   return (
     <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
-      <DialogContent title={`Apply ${stageLabel} responsibility to active work`} description={customer ? `Only ${customer.name}'s active work.` : "Active work for every customer. Customer overrides still win."} className="max-h-[90vh] overflow-y-auto">
+      <DialogContent title={t("responsibilities.applyStagelabelResponsibilityToActiveWork", { stageLabel })} description={customer ? t("responsibilities.onlyNameSActiveWork", { name: customer.name }) : t("responsibilities.activeWorkForEveryCustomerCustomer")} className="max-h-[90vh] overflow-y-auto">
         {result ? (
           <div className="space-y-3" data-testid="apply-result" role="status">
-            <p className="font-medium">Applied.</p>
-            {result.counts.length ? <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-sm">{result.counts.map(([k, v]) => <div key={k} className="contents"><dt className="text-muted-foreground">{humanizeCode(k.replace(/([a-z])([A-Z])/g, "$1_$2"))}</dt><dd className="tabular-nums">{v}</dd></div>)}</dl> : null}
-            <div className="flex justify-end"><Button onClick={onClose}>Done</Button></div>
+            <p className="font-medium">{t("responsibilities.applied")}</p>
+            {result.counts.length ? <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-sm">{result.counts.map(([k, v]) => <div key={k} className="contents"><dt className="text-muted-foreground">{fmt.code(k.replace(/([a-z])([A-Z])/g, "$1_$2"))}</dt><dd className="tabular-nums">{v}</dd></div>)}</dl> : null}
+            <div className="flex justify-end"><Button onClick={onClose}>{t("responsibilities.done")}</Button></div>
           </div>
         ) : (
           <div className="space-y-3">
             {intro ? <p className="text-sm text-muted-foreground">{intro}</p> : null}
             {error ? <FormError {...error} /> : null}
-            <ul role="radiogroup" aria-label="How to apply" className="space-y-2">
+            <ul role="radiogroup" aria-label={t("responsibilities.howToApply")} className="space-y-2">
               {MODES.map((m) => (
                 <li key={m.mode}>
                   <button type="button" role="radio" aria-checked={mode === m.mode} onClick={() => setMode(m.mode)} className={cn("w-full rounded-md border p-3 text-start", mode === m.mode ? "border-brand bg-brand-soft/40" : "hover:border-border-strong")}>
-                    <span className="block text-sm font-semibold">{m.title}</span><span className="block text-xs text-muted-foreground">{m.text}</span>
+                    <span className="block text-sm font-semibold">{t.text(m.title)}</span><span className="block text-xs text-muted-foreground">{t.text(m.text)}</span>
                   </button>
                 </li>
               ))}
             </ul>
-            <p className="text-xs text-muted-foreground">Started or completed work will not be changed.</p>
+            <p className="text-xs text-muted-foreground">{t("responsibilities.startedOrCompletedWorkWillNot")}</p>
             {mode === "REPLACE" ? (
               <div className="flex items-start gap-2 rounded-md border border-tone-warning-dot/50 bg-tone-warning-bg p-3 text-sm text-tone-warning-fg">
                 <Checkbox id="confirm-replace" checked={confirmReplace} onCheckedChange={(c) => setConfirmReplace(c === true)} className="mt-0.5" />
-                <Label htmlFor="confirm-replace" className="font-normal leading-snug">I understand this replaces current owners on work that has not started.</Label>
+                <Label htmlFor="confirm-replace" className="font-normal leading-snug">{t("responsibilities.iUnderstandThisReplacesCurrentOwners")}</Label>
               </div>
             ) : null}
-            {!allowed ? <p className="text-xs text-danger">Applying needs both the responsibilities and the job assignment permissions.</p> : null}
+            {!allowed ? <p className="text-xs text-danger">{t("responsibilities.applyingNeedsBothTheResponsibilitiesAnd")}</p> : null}
             <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={onClose} disabled={busy}>Not now</Button>
+              <Button variant="secondary" onClick={onClose} disabled={busy}>{t("responsibilities.notNow")}</Button>
               <Button disabled={!allowed || (mode === "REPLACE" && !confirmReplace)} loading={busy} variant={mode === "REPLACE" ? "danger" : "primary"} onClick={async () => {
                 setBusy(true); setError(null);
                 try {
                   const r = customer ? await api.applyCustomer(customer.id, stageKey, mode) : await api.applyGlobal(stageKey, mode);
-                  invalidate(); toast.success("Applied to active work");
+                  invalidate(); toast.success(t("responsibilities.appliedToActiveWork"));
                   setResult({ done: true, counts: flatCounts(r) });
                 } catch (e) { setError(errState(e)); } finally { setBusy(false); }
-              }}>{mode === "REPLACE" ? "Replace assignments" : "Apply"}</Button>
+              }}>{mode === "REPLACE" ? t("responsibilities.replaceAssignments") : t("responsibilities.apply")}</Button>
             </div>
           </div>
         )}

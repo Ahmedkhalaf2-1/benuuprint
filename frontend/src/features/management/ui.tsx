@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatDate } from "@/lib/utils/format";
 import { etaView, presetRange, rangeFromParams, rangeLabel } from "./logic";
 import type { EtaQuality, Range } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 /** The selected KPI range lives in the URL (`?from=&to=`, business-day dates). Empty = backend default (last 30 days). */
 export function useRange(): { range: Range; set: (r: Range) => void } {
@@ -31,15 +32,16 @@ export function useRange(): { range: Range; set: (r: Range) => void } {
 }
 
 export function RangeControl({ range, onChange, timezone }: { range: Range; onChange: (r: Range) => void; timezone?: string }) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-wrap items-end gap-2" data-testid="range-control">
-      <div className="flex gap-1" role="group" aria-label="Range presets">
+      <div className="flex gap-1" role="group" aria-label={t("management.rangePresets")}>
         {([["7d", 7], ["30d", 30], ["90d", 90]] as const).map(([l, d]) => <Button key={l} size="sm" variant="secondary" onClick={() => onChange(presetRange(d))}>{l}</Button>)}
-        <Button size="sm" variant="ghost" onClick={() => onChange({})}>Default</Button>
+        <Button size="sm" variant="ghost" onClick={() => onChange({})}>{t("management.default")}</Button>
       </div>
-      <label className="text-xs text-muted-foreground">From<DatePicker aria-label="From" className="h-8 w-36" value={range.from ?? ""} onChange={(e) => onChange({ ...range, from: e.target.value || undefined })} /></label>
-      <label className="text-xs text-muted-foreground">To<DatePicker aria-label="To" className="h-8 w-36" value={range.to ?? ""} onChange={(e) => onChange({ ...range, to: e.target.value || undefined })} /></label>
-      <p className="pb-1 text-xs text-muted-foreground">{rangeLabel(range)}{timezone ? ` · business time ${timezone}` : ""}</p>
+      <label className="text-xs text-muted-foreground">{t("common.from")}<DatePicker aria-label={t("common.from")} className="h-8 w-36" value={range.from ?? ""} onChange={(e) => onChange({ ...range, from: e.target.value || undefined })} /></label>
+      <label className="text-xs text-muted-foreground">{t("common.to")}<DatePicker aria-label={t("common.to")} className="h-8 w-36" value={range.to ?? ""} onChange={(e) => onChange({ ...range, to: e.target.value || undefined })} /></label>
+      <p className="pb-1 text-xs text-muted-foreground">{rangeLabel(range)}{timezone ? t("management.businessTimeTimezone", { timezone }) : ""}</p>
     </div>
   );
 }
@@ -51,6 +53,7 @@ export function RangeControl({ range, onChange, timezone }: { range: Range; onCh
 export function QuerySection<T>({ title, query, children, action, testId, description, className }: {
   title: string; query: UseQueryResult<T>; children: (data: T) => ReactNode; action?: ReactNode; testId?: string; description?: string; className?: string;
 }) {
+  const { t } = useI18n();
   const forbidden = query.error && isApiError(query.error) && query.error.kind === "forbidden";
   const limited = query.error && isApiError(query.error) && query.error.kind === "rate_limited";
   return (
@@ -58,8 +61,8 @@ export function QuerySection<T>({ title, query, children, action, testId, descri
       <CardHeader><CardTitle>{title}</CardTitle>{action ? <div className="flex items-center gap-2">{action}</div> : null}</CardHeader>
       <CardContent>
         {description ? <p className="mb-3 text-xs text-muted-foreground">{description}</p> : null}
-        {query.isLoading ? <Skeleton className="h-24" /> : forbidden ? <p role="status" className="text-sm text-muted-foreground" data-testid="section-forbidden">Not available for your role.</p>
-          : query.error ? <ErrorState className="py-4" title={limited ? "Too many requests — try again shortly" : `Could not load ${title.toLowerCase()}`} error={query.error} onRetry={() => query.refetch()} />
+        {query.isLoading ? <Skeleton className="h-24" /> : forbidden ? <p role="status" className="text-sm text-muted-foreground" data-testid="section-forbidden">{t("management.notAvailableForYourRole")}</p>
+          : query.error ? <ErrorState className="py-4" title={limited ? t("management.tooManyRequestsTryAgainShortly") : t("management.couldNotLoadV1", { v1: title.toLowerCase() })} error={query.error} onRetry={() => query.refetch()} />
           : query.data !== undefined ? children(query.data) : null}
       </CardContent>
     </Card>
@@ -67,11 +70,13 @@ export function QuerySection<T>({ title, query, children, action, testId, descri
 }
 
 export function RefreshButton({ onClick, busy }: { onClick: () => void; busy: boolean }) {
-  return <Button variant="secondary" size="sm" loading={busy} onClick={onClick}><RefreshCw /> Refresh</Button>;
+  const { t } = useI18n();
+  return <Button variant="secondary" size="sm" loading={busy} onClick={onClick}><RefreshCw />{" "}{t("management.refresh")}</Button>;
 }
 
 /** A figure. `null`/`undefined` = unknown ("—" plus the reason), never a zero. `href` makes it a drill-down. */
 export function Metric({ label, value, hint, tone, href, testId }: { label: string; value: ReactNode; hint?: string; tone?: "danger" | "warning" | "good"; href?: string; testId?: string }) {
+  const { t } = useI18n();
   const body = (
     <div className={cn("rounded-md border bg-surface p-3", href && "hover:border-brand hover:bg-surface-muted")} data-testid={testId}>
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -79,7 +84,7 @@ export function Metric({ label, value, hint, tone, href, testId }: { label: stri
       {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
-  return href ? <Link href={href} aria-label={`${label}: open`} className="block">{body}</Link> : body;
+  return href ? <Link href={href} aria-label={t("management.labelOpen", { label })} className="block">{body}</Link> : body;
 }
 
 /** Part-of-whole bar from backend counts (no recomputation beyond the proportions). */
@@ -113,11 +118,12 @@ export function RankedBars({ rows, label, unit }: { rows: Array<{ key: string; l
 
 /** ETA with its confidence: a low-confidence estimate always carries the caveat; no estimate is "Not estimable". */
 export function EtaText({ at, quality, compact }: { at: string | null | undefined; quality: EtaQuality | undefined; compact?: boolean }) {
+  const { t, fmt } = useI18n();
   const v = etaView(at, quality, formatDate);
   return (
     <span data-testid="eta" data-tone={v.tone} data-quality={quality ?? ""}>
-      <span className={cn(v.tone === "unknown" && "text-muted-foreground")}>{compact && at ? formatDate(at) : v.label}</span>
-      {v.caveat ? <span className="block text-xs text-tone-warning-fg">{compact ? quality === "LOW" ? "Low confidence" : quality === "MEDIUM" ? "Medium confidence" : v.caveat : v.caveat}</span> : null}
+      <span className={cn(v.tone === "unknown" && "text-muted-foreground")}>{compact && at ? fmt.date(at) : v.label}</span>
+      {v.caveat ? <span className="block text-xs text-tone-warning-fg">{compact ? quality === "LOW" ? t("management.lowConfidence") : quality === "MEDIUM" ? t("management.mediumConfidence") : v.caveat : v.caveat}</span> : null}
     </span>
   );
 }

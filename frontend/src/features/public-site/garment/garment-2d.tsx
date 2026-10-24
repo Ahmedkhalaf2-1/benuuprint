@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
 import { PLACEMENT_ZONE, SILHOUETTE, SeamDetails } from "./silhouettes";
 import type { DecorationVisualKey, FabricVisualKey, GarmentVisualProps } from "./types";
@@ -45,8 +46,12 @@ export function DecorationMark({ kind, ink, zone }: { kind: Exclude<DecorationVi
 /**
  * TEMPORARY 2D FALLBACK for the garment visual. This is the single file a future 3D viewer replaces; the props are the contract.
  */
+const KIND_NAME: Record<string, string> = { tshirt: "T-Shirts", hoodie: "Hoodies", sweatshirt: "Sweatshirts", polo: "Polo Shirts", jacket: "Jackets", bottoms: "Bottoms", sportswear: "Sportswear", custom: "Custom Pieces" };
+
 export function Garment2D({ productType, colour = "#17191a", fabric = "twill", decoration = null, className, reducedMotion }: GarmentVisualProps) {
+  const { t, locale } = useI18n();
   const uid = useId().replace(/:/g, "");
+  const kindName = locale === "ar" ? t.text(KIND_NAME[productType] ?? productType) : productType;
   const shape = SILHOUETTE[productType];
   const zone = PLACEMENT_ZONE[productType];
   const ink = readableOn(colour);
@@ -54,7 +59,7 @@ export function Garment2D({ productType, colour = "#17191a", fabric = "twill", d
     <svg
       viewBox="0 0 400 400"
       role="img"
-      aria-label={`${productType} preview${decoration ? ` with ${decoration.replace("-", " ")}` : ""}`}
+      aria-label={decoration ? t("site.previewAriaWith", { productType: kindName, decoration: decoration.replace("-", " ") }) : t("site.previewAria", { productType: kindName })}
       className={cn("size-full", reducedMotion && "pub-static", className)}
       style={{ color: ink }}
       fill="none"

@@ -1,3 +1,5 @@
+import { getActive } from "@/i18n/active";
+import type { Translator } from "@/i18n/translate";
 import type { AttentionItem, EtaQuality, Range } from "./types";
 
 /** A percentage the backend may be unable to compute: `null` stays "unknown" (never 0%). */
@@ -28,13 +30,13 @@ export interface EtaView { label: string; tone: "ok" | "caution" | "unknown"; ca
  * ETA wording from the backend's data quality. Only HIGH is presented as a plain estimate; anything else carries a caveat and a
  * missing estimate is "Not estimable" (never today's date).
  */
-export function etaView(at: string | null | undefined, quality: EtaQuality | undefined, fmt: (iso: string) => string): EtaView {
-  if (!at) return { label: "Not estimable", tone: "unknown", caveat: null };
-  const label = `Estimated completion: ${fmt(at)}`;
+export function etaView(at: string | null | undefined, quality: EtaQuality | undefined, fmt: (iso: string) => string, t: Translator = getActive().t): EtaView {
+  if (!at) return { label: t("management.notEstimable"), tone: "unknown", caveat: null };
+  const label = t("management.estimatedCompletionDate", { date: fmt(at) });
   if (quality === "HIGH") return { label, tone: "ok", caveat: null };
-  if (quality === "MEDIUM") return { label, tone: "caution", caveat: "Medium confidence — based on limited recent data" };
-  if (quality === "LOW") return { label, tone: "caution", caveat: "Low confidence — insufficient recent production data" };
-  return { label, tone: "caution", caveat: quality ? `Data quality: ${quality}` : "Confidence not reported" };
+  if (quality === "MEDIUM") return { label, tone: "caution", caveat: t("management.mediumConfidenceCaveat") };
+  if (quality === "LOW") return { label, tone: "caution", caveat: t("management.lowConfidenceCaveat") };
+  return { label, tone: "caution", caveat: quality ? t("management.dataQuality", { quality }) : t("management.confidenceNotReported") };
 }
 
 /** Deep link for a Needs-Attention / alert item: straight to the entity the user must act on. */
@@ -78,7 +80,8 @@ export function presetRange(days: number, now = new Date()): Range {
   return { from: iso(from), to: iso(to) };
 }
 export function rangeLabel(r: Range): string {
-  return r.from || r.to ? `${r.from ?? "…"} → ${r.to ?? "today"}` : "Last 30 days (default)";
+  const { t } = getActive();
+  return r.from || r.to ? t("management.rangeFromTo", { from: r.from ?? "…", to: r.to ?? t("management.today") }) : t("management.last30DaysDefault");
 }
 
 export const SEVERITY_RANK: Record<string, number> = { CRITICAL: 3, WARNING: 2, INFO: 1 };

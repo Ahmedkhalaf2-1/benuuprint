@@ -1,6 +1,8 @@
+"use client";
+
 import { Check, Pause, X } from "lucide-react";
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
-import { humanizeCode } from "@/lib/utils/format";
 import type { SampleStatus } from "./types";
 
 /** The normal path of a sample. ON_HOLD / REJECTED / CANCELLED are shown as a state on top of it. */
@@ -13,12 +15,13 @@ export const MAIN_PATH: SampleStatus[] = [
  * (backend action routes). Position for ON_HOLD is the status held from; REJECTED/CANCELLED have no position.
  */
 export function StatusTimeline({ status, holdPreviousStatus }: { status: SampleStatus; holdPreviousStatus?: SampleStatus | null }) {
+  const { t, fmt } = useI18n();
   const effective = status === "ON_HOLD" ? holdPreviousStatus ?? null : status;
   const idx = effective ? MAIN_PATH.indexOf(effective) : -1;
   const ended = status === "REJECTED" || status === "CANCELLED";
   return (
     <div data-testid="status-timeline">
-      <ol aria-label="Sample lifecycle" className="relative flex gap-1 overflow-x-auto pb-1">
+      <ol aria-label={t("samples.sampleLifecycle")} className="relative flex gap-1 overflow-x-auto pb-1">
         {MAIN_PATH.map((step, i) => {
           const done = idx >= 0 && i < idx;
           const current = i === idx && !ended;
@@ -28,18 +31,18 @@ export function StatusTimeline({ status, holdPreviousStatus }: { status: SampleS
               <p className={cn("mt-1.5 flex items-center gap-1 text-[0.6875rem] leading-tight", current ? "font-semibold text-foreground" : "text-muted-foreground")}>
                 {done ? <Check aria-hidden className="size-3 text-brand" /> : null}
                 {current && status === "ON_HOLD" ? <Pause aria-hidden className="size-3 text-tone-warning-fg" /> : null}
-                {humanizeCode(step)}
-                {done ? <span className="sr-only"> (completed)</span> : null}
-                {current ? <span className="sr-only"> (current{status === "ON_HOLD" ? ", on hold" : ""})</span> : null}
+                {fmt.code(step)}
+                {done ? <span className="sr-only">{t("samples.srCompleted")}</span> : null}
+                {current ? <span className="sr-only">{status === "ON_HOLD" ? t("samples.srCurrentOnHold") : t("samples.srCurrent")}</span> : null}
               </p>
             </li>
           );
         })}
       </ol>
       {ended ? (
-        <p role="status" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-tone-danger-fg"><X aria-hidden className="size-4" /> {humanizeCode(status)} — no further steps</p>
+        <p role="status" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-tone-danger-fg"><X aria-hidden className="size-4" /> {t("samples.statusNoFurtherSteps", { status: fmt.code(status) })}</p>
       ) : status === "ON_HOLD" ? (
-        <p role="status" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-tone-warning-fg"><Pause aria-hidden className="size-4" /> On hold{holdPreviousStatus ? ` (was ${humanizeCode(holdPreviousStatus)})` : ""}</p>
+        <p role="status" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-tone-warning-fg"><Pause aria-hidden className="size-4" />{" "}{t("samples.onHold")}{holdPreviousStatus ? t("common.wasStatus", { status: fmt.code(holdPreviousStatus) }) : ""}</p>
       ) : null}
     </div>
   );

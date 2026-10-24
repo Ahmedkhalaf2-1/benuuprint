@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { useListParams } from "@/hooks/use-list-params";
 import type { Paginated } from "@/types/api";
 import type { ListQuery } from "./api";
+import { useI18n } from "@/i18n/provider";
 
 const ALL = "__all";
 export interface FilterDef {
@@ -53,6 +54,7 @@ export function ReferenceListPage<T extends { id: string }>({
   emptyTitle: string;
   rowKey?: (row: T) => string;
 }) {
+  const { t } = useI18n();
   const { params, update, toQuery } = useListParams({ sort: sortable ? "sortOrder" : "", direction: "asc", sortParam: "sortBy", directionParam: "sortOrder", pageSize: 20 });
   const includeArchived = params.filters.includeArchived === "true";
   const isActive = params.filters.isActive;
@@ -90,15 +92,13 @@ export function ReferenceListPage<T extends { id: string }>({
             filters={
               <FilterBar activeCount={activeCount} onReset={reset}>
                 {filters.map((f) => (
-                  <Select key={f.param} aria-label={f.label} className="w-44" value={params.filters[f.param] ?? ALL} onValueChange={(v) => update({ filters: { [f.param]: v === ALL ? undefined : v } })} options={[{ value: ALL, label: `All ${f.label.toLowerCase()}` }, ...f.options]} />
+                  <Select key={f.param} aria-label={f.label} className="w-44" value={params.filters[f.param] ?? ALL} onValueChange={(v) => update({ filters: { [f.param]: v === ALL ? undefined : v } })} options={[{ value: ALL, label: t("masterData.allV1", { v1: f.label.toLowerCase() }) }, ...f.options]} />
                 ))}
                 {activeFilter ? (
-                  <Select aria-label="Active state" className="w-36" value={isActive ?? ALL} onValueChange={(v) => update({ filters: { isActive: v === ALL ? undefined : v } })} options={[{ value: ALL, label: "Any state" }, { value: "true", label: "Active" }, { value: "false", label: "Inactive" }]} />
+                  <Select aria-label={t("masterData.activeState")} className="w-36" value={isActive ?? ALL} onValueChange={(v) => update({ filters: { isActive: v === ALL ? undefined : v } })} options={[{ value: ALL, label: t("masterData.anyState") }, { value: "true", label: t("masterData.active") }, { value: "false", label: t("masterData.inactive") }]} />
                 ) : null}
                 <label className="flex items-center gap-2 text-sm">
-                  <Switch checked={includeArchived} onCheckedChange={(c) => update({ filters: { includeArchived: c ? "true" : undefined } })} aria-label="Include archived" />
-                  Include archived
-                </label>
+                  <Switch checked={includeArchived} onCheckedChange={(c) => update({ filters: { includeArchived: c ? "true" : undefined } })} aria-label={t("common.includeArchived")} />{t("common.includeArchived")}</label>
               </FilterBar>
             }
           />
@@ -107,7 +107,7 @@ export function ReferenceListPage<T extends { id: string }>({
           activeCount === 0 ? (
             <EmptyState title={emptyTitle} description={ADMIN_MANAGED} />
           ) : (
-            <EmptyState title="No matching rows" description="Nothing matches the current search and filters." action={<Button variant="secondary" size="sm" onClick={reset}>Clear filters</Button>} />
+            <EmptyState title={t("masterData.noMatchingRows")} description={t("common.nothingMatchesTheCurrentSearchAnd")} action={<Button variant="secondary" size="sm" onClick={reset}>{t("common.clearFilters")}</Button>} />
           )
         }
       />

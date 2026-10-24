@@ -1,3 +1,4 @@
+import { makeTranslator, type Translator } from "@/i18n/translate";
 import type { OrderDetail, OrderItemsBody } from "./types";
 
 /** Matrix cells are keyed `sizeOptionId|fabricColorId` (empty colour id = the approved colour / size-only row). */
@@ -24,13 +25,13 @@ export function cellsFromOrder(o: Pick<OrderDetail, "items">): Cells {
 export interface ItemsCheck { state: "empty" | "ok" | "mismatch" | "invalid"; total: number; sum: number; message: string | null }
 
 /** The total is never adjusted for the customer: a mismatch is reported and blocks saving the breakdown. */
-export function checkItems(totalInput: string, cells: Cells): ItemsCheck {
+export function checkItems(totalInput: string, cells: Cells, t: Translator = makeTranslator("en")): ItemsCheck {
   const sum = variantSum(cells);
   const hasTotal = totalInput.trim() !== "";
   if (!hasTotal && sum === 0) return { state: "empty", total: 0, sum, message: null };
   const total = posInt(totalInput);
-  if (hasTotal && total === 0) return { state: "invalid", total, sum, message: "Enter a whole number of units greater than zero." };
-  if (total !== sum) return { state: "mismatch", total, sum, message: sum === 0 ? "Add how many units you want in each size." : `The size breakdown adds up to ${sum} but the order total is ${total}. Adjust one so they match.` };
+  if (hasTotal && total === 0) return { state: "invalid", total, sum, message: t("customer.enterWholeUnits") };
+  if (total !== sum) return { state: "mismatch", total, sum, message: sum === 0 ? t("customer.addUnitsPerSize") : t("customer.breakdownMismatch", { sum, total }) };
   return { state: "ok", total, sum, message: null };
 }
 

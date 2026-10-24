@@ -17,10 +17,11 @@ import { Select } from "@/components/ui/select";
 import { accessoryOptions, componentOptions } from "@/features/master-data/adapters";
 import { useConfiguratorOptions } from "@/features/master-data/hooks";
 import { errorMessage } from "@/lib/api/errors";
-import { humanizeCode } from "@/lib/utils/format";
+
 import * as api from "./api";
 import { useSampleInvalidation } from "./hooks";
 import type { SampleAccessory, SampleComponent, SampleDetail } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 type Kind = "accessory" | "component";
 type Item = SampleAccessory | SampleComponent;
@@ -28,6 +29,7 @@ const CUSTOM = "__custom";
 
 /** Accessories and labels/packaging both choose a master-data row OR a free-text name (exactly one). Specification only. */
 export function AccessoriesEditor({ sample, editable }: { sample: SampleDetail; editable: boolean }) {
+  const { t, fmt } = useI18n();
   const inv = useSampleInvalidation();
   const [editing, setEditing] = useState<{ kind: Kind; item: Item | null } | null>(null);
   const [removing, setRemoving] = useState<{ kind: Kind; item: Item } | null>(null);
@@ -41,7 +43,7 @@ export function AccessoriesEditor({ sample, editable }: { sample: SampleDetail; 
     <Card id={kind === "accessory" ? "sec-accessories" : "sec-components"} aria-labelledby={`${kind}-title`} className="scroll-mt-20">
       <CardHeader>
         <CardTitle><span id={`${kind}-title`}>{title}</span></CardTitle>
-        {editable ? <Button size="sm" variant="secondary" onClick={() => setEditing({ kind, item: null })}><Plus /> Add</Button> : null}
+        {editable ? <Button size="sm" variant="secondary" onClick={() => setEditing({ kind, item: null })}><Plus />{" "}{t("samples.add")}</Button> : null}
       </CardHeader>
       {items.length === 0 ? <EmptyState title={emptyTitle} className="py-6" /> : (
         <ul className="divide-y" data-testid={`${kind}s`}>
@@ -50,18 +52,18 @@ export function AccessoriesEditor({ sample, editable }: { sample: SampleDetail; 
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 font-medium">
                   {nameOf(kind, i)}
-                  {i.customName ? <Badge variant="outline">Custom</Badge> : null}
-                  {kind === "component" && (i as SampleComponent).category ? <Badge variant="outline">{humanizeCode((i as SampleComponent).category!)}</Badge> : null}
+                  {i.customName ? <Badge variant="outline">{t("samples.custom")}</Badge> : null}
+                  {kind === "component" && (i as SampleComponent).category ? <Badge variant="outline">{fmt.code((i as SampleComponent).category!)}</Badge> : null}
                   {kind === "accessory" && (i as SampleAccessory).quantity != null ? <span className="font-normal text-muted-foreground">× {(i as SampleAccessory).quantity}</span> : null}
                 </p>
                 {i.notes ? <p className="text-xs text-muted-foreground">{i.notes}</p> : null}
               </div>
               {editable ? (
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild><IconButton size="sm" label={`Actions for ${nameOf(kind, i)}`} icon={<MoreHorizontal />} /></DropdownMenuTrigger>
+                  <DropdownMenuTrigger asChild><IconButton size="sm" label={t("samples.actionsForKind", { kind: nameOf(kind, i) })} icon={<MoreHorizontal />} /></DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem onSelect={() => setEditing({ kind, item: i })}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem destructive onSelect={() => setRemoving({ kind, item: i })}>Remove</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setEditing({ kind, item: i })}>{t("common.edit")}</DropdownMenuItem>
+                    <DropdownMenuItem destructive onSelect={() => setRemoving({ kind, item: i })}>{t("samples.remove")}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : null}
@@ -80,18 +82,19 @@ export function AccessoriesEditor({ sample, editable }: { sample: SampleDetail; 
       <ConfirmDialog
         open={!!removing}
         onOpenChange={(o) => !o && setRemoving(null)}
-        title={`Remove ${removing ? nameOf(removing.kind, removing.item) : "item"}?`}
-        description="It is removed from the draft specification."
-        confirmLabel="Remove"
+        title={t("samples.removeV1", { v1: removing ? nameOf(removing.kind, removing.item) : "item" })}
+        description={t("samples.itIsRemovedFromTheDraft")}
+        confirmLabel={t("samples.remove")}
         destructive
         loading={remove.isPending}
-        onConfirm={() => removing && remove.mutate(removing, { onSuccess: () => { toast.success("Removed"); setRemoving(null); }, onError: (e) => { toast.error(errorMessage(e)); setRemoving(null); } })}
+        onConfirm={() => removing && remove.mutate(removing, { onSuccess: () => { toast.success(t("samples.removed")); setRemoving(null); }, onError: (e) => { toast.error(errorMessage(e)); setRemoving(null); } })}
       />
     </div>
   );
 }
 
 function ItemDialog({ sampleId, kind, item, onClose }: { sampleId: string; kind: Kind; item: Item | null; onClose: () => void }) {
+  const { t } = useI18n();
   const inv = useSampleInvalidation();
   const config = useConfiguratorOptions();
   const opts = kind === "accessory" ? accessoryOptions(config.data) : componentOptions(config.data);
@@ -130,7 +133,7 @@ function ItemDialog({ sampleId, kind, item, onClose }: { sampleId: string; kind:
     setFieldError(null);
     try {
       await save.mutateAsync();
-      toast.success(item ? "Updated" : "Added");
+      toast.success(item ? t("common.updated") : t("samples.added"));
       onClose();
     } catch (e) {
       setError({ message: errorMessage(e) });
@@ -143,13 +146,13 @@ function ItemDialog({ sampleId, kind, item, onClose }: { sampleId: string; kind:
       <DialogContent title={title}>
         <form onSubmit={(e) => { e.preventDefault(); void submit(); }} noValidate className="space-y-3">
           {error ? <FormError {...error} /> : null}
-          <FormField id="i-choice" label={kind === "accessory" ? "Accessory" : "Component"} required error={fieldError ?? undefined}>
-            <Select id="i-choice" value={choice} onValueChange={setChoice} placeholder="Choose…" options={[...opts.map((o) => ({ value: o.value, label: o.label })), { value: CUSTOM, label: "Custom (free text)…" }]} />
+          <FormField id="i-choice" label={kind === "accessory" ? t("samples.accessory") : t("samples.component")} required error={fieldError ?? undefined}>
+            <Select id="i-choice" value={choice} onValueChange={setChoice} placeholder={t("common.choose")} options={[...opts.map((o) => ({ value: o.value, label: o.label })), { value: CUSTOM, label: t("samples.customFreeText") }]} />
           </FormField>
-          {choice === CUSTOM ? <FormField id="i-custom" label="Custom name" required><Input id="i-custom" value={customName} onChange={(e) => setCustomName(e.target.value)} /></FormField> : null}
-          {kind === "accessory" ? <FormField id="i-qty" label="Quantity"><Input id="i-qty" inputMode="numeric" value={quantity} onChange={(e) => setQuantity(e.target.value)} /></FormField> : null}
-          <FormField id="i-notes" label="Notes"><Textarea id="i-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></FormField>
-          <div className="flex justify-end gap-2 pt-1"><Button type="button" variant="secondary" onClick={onClose}>Cancel</Button><Button type="submit" loading={save.isPending}>{item ? "Save" : "Add"}</Button></div>
+          {choice === CUSTOM ? <FormField id="i-custom" label={t("samples.customName")} required><Input id="i-custom" value={customName} onChange={(e) => setCustomName(e.target.value)} /></FormField> : null}
+          {kind === "accessory" ? <FormField id="i-qty" label={t("common.quantity")}><Input id="i-qty" inputMode="numeric" value={quantity} onChange={(e) => setQuantity(e.target.value)} /></FormField> : null}
+          <FormField id="i-notes" label={t("common.notes")}><Textarea id="i-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></FormField>
+          <div className="flex justify-end gap-2 pt-1"><Button type="button" variant="secondary" onClick={onClose}>{t("common.cancel")}</Button><Button type="submit" loading={save.isPending}>{item ? t("samples.save") : t("samples.add")}</Button></div>
         </form>
       </DialogContent>
     </Dialog>

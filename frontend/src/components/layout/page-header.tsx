@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Eyebrow } from "@/components/ui/card";
 import { navSections } from "@/features/navigation/nav-config";
+import { useI18n } from "@/i18n/provider";
 import { Breadcrumbs, type Crumb } from "./breadcrumbs";
 
 /** The nav group a path belongs to (e.g. /production/jobs/1 -> "Operations"), used as the page eyebrow. Presentation only. */
@@ -29,14 +30,15 @@ export function PageHeader({
   actions?: ReactNode;
   eyebrow?: string;
 }) {
+  const { t } = useI18n();
   const pathname = usePathname();
-  const label = eyebrow ?? sectionFor(pathname);
+  const label = t.text(eyebrow ?? sectionFor(pathname) ?? "") || undefined;
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-x-4 gap-y-3 border-b border-border/70 pb-5">
       <div className="min-w-0">
         {breadcrumbs ? <div className="mb-2"><Breadcrumbs items={breadcrumbs} /></div> : label ? <Eyebrow className="mb-2">{label}</Eyebrow> : null}
-        <h1 className="truncate text-[1.875rem] font-semibold leading-tight tracking-[-0.03em]">{title}</h1>
-        {description ? <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p> : null}
+        <h1 className="truncate text-[1.875rem] font-semibold leading-tight tracking-[-0.03em]">{t.text(title)}</h1>
+        {description ? <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t.text(description)}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </header>
@@ -44,11 +46,12 @@ export function PageHeader({
 }
 
 export function SectionHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+  const { t } = useI18n();
   return (
     <div className="mb-3 flex items-end justify-between gap-3">
       <div>
-        <h2 className="text-lg font-semibold leading-tight tracking-tight">{title}</h2>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        <h2 className="text-lg font-semibold leading-tight tracking-tight">{t.text(title)}</h2>
+        {description ? <p className="text-sm text-muted-foreground">{t.text(description)}</p> : null}
       </div>
       {actions}
     </div>

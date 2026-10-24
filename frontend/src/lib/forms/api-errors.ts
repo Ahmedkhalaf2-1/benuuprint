@@ -1,4 +1,5 @@
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
+import { getActive } from "@/i18n/active";
 import { isApiError } from "@/lib/api/errors";
 
 export interface MappedFormError {
@@ -19,7 +20,7 @@ export function applyApiErrors<T extends FieldValues>(
   fields: readonly string[],
   opts: { conflictField?: string } = {},
 ): MappedFormError {
-  if (!isApiError(error)) return { formMessage: "Unexpected error. Please try again." };
+  if (!isApiError(error)) return { formMessage: getActive().t.text("Unexpected error. Please try again.") };
   const rest: string[] = [];
   if (error.kind === "validation") {
     for (const m of error.messages) {
@@ -29,9 +30,9 @@ export function applyApiErrors<T extends FieldValues>(
       } else rest.push(m);
     }
   } else if (error.kind === "conflict" && opts.conflictField && fields.includes(opts.conflictField)) {
-    setError(opts.conflictField as Path<T>, { type: "server", message: error.message });
+    setError(opts.conflictField as Path<T>, { type: "server", message: getActive().t.text(error.message) });
   } else {
-    rest.push(error.kind === "rate_limited" && error.retryAfter ? `Too many requests. Try again in ${error.retryAfter}s.` : error.message);
+    rest.push(error.kind === "rate_limited" && error.retryAfter ? getActive().t("common.tooManyRequestsRetry", { seconds: error.retryAfter }) : getActive().t.text(error.message));
   }
   return { formMessage: rest.length ? rest.join(" ") : null, requestId: error.requestId };
 }

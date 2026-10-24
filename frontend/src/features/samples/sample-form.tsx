@@ -1,6 +1,6 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@/lib/forms/resolver";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -36,6 +36,7 @@ import { SampleFiles } from "./sample-files";
 import { SAMPLE_FIELDS, buildSamplePayload, emptySampleValues, sampleSchema, toFormValues, type SampleFormValues } from "./schema";
 import { TermsPanel } from "./terms-panel";
 import { FABRIC_PROVIDERS, FIT_METHODS, type SampleDetail } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 const SECTIONS = [
   ["sec-customer", "Customer & brand"], ["sec-product", "Product"], ["sec-fabric", "Fabric & colour"], ["sec-size", "Size & fit"],
@@ -58,6 +59,7 @@ const NONE = "__none";
  * available once the draft exists: on the create page they are explained, after "Save draft" the editor reopens with them.
  */
 export function SampleForm({ sample, initialCustomer }: { sample?: SampleDetail; initialCustomer?: PickedCustomer | null }) {
+  const { t } = useI18n();
   const router = useRouter();
   const { can } = useAuth();
   const inv = useSampleInvalidation();
@@ -94,17 +96,17 @@ export function SampleForm({ sample, initialCustomer }: { sample?: SampleDetail;
         if (sample) {
           saved = await update.mutateAsync(buildSamplePayload(values, "update", { includeBrand: values.brandId !== sample.brand.id }));
           reset(toFormValues(saved));
-          toast.success("Draft saved");
+          toast.success(t("samples.draftSaved"));
         } else {
           saved = await create.mutateAsync(buildSamplePayload(values, "create"));
           reset(values); // clears dirty so the guard lets us navigate
-          toast.success(`${saved.sampleNumber} created as a draft`);
+          toast.success(t("samples.samplenumberCreatedAsADraft", { sampleNumber: saved.sampleNumber }));
         }
       } catch (e) {
         const m = applyApiErrors(e, setError, SAMPLE_FIELDS);
         if (m.formMessage) setFormError({ message: m.formMessage, requestId: m.requestId });
       }
-    }, () => setFormError({ message: "Some fields need attention." }))();
+    }, () => setFormError({ message: t("samples.someFieldsNeedAttention") }))();
     return saved;
   };
 
@@ -131,10 +133,10 @@ export function SampleForm({ sample, initialCustomer }: { sample?: SampleDetail;
 
   return (
     <div className="lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-6">
-      <nav aria-label="Form sections" className="mb-4 overflow-x-auto lg:sticky lg:top-20 lg:mb-0 lg:self-start">
+      <nav aria-label={t("samples.formSections")} className="mb-4 overflow-x-auto lg:sticky lg:top-20 lg:mb-0 lg:self-start">
         <ul className="flex gap-2 lg:flex-col lg:gap-0.5">
           {SECTIONS.map(([id, title]) => (
-            <li key={id} className="shrink-0"><a href={`#${id}`} className="block whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground">{title}</a></li>
+            <li key={id} className="shrink-0"><a href={`#${id}`} className="block whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground">{t.text(title)}</a></li>
           ))}
         </ul>
       </nav>
@@ -143,53 +145,53 @@ export function SampleForm({ sample, initialCustomer }: { sample?: SampleDetail;
         {problems ? <ProblemsSummary messages={problems} /> : null}
         {formError ? <FormError {...formError} /> : null}
 
-        <form id="sample-form" onSubmit={(e) => { e.preventDefault(); void onSaveDraft(); }} noValidate aria-label={sample ? "Edit sample draft" : "New sample"} className="space-y-4">
-          <Section id="sec-customer" title="Customer & brand">
-            <FormField id="customer" label="Customer" required error={fieldErr("customerId")} hint={sample ? "The customer of a sample cannot be changed." : undefined}>
+        <form id="sample-form" onSubmit={(e) => { e.preventDefault(); void onSaveDraft(); }} noValidate aria-label={sample ? t("samples.editSampleDraft") : t("samples.newSample")} className="space-y-4">
+          <Section id="sec-customer" title={t("samples.customerBrand")}>
+            <FormField id="customer" label={t("common.customer")} required error={fieldErr("customerId")} hint={sample ? t("samples.theCustomerOfASampleCannot") : undefined}>
               {sample ? <p className="flex h-9 items-center text-sm"><Link href={`/customers/${sample.customer.id}`} className="hover:text-brand hover:underline">{sample.customer.customerNumber} · {sample.customer.displayName}</Link></p> : <CustomerPicker id="customer" value={customer} onChange={(c) => setCustomer(c)} invalid={!!errors.customerId} />}
             </FormField>
-            <FormField id="brandId" label="Brand" required error={fieldErr("brandId")} hint={!customer ? "Choose a customer first." : undefined}>
-              <Select id="brandId" value={v.brandId ?? ""} onValueChange={(x) => setValue("brandId", x, { shouldDirty: true })} disabled={!customer || (!!sample && !editable)} placeholder={brands.isLoading ? "Loading brands…" : customer ? "Choose a brand…" : "—"} options={(brands.data?.data ?? []).filter((b) => b.status !== "ARCHIVED").map((b) => ({ value: b.id, label: `${b.name} · ${b.brandNumber}` }))} />
-              {customer && brands.data && brands.data.data.length === 0 ? <p className="mt-1 text-xs text-muted-foreground">This customer has no brands. <Link className="text-brand hover:underline" href={`/brands/new?customerId=${customer.id}`}>Add one</Link> first.</p> : null}
+            <FormField id="brandId" label={t("common.brand2")} required error={fieldErr("brandId")} hint={!customer ? t("samples.chooseACustomerFirst") : undefined}>
+              <Select id="brandId" value={v.brandId ?? ""} onValueChange={(x) => setValue("brandId", x, { shouldDirty: true })} disabled={!customer || (!!sample && !editable)} placeholder={brands.isLoading ? t("samples.loadingBrands") : customer ? t("samples.chooseABrand") : "—"} options={(brands.data?.data ?? []).filter((b) => b.status !== "ARCHIVED").map((b) => ({ value: b.id, label: `${b.name} · ${b.brandNumber}` }))} />
+              {customer && brands.data && brands.data.data.length === 0 ? <p className="mt-1 text-xs text-muted-foreground">{t("samples.thisCustomerHasNoBrands")}{" "}<Link className="text-brand hover:underline" href={`/brands/new?customerId=${customer.id}`}>{t("samples.addOne")}</Link>{" "}{t("samples.first")}</p> : null}
             </FormField>
           </Section>
 
-          <Section id="sec-product" title="Product" description="Pick a catalogue product, or describe a custom one.">
-            <ChoiceGroup name="productMode" aria-label="Product source" value={v.productMode ?? "catalogue"} onValueChange={(m) => setValue("productMode", m, { shouldDirty: true })} options={[{ value: "catalogue", label: "Catalogue product" }, { value: "custom", label: "Custom product", description: "Not in the catalogue" }]} />
+          <Section id="sec-product" title={t("common.product")} description={t("samples.pickACatalogueProductOrDescribe")}>
+            <ChoiceGroup name="productMode" aria-label={t("samples.productSource")} value={v.productMode ?? "catalogue"} onValueChange={(m) => setValue("productMode", m, { shouldDirty: true })} options={[{ value: "catalogue", label: t("samples.catalogueProduct") }, { value: "custom", label: t("samples.customProduct"), description: t("samples.notInTheCatalogue") }]} />
             {v.productMode === "catalogue" ? (
-              <FormField id="productTypeId" label="Product type"><Select id="productTypeId" value={v.productTypeId || NONE} onValueChange={(x) => setValue("productTypeId", x === NONE ? "" : x, { shouldDirty: true })} options={[{ value: NONE, label: "Not chosen yet" }, ...(options?.productTypes ?? []).map((p) => ({ value: p.id, label: p.name }))]} /></FormField>
+              <FormField id="productTypeId" label={t("common.productType")}><Select id="productTypeId" value={v.productTypeId || NONE} onValueChange={(x) => setValue("productTypeId", x === NONE ? "" : x, { shouldDirty: true })} options={[{ value: NONE, label: t("samples.notChosenYet") }, ...(options?.productTypes ?? []).map((p) => ({ value: p.id, label: p.name }))]} /></FormField>
             ) : (
               <>
-                <FormField id="customProductName" label="Custom product name" error={fieldErr("customProductName")}><Input id="customProductName" {...a11y("customProductName")} {...register("customProductName")} /></FormField>
-                <FormField id="customProductDescription" label="Description" error={fieldErr("customProductDescription")}><Textarea id="customProductDescription" rows={3} {...register("customProductDescription")} /></FormField>
+                <FormField id="customProductName" label={t("samples.customProductName")} error={fieldErr("customProductName")}><Input id="customProductName" {...a11y("customProductName")} {...register("customProductName")} /></FormField>
+                <FormField id="customProductDescription" label={t("common.description")} error={fieldErr("customProductDescription")}><Textarea id="customProductDescription" rows={3} {...register("customProductDescription")} /></FormField>
               </>
             )}
           </Section>
 
-          <Section id="sec-fabric" title="Fabric & colour">
-            <ChoiceGroup name="fabricMode" aria-label="Fabric source" value={v.fabricMode ?? "catalogue"} onValueChange={(m) => { setValue("fabricMode", m, { shouldDirty: true }); setValue("fabricColorId", ""); if (m === "custom") setValue("colorMode", "custom"); }} options={[{ value: "catalogue", label: "Catalogue fabric" }, { value: "custom", label: "Custom fabric", description: "Not in the catalogue" }]} />
+          <Section id="sec-fabric" title={t("samples.fabricColour")}>
+            <ChoiceGroup name="fabricMode" aria-label={t("samples.fabricSource")} value={v.fabricMode ?? "catalogue"} onValueChange={(m) => { setValue("fabricMode", m, { shouldDirty: true }); setValue("fabricColorId", ""); if (m === "custom") setValue("colorMode", "custom"); }} options={[{ value: "catalogue", label: t("samples.catalogueFabric") }, { value: "custom", label: t("samples.customFabric"), description: t("samples.notInTheCatalogue") }]} />
             {v.fabricMode === "catalogue" ? (
-              <FormField id="fabricId" label="Fabric" hint={v.productTypeId && v.productMode === "catalogue" ? "Fabrics recommended for this product are listed first. Others are still allowed." : undefined}>
-                <Select id="fabricId" value={v.fabricId || NONE} onValueChange={(x) => { setValue("fabricId", x === NONE ? "" : x, { shouldDirty: true }); setValue("fabricColorId", ""); }} options={[{ value: NONE, label: "Not chosen yet" }, ...fabrics.map((f) => ({ value: f.value, label: `${f.label}${f.recommended ? " · Recommended" : ""}${f.allowed ? "" : " · not advised"}` }))]} />
+              <FormField id="fabricId" label={t("samples.fabric")} hint={v.productTypeId && v.productMode === "catalogue" ? t("samples.fabricsRecommendedForThisProductAre") : undefined}>
+                <Select id="fabricId" value={v.fabricId || NONE} onValueChange={(x) => { setValue("fabricId", x === NONE ? "" : x, { shouldDirty: true }); setValue("fabricColorId", ""); }} options={[{ value: NONE, label: t("samples.notChosenYet") }, ...fabrics.map((f) => ({ value: f.value, label: `${f.label}${f.recommended ? " · Recommended" : ""}${f.allowed ? "" : " · not advised"}` }))]} />
               </FormField>
             ) : (
               <>
-                <FormField id="customFabricName" label="Custom fabric name" error={fieldErr("customFabricName")}><Input id="customFabricName" {...a11y("customFabricName")} {...register("customFabricName")} /></FormField>
-                <FormField id="customFabricDescription" label="Description" error={fieldErr("customFabricDescription")}><Textarea id="customFabricDescription" rows={2} {...register("customFabricDescription")} /></FormField>
+                <FormField id="customFabricName" label={t("samples.customFabricName")} error={fieldErr("customFabricName")}><Input id="customFabricName" {...a11y("customFabricName")} {...register("customFabricName")} /></FormField>
+                <FormField id="customFabricDescription" label={t("common.description")} error={fieldErr("customFabricDescription")}><Textarea id="customFabricDescription" rows={2} {...register("customFabricDescription")} /></FormField>
               </>
             )}
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField id="fabricProvider" label="Who provides the fabric?"><Select id="fabricProvider" value={v.fabricProvider ?? "NOT_DECIDED"} onValueChange={(x) => setValue("fabricProvider", x as SampleFormValues["fabricProvider"], { shouldDirty: true })} options={FABRIC_PROVIDERS.map((p) => ({ value: p, label: PROVIDER_LABELS[p] ?? p }))} /></FormField>
-              <FormField id="gsm" label="GSM" error={fieldErr("gsm")} hint={selectedFabric && (selectedFabric.minGsm != null || selectedFabric.maxGsm != null) ? `This fabric: ${selectedFabric.minGsm ?? "?"}–${selectedFabric.maxGsm ?? "?"}${selectedFabric.defaultGsm != null ? ` (default ${selectedFabric.defaultGsm})` : ""}. The server checks the range.` : undefined}>
+              <FormField id="fabricProvider" label={t("samples.whoProvidesTheFabric")}><Select id="fabricProvider" value={v.fabricProvider ?? "NOT_DECIDED"} onValueChange={(x) => setValue("fabricProvider", x as SampleFormValues["fabricProvider"], { shouldDirty: true })} options={FABRIC_PROVIDERS.map((p) => ({ value: p, label: PROVIDER_LABELS[p] ?? p }))} /></FormField>
+              <FormField id="gsm" label="GSM" error={fieldErr("gsm")} hint={selectedFabric && (selectedFabric.minGsm != null || selectedFabric.maxGsm != null) ? t("samples.thisFabricV1V2V3The", { v1: selectedFabric.minGsm ?? "?", v2: selectedFabric.maxGsm ?? "?", v3: selectedFabric.defaultGsm != null ? ` (default ${selectedFabric.defaultGsm})` : "" }) : undefined}>
                 <Input id="gsm" inputMode="numeric" {...a11y("gsm")} {...register("gsm")} />
               </FormField>
             </div>
             <fieldset className="space-y-3">
-              <legend className="text-[0.8125rem] font-medium">Colour</legend>
-              {v.fabricMode === "catalogue" ? <ChoiceGroup name="colorMode" aria-label="Colour source" value={v.colorMode ?? "catalogue"} onValueChange={(m) => setValue("colorMode", m, { shouldDirty: true })} options={[{ value: "catalogue", label: "Fabric colour" }, { value: "custom", label: "Custom colour", description: "Name, Pantone and/or hex" }]} /> : <p className="text-xs text-muted-foreground">A custom fabric uses a custom colour.</p>}
+              <legend className="text-[0.8125rem] font-medium">{t("samples.colour")}</legend>
+              {v.fabricMode === "catalogue" ? <ChoiceGroup name="colorMode" aria-label={t("samples.colourSource")} value={v.colorMode ?? "catalogue"} onValueChange={(m) => setValue("colorMode", m, { shouldDirty: true })} options={[{ value: "catalogue", label: t("samples.fabricColour2") }, { value: "custom", label: t("samples.customColour"), description: t("samples.namePantoneAndOrHex") }]} /> : <p className="text-xs text-muted-foreground">{t("samples.aCustomFabricUsesACustom")}</p>}
               {v.fabricMode === "catalogue" && v.colorMode === "catalogue" ? (
-                !selectedFabric ? <p className="text-sm text-muted-foreground">Choose a fabric to see its colours.</p> : colorList.length === 0 ? <p className="text-sm text-muted-foreground">This fabric has no catalogue colours. Use a custom colour.</p> : (
-                  <div role="radiogroup" aria-label="Fabric colours" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                !selectedFabric ? <p className="text-sm text-muted-foreground">{t("samples.chooseAFabricToSeeIts")}</p> : colorList.length === 0 ? <p className="text-sm text-muted-foreground">{t("samples.thisFabricHasNoCatalogueColours")}</p> : (
+                  <div role="radiogroup" aria-label={t("samples.fabricColours")} className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                     {colorList.map((c) => (
                       <button key={c.id} type="button" role="radio" aria-checked={v.fabricColorId === c.id} onClick={() => setValue("fabricColorId", c.id, { shouldDirty: true })} className={cn("rounded-md border bg-surface p-2.5 text-start hover:bg-surface-muted", v.fabricColorId === c.id && "border-brand bg-brand-soft/40")}>
                         <ColorSwatch name={c.name} hex={c.hex} pantone={c.pantone} />
@@ -199,9 +201,9 @@ export function SampleForm({ sample, initialCustomer }: { sample?: SampleDetail;
                 )
               ) : (
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <FormField id="customColorName" label="Colour name" error={fieldErr("customColorName")}><Input id="customColorName" {...a11y("customColorName")} {...register("customColorName")} /></FormField>
-                  <FormField id="customPantone" label="Pantone" error={fieldErr("customPantone")}><Input id="customPantone" {...a11y("customPantone")} {...register("customPantone")} /></FormField>
-                  <FormField id="customHex" label="Hex" error={fieldErr("customHex")} hint="#RRGGBB">
+                  <FormField id="customColorName" label={t("samples.colourName")} error={fieldErr("customColorName")}><Input id="customColorName" {...a11y("customColorName")} {...register("customColorName")} /></FormField>
+                  <FormField id="customPantone" label={t("samples.pantone")} error={fieldErr("customPantone")}><Input id="customPantone" {...a11y("customPantone")} {...register("customPantone")} /></FormField>
+                  <FormField id="customHex" label={t("samples.hex")} error={fieldErr("customHex")} hint="#RRGGBB">
                     <div className="flex items-center gap-2"><ColorSwatch name="Preview" hex={v.customHex} size="md" showLabel={false} /><Input id="customHex" placeholder="#1A2B3C" {...a11y("customHex")} {...register("customHex")} /></div>
                   </FormField>
                 </div>
@@ -209,17 +211,17 @@ export function SampleForm({ sample, initialCustomer }: { sample?: SampleDetail;
             </fieldset>
           </Section>
 
-          <Section id="sec-size" title="Size & fit">
-            <FormField id="sampleSizeOptionId" label="Sample size"><Select id="sampleSizeOptionId" value={v.sampleSizeOptionId || NONE} onValueChange={(x) => setValue("sampleSizeOptionId", x === NONE ? "" : x, { shouldDirty: true })} options={[{ value: NONE, label: "Not chosen yet" }, ...sizes]} /></FormField>
-            <ChoiceGroup name="fitMethod" aria-label="Fit method" columns={4} value={v.fitMethod ?? "NOT_SURE"} onValueChange={(m) => { setValue("fitMethod", m, { shouldDirty: true }); if (m !== "BENUE_PATTERN") setValue("patternVersionId", ""); }} options={FIT_METHODS.map((m) => ({ value: m, label: FIT_METHOD_LABELS[m]!.label, description: FIT_METHOD_LABELS[m]!.description }))} />
+          <Section id="sec-size" title={t("samples.sizeFit")}>
+            <FormField id="sampleSizeOptionId" label={t("samples.sampleSize")}><Select id="sampleSizeOptionId" value={v.sampleSizeOptionId || NONE} onValueChange={(x) => setValue("sampleSizeOptionId", x === NONE ? "" : x, { shouldDirty: true })} options={[{ value: NONE, label: t("samples.notChosenYet") }, ...sizes]} /></FormField>
+            <ChoiceGroup name="fitMethod" aria-label={t("samples.fitMethod")} columns={4} value={v.fitMethod ?? "NOT_SURE"} onValueChange={(m) => { setValue("fitMethod", m, { shouldDirty: true }); if (m !== "BENUE_PATTERN") setValue("patternVersionId", ""); }} options={FIT_METHODS.map((m) => ({ value: m, label: FIT_METHOD_LABELS[m]!.label, description: FIT_METHOD_LABELS[m]!.description }))} />
             {v.fitMethod === "BENUE_PATTERN" ? (
-              <FormField id="patternVersionId" label="Approved pattern" hint="The sample pins this approved pattern version, not the pattern itself." error={fieldErr("patternVersionId")}>
-                <Select id="patternVersionId" value={v.patternVersionId || NONE} onValueChange={(x) => setValue("patternVersionId", x === NONE ? "" : x, { shouldDirty: true })} options={[{ value: NONE, label: "Not chosen yet" }, ...patterns.map((p) => ({ value: p.value, label: `${p.label} · ${p.hint}` }))]} />
-                {patterns.length === 0 ? <p className="mt-1 text-xs text-tone-warning-fg">No approved patterns are available{v.productTypeId ? " for this product type" : ""}.</p> : null}
+              <FormField id="patternVersionId" label={t("samples.approvedPattern")} hint={t("samples.theSamplePinsThisApprovedPattern")} error={fieldErr("patternVersionId")}>
+                <Select id="patternVersionId" value={v.patternVersionId || NONE} onValueChange={(x) => setValue("patternVersionId", x === NONE ? "" : x, { shouldDirty: true })} options={[{ value: NONE, label: t("samples.notChosenYet") }, ...patterns.map((p) => ({ value: p.value, label: `${p.label} · ${p.hint}` }))]} />
+                {patterns.length === 0 ? <p className="mt-1 text-xs text-tone-warning-fg">{t("samples.noApprovedPatternsAreAvailable")}{v.productTypeId ? t("samples.forThisProductType") : ""}.</p> : null}
               </FormField>
             ) : null}
-            {v.fitMethod === "COPY_CUSTOMER_PIECE" ? <p className="text-sm text-muted-foreground">Describe the piece to copy in the fit notes below, and attach reference photos in <a className="text-brand hover:underline" href="#sec-files">Files</a>.</p> : null}
-            {v.fitMethod === "CUSTOM_SIZE_CHART" ? <p className="text-sm text-muted-foreground">A <strong>Size chart</strong> file must be attached in <a className="text-brand hover:underline" href="#sec-files">Files</a> before submission.</p> : null}
+            {v.fitMethod === "COPY_CUSTOMER_PIECE" ? <p className="text-sm text-muted-foreground">{t("samples.describeThePieceToCopyIn")}{" "}<a className="text-brand hover:underline" href="#sec-files">{t("samples.files")}</a>.</p> : null}
+            {v.fitMethod === "CUSTOM_SIZE_CHART" ? <p className="text-sm text-muted-foreground">A <strong>{t("samples.sizeChart")}</strong>{" "}{t("samples.fileMustBeAttachedIn")}{" "}<a className="text-brand hover:underline" href="#sec-files">{t("samples.files")}</a>{" "}{t("samples.beforeSubmission")}</p> : null}
           </Section>
 
           {/* Instructions live in the main form (saved with the draft) but are placed after the part editors below. */}
@@ -231,17 +233,17 @@ export function SampleForm({ sample, initialCustomer }: { sample?: SampleDetail;
             <AccessoriesEditor sample={sample} editable={editable} />
           </>
         ) : (
-          <Card id="sec-decoration" className="scroll-mt-20"><CardContent className="py-6 text-sm text-muted-foreground"><p className="font-medium text-foreground">Decoration, accessories, files, artwork and terms</p><p className="mt-1">These are added to the draft once it exists. Click <strong>Save draft</strong> and the editor reopens with all of them.</p></CardContent></Card>
+          <Card id="sec-decoration" className="scroll-mt-20"><CardContent className="py-6 text-sm text-muted-foreground"><p className="font-medium text-foreground">{t("samples.decorationAccessoriesFilesArtworkAndTerms")}</p><p className="mt-1">{t("samples.theseAreAddedToTheDraft")}{" "}<strong>{t("samples.saveDraft")}</strong>{" "}{t("samples.andTheEditorReopensWithAll")}</p></CardContent></Card>
         )}
 
-        <Section id="sec-instructions" title="Instructions" description="Each note keeps its own field. Factory instructions are internal and never customer-facing.">
+        <Section id="sec-instructions" title={t("samples.instructions")} description={t("samples.eachNoteKeepsItsOwnField")}>
           <form id="sample-notes" onSubmit={(e) => e.preventDefault()} className="grid gap-4 lg:grid-cols-2">
-            <FormField id="notes" label="Request notes" error={fieldErr("notes")}><Textarea id="notes" rows={3} {...register("notes")} /></FormField>
-            <FormField id="fitNotes" label="Fit notes" error={fieldErr("fitNotes")}><Textarea id="fitNotes" rows={3} {...register("fitNotes")} /></FormField>
-            <FormField id="printNotes" label="Print notes" error={fieldErr("printNotes")}><Textarea id="printNotes" rows={3} {...register("printNotes")} /></FormField>
-            <FormField id="fabricNotes" label="Fabric notes" error={fieldErr("fabricNotes")}><Textarea id="fabricNotes" rows={3} {...register("fabricNotes")} /></FormField>
-            <FormField id="specialInstructions" label="Special instructions" error={fieldErr("specialInstructions")}><Textarea id="specialInstructions" rows={3} {...register("specialInstructions")} /></FormField>
-            <FormField id="factoryInstructions" label="Factory instructions (internal)" error={fieldErr("factoryInstructions")}><Textarea id="factoryInstructions" rows={3} {...register("factoryInstructions")} /></FormField>
+            <FormField id="notes" label={t("samples.requestNotes")} error={fieldErr("notes")}><Textarea id="notes" rows={3} {...register("notes")} /></FormField>
+            <FormField id="fitNotes" label={t("samples.fitNotes")} error={fieldErr("fitNotes")}><Textarea id="fitNotes" rows={3} {...register("fitNotes")} /></FormField>
+            <FormField id="printNotes" label={t("samples.printNotes")} error={fieldErr("printNotes")}><Textarea id="printNotes" rows={3} {...register("printNotes")} /></FormField>
+            <FormField id="fabricNotes" label={t("samples.fabricNotes")} error={fieldErr("fabricNotes")}><Textarea id="fabricNotes" rows={3} {...register("fabricNotes")} /></FormField>
+            <FormField id="specialInstructions" label={t("samples.specialInstructions")} error={fieldErr("specialInstructions")}><Textarea id="specialInstructions" rows={3} {...register("specialInstructions")} /></FormField>
+            <FormField id="factoryInstructions" label={t("samples.factoryInstructionsInternal")} error={fieldErr("factoryInstructions")}><Textarea id="factoryInstructions" rows={3} {...register("factoryInstructions")} /></FormField>
           </form>
         </Section>
 
@@ -257,12 +259,12 @@ export function SampleForm({ sample, initialCustomer }: { sample?: SampleDetail;
       </div>
 
       {/* Sticky action bar: stays below the content (pb-24 above) so it never hides fields, also on mobile. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-surface/95 px-4 py-3 backdrop-blur sm:px-6 lg:ps-[calc(var(--sidebar-width)+1.5rem)]" role="region" aria-label="Form actions">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-surface/95 px-4 py-3 backdrop-blur sm:px-6 lg:ps-[calc(var(--sidebar-width)+1.5rem)]" role="region" aria-label={t("samples.formActions")}>
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-end gap-2">
-          <span className="me-auto text-xs text-muted-foreground" aria-live="polite">{isDirty ? "Unsaved changes" : sample ? "All changes saved" : ""}</span>
-          <Button variant="secondary" asChild><Link href={sample ? `/samples/${sample.id}` : "/samples"}>Cancel</Link></Button>
-          <Button type="button" variant="secondary" loading={isSubmitting || create.isPending || update.isPending} onClick={() => void onSaveDraft()}>Save draft</Button>
-          {sample && can("samples.submit") ? <Button type="button" loading={submitting} onClick={() => void onSubmitClick()}>Submit sample</Button> : null}
+          <span className="me-auto text-xs text-muted-foreground" aria-live="polite">{isDirty ? t("samples.unsavedChanges") : sample ? t("samples.allChangesSaved") : ""}</span>
+          <Button variant="secondary" asChild><Link href={sample ? `/samples/${sample.id}` : "/samples"}>{t("common.cancel")}</Link></Button>
+          <Button type="button" variant="secondary" loading={isSubmitting || create.isPending || update.isPending} onClick={() => void onSaveDraft()}>{t("samples.saveDraft")}</Button>
+          {sample && can("samples.submit") ? <Button type="button" loading={submitting} onClick={() => void onSubmitClick()}>{t("samples.submitSample")}</Button> : null}
         </div>
       </div>
 

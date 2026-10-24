@@ -6,19 +6,21 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getAssetDownloadUrl } from "@/lib/api/assets";
 import { errorMessage } from "@/lib/api/errors";
+import { useI18n } from "@/i18n/provider";
 
 /**
  * Private file download: the signed URL is requested only when the user clicks, resolved on the API origin
  * (lib/api/assets) and opened once. Storage keys / paths are never built or shown by the frontend.
  */
 export function AssetDownloadButton({ assetId, fileName, size = "sm" }: { assetId: string; fileName: string; size?: "sm" | "md" }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   return (
     <Button
       size={size}
       variant="secondary"
       loading={busy}
-      aria-label={`Download ${fileName}`}
+      aria-label={t("common.downloadFilename", { fileName })}
       onClick={async () => {
         setBusy(true);
         try {
@@ -31,8 +33,7 @@ export function AssetDownloadButton({ assetId, fileName, size = "sm" }: { assetI
         }
       }}
     >
-      <Download /> Download
-    </Button>
+      <Download />{" "}{t("common.download")}</Button>
   );
 }
 

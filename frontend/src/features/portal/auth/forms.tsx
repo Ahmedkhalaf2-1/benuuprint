@@ -1,6 +1,7 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { getActive } from "@/i18n/active";
+import { zodResolver } from "@/lib/forms/resolver";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,6 +15,7 @@ import { isApiError } from "@/lib/api/errors";
 import { activateAccount, forgotPassword, resendVerification, resetPassword } from "../api";
 import { authHref, safeNextPath, signupNext, useEmailVerificationRequired } from "./next-path";
 import { useCustomerAuth } from "./customer-auth-provider";
+import { useI18n } from "@/i18n/provider";
 
 /** Only same-app portal paths are honoured as post-login targets. */
 export function safePortalNext(next: string | null): string {
@@ -22,7 +24,7 @@ export function safePortalNext(next: string | null): string {
 
 export function portalErrorText(e: unknown): string {
   if (!isApiError(e)) return "Something went wrong. Please try again.";
-  if (e.kind === "rate_limited") return e.retryAfter ? `Too many attempts. Please try again in ${e.retryAfter} seconds.` : "Too many attempts. Please wait a moment and try again.";
+  if (e.kind === "rate_limited") return e.retryAfter ? getActive().t("customerAuth.tooManyAttemptsSeconds", { seconds: e.retryAfter }) : getActive().t("customerAuth.tooManyAttempts");
   if (e.kind === "unauthorized") return "That email and password do not match.";
   if (e.kind === "network" || e.status === 503) return "We can't reach the server. Check your connection and try again.";
   if (e.kind === "server") return "We had a problem on our side. Please try again shortly.";
@@ -38,13 +40,14 @@ export function Banner({ tone, children }: { tone: "error" | "info" | "success";
 }
 
 export function PasswordInput({ id, label, autoComplete, error, ...rest }: { id: string; label: string; autoComplete: string; error?: string } & Record<string, unknown>) {
+  const { t } = useI18n();
   const [show, setShow] = useState(false);
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
       <div className="relative">
         <Input id={id} type={show ? "text" : "password"} autoComplete={autoComplete} className="pe-10" aria-invalid={!!error} {...rest} />
-        <IconButton label={show ? "Hide password" : "Show password"} aria-pressed={show} size="sm" icon={show ? <EyeOff /> : <Eye />} className="absolute end-0.5 top-0.5" onClick={() => setShow((s) => !s)} />
+        <IconButton label={show ? t("customerAuth.hidePassword") : t("customerAuth.showPassword")} aria-pressed={show} size="sm" icon={show ? <EyeOff /> : <Eye />} className="absolute end-0.5 top-0.5" onClick={() => setShow((s) => !s)} />
       </div>
       {error ? <p className="text-xs text-danger">{error}</p> : null}
     </div>
@@ -52,6 +55,7 @@ export function PasswordInput({ id, label, autoComplete, error, ...rest }: { id:
 }
 
 export function CustomerLoginForm() {
+  const { t } = useI18n();
   const router = useRouter();
   const params = useSearchParams();
   const { login, status } = useCustomerAuth();
@@ -72,87 +76,90 @@ export function CustomerLoginForm() {
   };
   return (
     <>
-      <form onSubmit={handleSubmit(async (v) => { setError(null); setUnverified(null); setResent(null); try { await login(v); } catch (e) { if (isApiError(e) && e.code === "EMAIL_NOT_VERIFIED" && verificationRequired) setUnverified(v.email.trim()); else setError(portalErrorText(e)); } })} noValidate className="space-y-4" aria-label="Sign in">
-        {toSample && !error && !unverified ? <Banner tone="info">To start a sample, sign in or create an account.</Banner> : null}
-        {expired && !error ? <Banner tone="info">Your session ended. Please sign in again.</Banner> : null}
-        {params.get("reset") === "1" && !error ? <Banner tone="success">Your password was changed. Please sign in.</Banner> : null}
-        {params.get("activated") === "1" && !error ? <Banner tone="success">Your account is ready. Please sign in.</Banner> : null}
-        {params.get("verified") === "1" && !error && !unverified ? <Banner tone="success">Your email is verified. Please sign in.</Banner> : null}
+      <form onSubmit={handleSubmit(async (v) => { setError(null); setUnverified(null); setResent(null); try { await login(v); } catch (e) { if (isApiError(e) && e.code === "EMAIL_NOT_VERIFIED" && verificationRequired) setUnverified(v.email.trim()); else setError(portalErrorText(e)); } })} noValidate className="space-y-4" aria-label={t("customerAuth.signIn")}>
+        {toSample && !error && !unverified ? <Banner tone="info">{t("customerAuth.toStartASampleSignIn")}</Banner> : null}
+        {expired && !error ? <Banner tone="info">{t("customerAuth.yourSessionEndedPleaseSignIn")}</Banner> : null}
+        {params.get("reset") === "1" && !error ? <Banner tone="success">{t("customerAuth.yourPasswordWasChangedPleaseSign")}</Banner> : null}
+        {params.get("activated") === "1" && !error ? <Banner tone="success">{t("customerAuth.yourAccountIsReadyPleaseSign")}</Banner> : null}
+        {params.get("verified") === "1" && !error && !unverified ? <Banner tone="success">{t("customerAuth.yourEmailIsVerifiedPleaseSign")}</Banner> : null}
         {error ? <Banner tone="error">{error}</Banner> : null}
         {unverified ? (
           <div role="alert" data-testid="unverified" className="space-y-3 rounded-md border border-tone-warning-dot/40 bg-tone-warning-bg px-3 py-3 text-sm text-tone-warning-fg">
-            <p className="font-medium">Your email needs to be verified before you can sign in.</p>
-            {resent ? <p data-testid="resend-message">{resent} <Link className="underline" href={authHref("/account/check-email", next, { email: unverified })}>What to do next</Link></p> : <p>Open the verification link we emailed you, or ask us to send a new one.</p>}
+            <p className="font-medium">{t("customerAuth.yourEmailNeedsToBeVerified")}</p>
+            {resent ? <p data-testid="resend-message">{resent} <Link className="underline" href={authHref("/account/check-email", next, { email: unverified })}>{t("customerAuth.whatToDoNext")}</Link></p> : <p>{t("customerAuth.openTheVerificationLinkWeEmailed")}</p>}
             <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" variant="secondary" loading={resending} disabled={!!resent} onClick={() => void resend()}>Resend verification</Button>
-              <Button type="button" size="sm" variant="ghost" onClick={() => { setUnverified(null); setResent(null); }}>Use a different email</Button>
+              <Button type="button" size="sm" variant="secondary" loading={resending} disabled={!!resent} onClick={() => void resend()}>{t("customerAuth.resendVerification")}</Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => { setUnverified(null); setResent(null); }}>{t("customerAuth.useADifferentEmail")}</Button>
             </div>
           </div>
         ) : null}
         <div className="space-y-1.5">
-          <Label htmlFor="c-email">Email</Label>
+          <Label htmlFor="c-email">{t("common.email")}</Label>
           <Input id="c-email" type="email" inputMode="email" autoComplete="username" autoFocus aria-invalid={!!errors.email} {...register("email")} />
           {errors.email ? <p className="text-xs text-danger">{errors.email.message}</p> : null}
         </div>
-        <PasswordInput id="c-password" label="Password" autoComplete="current-password" error={errors.password?.message} {...register("password")} />
-        <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign in"}</Button>
-        <p className="text-center text-sm"><Link href="/account/forgot-password" className="text-brand hover:underline">Forgot your password?</Link></p>
+        <PasswordInput id="c-password" label={t("common.password")} autoComplete="current-password" error={errors.password?.message} {...register("password")} />
+        <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>{isSubmitting ? t("customerAuth.signingIn") : t("customerAuth.signIn")}</Button>
+        <p className="text-center text-sm"><Link href="/account/forgot-password" className="text-brand hover:underline">{t("customerAuth.forgotYourPassword")}</Link></p>
       </form>
       <div className="mt-6 border-t pt-6" data-testid="signup-cta">
-        <p className="text-sm text-muted-foreground">New to Benuu Print?</p>
-        <Button asChild variant="secondary" size="lg" className="mt-2 w-full"><Link href={authHref("/account/register", next)}>Create an account</Link></Button>
+        <p className="text-sm text-muted-foreground">{t("customerAuth.newToBenuuPrint")}</p>
+        <Button asChild variant="secondary" size="lg" className="mt-2 w-full"><Link href={authHref("/account/register", next)}>{t("customerAuth.createAnAccount")}</Link></Button>
       </div>
     </>
   );
 }
 
 export function ActivateForm() {
+  const { t } = useI18n();
   const router = useRouter();
   const token = useSearchParams().get("token") ?? "";
   const [error, setError] = useState<string | null>(null);
-  const schema = z.object({ password: passwordSchema, confirm: z.string() }).refine((v) => v.password === v.confirm, { path: ["confirm"], message: "The passwords do not match" });
+  const schema = z.object({ password: passwordSchema, confirm: z.string() }).refine((v) => v.password === v.confirm, { path: ["confirm"], message: t("customerAuth.thePasswordsDoNotMatch") });
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{ password: string; confirm: string }>({ resolver: zodResolver(schema) });
-  if (!token) return <Banner tone="error">This activation link is incomplete. Open the link from your invitation email, or ask Benuu Print to send a new one.</Banner>;
+  if (!token) return <Banner tone="error">{t("customerAuth.thisActivationLinkIsIncompleteOpen")}</Banner>;
   return (
-    <form onSubmit={handleSubmit(async (v) => { setError(null); try { await activateAccount({ token, password: v.password }); router.replace("/account/login?activated=1"); } catch (e) { setError(isApiError(e) && (e.status === 400 || e.status === 404 || e.status === 410) ? `${e.messages.join(" ")} If your link has expired, ask Benuu Print to send a new invitation.` : portalErrorText(e)); } })} noValidate className="space-y-4" aria-label="Activate your account">
+    <form onSubmit={handleSubmit(async (v) => { setError(null); try { await activateAccount({ token, password: v.password }); router.replace("/account/login?activated=1"); } catch (e) { setError(isApiError(e) && (e.status === 400 || e.status === 404 || e.status === 410) ? t("customerAuth.activationExpiredHint", { messages: e.messages.map((m) => t.text(m)).join(" ") }) : portalErrorText(e)); } })} noValidate className="space-y-4" aria-label={t("customerAuth.activateYourAccount")}>
       {error ? <Banner tone="error">{error}</Banner> : null}
-      <PasswordInput id="a-password" label="Choose a password" autoComplete="new-password" error={errors.password?.message} {...register("password")} />
-      <p className="-mt-2 text-xs text-muted-foreground">At least 12 characters, with a lowercase letter, an uppercase letter and a digit.</p>
-      <PasswordInput id="a-confirm" label="Repeat the password" autoComplete="new-password" error={errors.confirm?.message} {...register("confirm")} />
-      <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>Activate account</Button>
+      <PasswordInput id="a-password" label={t("customerAuth.chooseAPassword")} autoComplete="new-password" error={errors.password?.message} {...register("password")} />
+      <p className="-mt-2 text-xs text-muted-foreground">{t("customerAuth.atLeast12CharactersWithA")}</p>
+      <PasswordInput id="a-confirm" label={t("customerAuth.repeatThePassword")} autoComplete="new-password" error={errors.confirm?.message} {...register("confirm")} />
+      <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>{t("customerAuth.activateAccount")}</Button>
     </form>
   );
 }
 
 export function ForgotPasswordForm() {
+  const { t } = useI18n();
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{ email: string }>({ resolver: zodResolver(z.object({ email: z.string().trim().min(1, "Enter your email").email("Enter a valid email address") })) });
-  if (done) return <div className="space-y-4"><Banner tone="success">{done}</Banner><Link href="/account/login" className="text-sm text-brand hover:underline">Back to sign in</Link></div>;
+  if (done) return <div className="space-y-4"><Banner tone="success">{done}</Banner><Link href="/account/login" className="text-sm text-brand hover:underline">{t("customerAuth.backToSignIn")}</Link></div>;
   return (
-    <form onSubmit={handleSubmit(async (v) => { setError(null); try { const r = await forgotPassword(v); setDone(r?.message || "If an account matches, we have sent a link to reset the password."); } catch (e) { setError(portalErrorText(e)); } })} noValidate className="space-y-4" aria-label="Reset your password">
+    <form onSubmit={handleSubmit(async (v) => { setError(null); try { const r = await forgotPassword(v); setDone(r?.message || "If an account matches, we have sent a link to reset the password."); } catch (e) { setError(portalErrorText(e)); } })} noValidate className="space-y-4" aria-label={t("customerAuth.resetYourPassword")}>
       {error ? <Banner tone="error">{error}</Banner> : null}
-      <div className="space-y-1.5"><Label htmlFor="f-email">Email</Label><Input id="f-email" type="email" autoComplete="username" autoFocus {...register("email")} />{errors.email ? <p className="text-xs text-danger">{errors.email.message}</p> : null}</div>
-      <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>Send reset link</Button>
-      <p className="text-center text-sm"><Link href="/account/login" className="text-brand hover:underline">Back to sign in</Link></p>
+      <div className="space-y-1.5"><Label htmlFor="f-email">{t("common.email")}</Label><Input id="f-email" type="email" autoComplete="username" autoFocus {...register("email")} />{errors.email ? <p className="text-xs text-danger">{errors.email.message}</p> : null}</div>
+      <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>{t("customerAuth.sendResetLink")}</Button>
+      <p className="text-center text-sm"><Link href="/account/login" className="text-brand hover:underline">{t("customerAuth.backToSignIn")}</Link></p>
     </form>
   );
 }
 
 export function ResetPasswordForm() {
+  const { t } = useI18n();
   const router = useRouter();
   const token = useSearchParams().get("token") ?? "";
   const [error, setError] = useState<string | null>(null);
-  const schema = z.object({ password: passwordSchema, confirm: z.string() }).refine((v) => v.password === v.confirm, { path: ["confirm"], message: "The passwords do not match" });
+  const schema = z.object({ password: passwordSchema, confirm: z.string() }).refine((v) => v.password === v.confirm, { path: ["confirm"], message: t("customerAuth.thePasswordsDoNotMatch") });
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{ password: string; confirm: string }>({ resolver: zodResolver(schema) });
-  if (!token) return <Banner tone="error">This reset link is incomplete. Use the link from your email, or <Link href="/account/forgot-password" className="underline">request a new one</Link>.</Banner>;
+  if (!token) return <Banner tone="error">{t("customerAuth.thisResetLinkIsIncompleteUse")}{" "}<Link href="/account/forgot-password" className="underline">{t("customerAuth.requestANewOne")}</Link>.</Banner>;
   return (
-    <form onSubmit={handleSubmit(async (v) => { setError(null); try { await resetPassword({ token, newPassword: v.password }); router.replace("/account/login?reset=1"); } catch (e) { setError(portalErrorText(e)); } })} noValidate className="space-y-4" aria-label="Choose a new password">
+    <form onSubmit={handleSubmit(async (v) => { setError(null); try { await resetPassword({ token, newPassword: v.password }); router.replace("/account/login?reset=1"); } catch (e) { setError(portalErrorText(e)); } })} noValidate className="space-y-4" aria-label={t("customerAuth.chooseANewPassword")}>
       {error ? <Banner tone="error">{error}</Banner> : null}
-      <PasswordInput id="r-password" label="New password" autoComplete="new-password" error={errors.password?.message} {...register("password")} />
-      <p className="-mt-2 text-xs text-muted-foreground">At least 12 characters, with a lowercase letter, an uppercase letter and a digit.</p>
-      <PasswordInput id="r-confirm" label="Repeat the password" autoComplete="new-password" error={errors.confirm?.message} {...register("confirm")} />
-      <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>Set new password</Button>
+      <PasswordInput id="r-password" label={t("customerAuth.newPassword")} autoComplete="new-password" error={errors.password?.message} {...register("password")} />
+      <p className="-mt-2 text-xs text-muted-foreground">{t("customerAuth.atLeast12CharactersWithA")}</p>
+      <PasswordInput id="r-confirm" label={t("customerAuth.repeatThePassword")} autoComplete="new-password" error={errors.confirm?.message} {...register("confirm")} />
+      <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>{t("customerAuth.setNewPassword")}</Button>
     </form>
   );
 }

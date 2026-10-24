@@ -1,3 +1,6 @@
+"use client";
+
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
 
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
@@ -29,8 +32,9 @@ export function ColorSwatch({
   muted?: boolean;
   className?: string;
 }) {
+  const { t } = useI18n();
   const valid = isHex(hex);
-  const description = valid ? `${name}, ${hex!.toUpperCase()}` : `${name}, no colour value`;
+  const description = valid ? `${name}, ${hex!.toUpperCase()}` : `${name}, ${t("common.noColourValue")}`;
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-2", muted && "opacity-60", className)}>
       <span
@@ -49,7 +53,7 @@ export function ColorSwatch({
         <span className="min-w-0 leading-tight">
           <span className="block truncate text-sm font-medium">{name}</span>
           <span className="block truncate text-xs text-muted-foreground">
-            {[valid ? hex!.toUpperCase() : "No colour value", pantone ? `Pantone ${pantone}` : null, code].filter(Boolean).join(" · ")}
+            {[valid ? hex!.toUpperCase() : t("common.noColourValueCap"), pantone ? t("common.pantoneValue", { value: pantone }) : null, code].filter(Boolean).join(" · ")}
           </span>
         </span>
       ) : null}

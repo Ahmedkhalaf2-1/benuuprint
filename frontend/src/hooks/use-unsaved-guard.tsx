@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/dialog";
+import { useI18n } from "@/i18n/provider";
 
 /**
  * Guards unsaved changes against: tab close / reload (beforeunload) AND in-app link clicks (a capture-phase click
@@ -11,6 +12,7 @@ import { ConfirmDialog } from "@/components/ui/dialog";
  * Render the returned `dialog` somewhere in the page.
  */
 export function useUnsavedGuard(dirty: boolean) {
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const bypass = useRef(false);
@@ -44,9 +46,9 @@ export function useUnsavedGuard(dirty: boolean) {
     <ConfirmDialog
       open={pending !== null}
       onOpenChange={(o) => !o && setPending(null)}
-      title="Discard unsaved changes?"
-      description="You have changes that are not saved to this draft. If you leave now they will be lost."
-      confirmLabel="Discard and leave"
+      title={t("common.discardUnsavedChanges")}
+      description={t("common.youHaveChangesThatAreNot")}
+      confirmLabel={t("common.discardAndLeave")}
       destructive
       onConfirm={() => {
         const href = pending;

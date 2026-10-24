@@ -18,23 +18,28 @@ import * as api from "./api";
 import { useAddresses, useOptions, useOrder, useSample } from "./hooks";
 import { cellKey, cellsFromOrder, checkItems, itemsBody, setCellValue, toDateInput, toIsoDate, variantSum, type Cells } from "./order-builders";
 import type { OrderDetail } from "./types";
+import { useI18n } from "@/i18n/provider";
 
-const NOT_FOUND = <EmptyState title="Not found" description="We couldn't find that. It may have been removed, or the link may be wrong." action={<Button asChild variant="secondary"><Link href="/account/orders">Back to my orders</Link></Button>} className="py-20" />;
+function NotFound() {
+  const { t } = useI18n();
+  return <EmptyState title={t("customer.notFound")} description={t("customer.notFoundBody")} action={<Button asChild variant="secondary"><Link href="/account/orders">{t("customer.backToMyOrders")}</Link></Button>} className="py-20" />;
+}
 const gone = (e: unknown) => isApiError(e) && (e.kind === "not_found" || e.kind === "validation");
 
 interface Reference { sampleId: string; number: string; product: string | null; brand: string | null; fabricId: string | null }
 
 /** Size × colour grid with real ids from the configurator (no custom sizes or colours). */
 function Matrix({ sizes, colors, cells, onChange, disabled }: { sizes: Array<{ id: string; name: string }>; colors: Array<{ id: string; name: string }>; cells: Cells; onChange: (c: Cells) => void; disabled?: boolean }) {
+  const { t } = useI18n();
   const rows = colors.length ? colors : [{ id: "", name: "Approved colour" }];
   return (
     <div className="overflow-x-auto" data-testid="order-matrix">
       <table className="w-full text-sm">
-        <thead><tr><th className="p-2 text-start font-medium text-muted-foreground">{colors.length ? "Colour" : ""}</th>{sizes.map((s) => <th key={s.id} className="p-2 text-center font-medium">{s.name}</th>)}</tr></thead>
+        <thead><tr><th className="p-2 text-start font-medium text-muted-foreground">{colors.length ? t("common.colour") : ""}</th>{sizes.map((s) => <th key={s.id} className="p-2 text-center font-medium">{s.name}</th>)}</tr></thead>
         <tbody>{rows.map((c) => (
           <tr key={c.id || "base"} className="border-t">
             <th scope="row" className="whitespace-nowrap p-2 text-start font-normal">{c.name}</th>
-            {sizes.map((s) => <td key={s.id} className="p-1"><Input inputMode="numeric" className="h-9 w-20 text-center" aria-label={`${c.name} ${s.name} quantity`} disabled={disabled} value={cells[cellKey(s.id, c.id)] ?? ""} onChange={(e) => onChange(setCellValue(cells, cellKey(s.id, c.id), e.target.value.replace(/[^\d]/g, "")))} /></td>)}
+            {sizes.map((s) => <td key={s.id} className="p-1"><Input inputMode="numeric" className="h-9 w-20 text-center" aria-label={t("customer.nameName2Quantity", { name: c.name, name2: s.name })} disabled={disabled} value={cells[cellKey(s.id, c.id)] ?? ""} onChange={(e) => onChange(setCellValue(cells, cellKey(s.id, c.id), e.target.value.replace(/[^\d]/g, "")))} /></td>)}
           </tr>))}</tbody>
       </table>
     </div>
@@ -43,6 +48,7 @@ function Matrix({ sizes, colors, cells, onChange, disabled }: { sizes: Array<{ i
 
 /** Create (from an approved sample) or edit a draft order. Save Draft and Submit use the explicit routes; the status is never PATCHed. */
 export function OrderForm({ sampleId, orderId }: { sampleId?: string; orderId?: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const qc = useQueryClient();
   const order = useOrder(orderId);
@@ -70,17 +76,17 @@ export function OrderForm({ sampleId, orderId }: { sampleId?: string; orderId?: 
   const colors = fabric?.colors ?? [];
   const scales = useMemo(() => options.data?.sizeScales ?? [], [options.data]);
   const scale = scales.find((s) => s.id === scaleId) ?? scales[0];
-  const check = checkItems(total, cells);
+  const check = checkItems(total, cells, t);
 
   const loading = (orderId && order.isLoading) || sample.isLoading || options.isLoading;
   if (loading) return <PageSkeleton />;
-  if (orderId && order.error) return gone(order.error) ? NOT_FOUND : <ErrorState error={order.error} onRetry={() => order.refetch()} />;
-  if (sample.error) return gone(sample.error) ? NOT_FOUND : <ErrorState error={sample.error} onRetry={() => sample.refetch()} />;
+  if (orderId && order.error) return gone(order.error) ? <NotFound /> : <ErrorState error={order.error} onRetry={() => order.refetch()} />;
+  if (sample.error) return gone(sample.error) ? <NotFound /> : <ErrorState error={sample.error} onRetry={() => sample.refetch()} />;
   if (options.error) return <ErrorState error={options.error} onRetry={() => options.refetch()} />;
   const s = sample.data;
   if (!s) return null;
   if (orderId && order.data && !order.data.allowedActions.includes("EDIT_ORDER")) {
-    return <EmptyState title="This order can't be edited" description="Once an order is submitted our team takes over. You can follow its progress from the order page." action={<Button asChild><Link href={`/account/orders/${orderId}`}>View order</Link></Button>} className="py-20" />;
+    return <EmptyState title={t("customer.thisOrderCanTBeEdited")} description={t("customer.onceAnOrderIsSubmittedOur")} action={<Button asChild><Link href={`/account/orders/${orderId}`}>{t("customer.viewOrder")}</Link></Button>} className="py-20" />;
   }
   const ref: Reference = { sampleId: s.id, number: s.sampleNumber, product: s.productName ?? null, brand: s.brand.name, fabricId: s.fabricId };
   const noSizes = !scale || scale.sizes.length === 0;
@@ -89,8 +95,8 @@ export function OrderForm({ sampleId, orderId }: { sampleId?: string; orderId?: 
   const invalidate = () => { void qc.invalidateQueries({ queryKey: queryKeys.customer.orders }); };
   const save = async (submit: boolean) => {
     setError(null);
-    if (check.state !== "empty" && check.state !== "ok") { setError({ message: check.message ?? "Check the quantities." }); return; }
-    if (submit && check.state !== "ok") { setError({ message: "Enter the quantity and size breakdown before submitting." }); return; }
+    if (check.state !== "empty" && check.state !== "ok") { setError({ message: check.message ?? t("customer.checkTheQuantities") }); return; }
+    if (submit && check.state !== "ok") { setError({ message: t("customer.enterTheQuantityAndSizeBreakdown") }); return; }
     setBusy(submit ? "submit" : "save");
     let id = orderId;
     try {
@@ -109,7 +115,7 @@ export function OrderForm({ sampleId, orderId }: { sampleId?: string; orderId?: 
         router.replace(`/account/orders/${done.id}?submitted=1`);
       } else {
         invalidate();
-        toast.success("Draft saved");
+        toast.success(t("customer.draftSaved"));
         router.replace(`/account/orders/${id}/edit`);
       }
     } catch (e) {
@@ -121,44 +127,43 @@ export function OrderForm({ sampleId, orderId }: { sampleId?: string; orderId?: 
 
   return (
     <div className="space-y-6">
-      <p className="text-sm"><Link href={orderId ? `/account/orders/${orderId}` : `/account/samples/${s.id}`} className="text-muted-foreground hover:text-foreground hover:underline">← Back</Link></p>
-      <header className="space-y-1"><h1 className="text-2xl font-semibold tracking-tight">{orderId ? `Edit order ${order.data?.orderNumber ?? ""}` : "Start a bulk order"}</h1>
-        <p className="text-muted-foreground" data-testid="reference-note">This order will use your approved sample as the production reference.</p></header>
-      <Card data-testid="reference-card"><CardHeader><CardTitle>Approved sample</CardTitle></CardHeader><CardContent><dl className="grid gap-1 text-sm sm:grid-cols-[9rem_1fr]">
-        <dt className="text-muted-foreground">Sample</dt><dd className="font-mono">{ref.number}</dd>
-        <dt className="text-muted-foreground">Product</dt><dd>{ref.product ?? "—"}</dd>
-        <dt className="text-muted-foreground">Brand</dt><dd>{ref.brand}</dd>
+      <p className="text-sm"><Link href={orderId ? `/account/orders/${orderId}` : `/account/samples/${s.id}`} className="text-muted-foreground hover:text-foreground hover:underline">{t("customer.back")}</Link></p>
+      <header className="space-y-1"><h1 className="text-2xl font-semibold tracking-tight">{orderId ? t("customer.editOrderV1", { v1: order.data?.orderNumber ?? "" }) : t("customer.startABulkOrder")}</h1>
+        <p className="text-muted-foreground" data-testid="reference-note">{t("customer.thisOrderWillUseYourApproved")}</p></header>
+      <Card data-testid="reference-card"><CardHeader><CardTitle>{t("customer.approvedSample")}</CardTitle></CardHeader><CardContent><dl className="grid gap-1 text-sm sm:grid-cols-[9rem_1fr]">
+        <dt className="text-muted-foreground">{t("common.sample")}</dt><dd className="font-mono">{ref.number}</dd>
+        <dt className="text-muted-foreground">{t("common.product")}</dt><dd>{ref.product ?? "—"}</dd>
+        <dt className="text-muted-foreground">{t("common.brand2")}</dt><dd>{ref.brand}</dd>
       </dl></CardContent></Card>
 
-      <Card><CardHeader><CardTitle>Quantity</CardTitle></CardHeader><CardContent className="space-y-4">
-        <FormField id="ord-total" label="Total units" hint="How many pieces in all."><Input id="ord-total" inputMode="numeric" className="w-40" value={total} onChange={(e) => setTotal(e.target.value.replace(/[^\d]/g, ""))} /></FormField>
-        <div className="space-y-2"><h3 className="text-sm font-medium">Sizes{colors.length ? " and colours" : ""}</h3>
-          {noSizes ? <p role="status" data-testid="no-sizes" className="rounded-md bg-surface-muted px-3 py-2 text-sm">No sizes are available to choose right now. Please contact Benuu Print to set up your quantities.</p> : (
+      <Card><CardHeader><CardTitle>{t("common.quantity")}</CardTitle></CardHeader><CardContent className="space-y-4">
+        <FormField id="ord-total" label={t("customer.totalUnits2")} hint={t("customer.howManyPiecesInAll")}><Input id="ord-total" inputMode="numeric" className="w-40" value={total} onChange={(e) => setTotal(e.target.value.replace(/[^\d]/g, ""))} /></FormField>
+        <div className="space-y-2"><h3 className="text-sm font-medium">{t("customer.sizes")}{colors.length ? t("customer.andColours") : ""}</h3>
+          {noSizes ? <p role="status" data-testid="no-sizes" className="rounded-md bg-surface-muted px-3 py-2 text-sm">{t("customer.noSizesAreAvailableToChoose")}</p> : (
             <>
-              {scales.length > 1 ? <Select aria-label="Size range" className="w-56" value={scale.id} onValueChange={setScaleId} options={scales.map((x) => ({ value: x.id, label: x.name }))} /> : null}
+              {scales.length > 1 ? <Select aria-label={t("customer.sizeRange")} className="w-56" value={scale.id} onValueChange={setScaleId} options={scales.map((x) => ({ value: x.id, label: x.name }))} /> : null}
               <Matrix sizes={scale.sizes} colors={colors} cells={cells} onChange={setCells} />
-              {!colors.length ? <p className="text-xs text-muted-foreground">Your order uses the approved colour from your sample.</p> : null}
+              {!colors.length ? <p className="text-xs text-muted-foreground">{t("customer.yourOrderUsesTheApprovedColour")}</p> : null}
             </>)}
-          <p className={check.state === "mismatch" || check.state === "invalid" ? "text-sm font-medium text-destructive" : "text-sm text-muted-foreground"} role={check.message ? "alert" : undefined} data-testid="qty-summary">
-            Breakdown: {variantSum(cells)} · Order total: {total || 0}{check.message ? ` — ${check.message}` : check.state === "ok" ? " — matches" : ""}</p>
+          <p className={check.state === "mismatch" || check.state === "invalid" ? "text-sm font-medium text-destructive" : "text-sm text-muted-foreground"} role={check.message ? "alert" : undefined} data-testid="qty-summary">{t("customer.breakdownCellsOrderTotal", { cells: variantSum(cells) })}{" "}{total || 0}{check.message ? ` — ${check.message}` : check.state === "ok" ? t("customer.matches") : ""}</p>
         </div></CardContent></Card>
 
-      <Card><CardHeader><CardTitle>Delivery</CardTitle></CardHeader><CardContent className="space-y-4">
-        <FormField id="ord-date" label="Requested delivery date" hint="A request, not a guarantee. We'll confirm a realistic date after review."><DatePicker id="ord-date" className="w-48" value={date} onChange={(e) => setDate(e.target.value)} /></FormField>
-        <FormField id="ord-addr" label="Delivery address" hint="Addresses saved in your profile.">
-          {myAddresses.length ? <Select id="ord-addr" aria-label="Delivery address" value={addressId || "__none"} onValueChange={(v) => setAddressId(v === "__none" ? "" : v)} options={[{ value: "__none", label: "Choose an address…" }, ...myAddresses.map((a) => ({ value: a.id, label: `${a.addressLine1}, ${a.city}` }))]} /> : <p className="text-sm text-muted-foreground">You have no saved addresses yet.</p>}
+      <Card><CardHeader><CardTitle>{t("common.delivery")}</CardTitle></CardHeader><CardContent className="space-y-4">
+        <FormField id="ord-date" label={t("customer.requestedDeliveryDate")} hint={t("customer.aRequestNotAGuaranteeWe")}><DatePicker id="ord-date" className="w-48" value={date} onChange={(e) => setDate(e.target.value)} /></FormField>
+        <FormField id="ord-addr" label={t("customer.deliveryAddress")} hint={t("customer.addressesSavedInYourProfile")}>
+          {myAddresses.length ? <Select id="ord-addr" aria-label={t("customer.deliveryAddress")} value={addressId || "__none"} onValueChange={(v) => setAddressId(v === "__none" ? "" : v)} options={[{ value: "__none", label: t("customer.chooseAnAddress") }, ...myAddresses.map((a) => ({ value: a.id, label: `${a.addressLine1}, ${a.city}` }))]} /> : <p className="text-sm text-muted-foreground">{t("customer.youHaveNoSavedAddressesYet")}</p>}
         </FormField>
-        <p className="text-sm"><Link href="/account/profile" className="text-brand hover:underline">Add or edit addresses in your profile</Link></p>
+        <p className="text-sm"><Link href="/account/profile" className="text-brand hover:underline">{t("customer.addOrEditAddressesInYour")}</Link></p>
       </CardContent></Card>
 
-      <Card><CardHeader><CardTitle>Notes</CardTitle></CardHeader><CardContent><FormField id="ord-notes" label="Anything we should know?"><Textarea id="ord-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></FormField></CardContent></Card>
+      <Card><CardHeader><CardTitle>{t("common.notes")}</CardTitle></CardHeader><CardContent><FormField id="ord-notes" label={t("customer.anythingWeShouldKnow")}><Textarea id="ord-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></FormField></CardContent></Card>
 
-      <Card data-testid="order-review"><CardHeader><CardTitle>Review &amp; submit</CardTitle></CardHeader><CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">Submitting sends the order to our team to review. You can&apos;t change it afterwards, so check the quantities first.</p>
+      <Card data-testid="order-review"><CardHeader><CardTitle>{t("customer.reviewSubmit")}</CardTitle></CardHeader><CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">{t("customer.submittingSendsTheOrderToOur")}</p>
         {error ? <FormError message={error.message} requestId={error.requestId} /> : null}
         <div className="flex flex-wrap gap-3">
-          <Button variant="secondary" loading={busy === "save"} disabled={!!busy} onClick={() => void save(false)}>Save draft</Button>
-          <Button loading={busy === "submit"} disabled={!!busy || check.state !== "ok"} onClick={() => void save(true)}>Submit order</Button>
+          <Button variant="secondary" loading={busy === "save"} disabled={!!busy} onClick={() => void save(false)}>{t("common.saveDraft")}</Button>
+          <Button loading={busy === "submit"} disabled={!!busy || check.state !== "ok"} onClick={() => void save(true)}>{t("customer.submitOrder")}</Button>
         </div>
       </CardContent></Card>
     </div>

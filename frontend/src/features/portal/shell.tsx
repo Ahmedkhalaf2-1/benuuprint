@@ -7,6 +7,8 @@ import { LayoutDashboard, Package, Shirt, UserRound } from "lucide-react";
 import { PageSkeleton } from "@/components/feedback/states";
 import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/i18n/language-switcher";
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
 import { useCustomerAuth } from "./auth/customer-auth-provider";
 
@@ -32,31 +34,34 @@ export function PortalGuard({ children }: { children: ReactNode }) {
  * fixed bottom tab bar on phones (large touch targets, icon + label), so the four destinations are always one thumb-tap away.
  */
 export function PortalShell({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const { customer, logout } = useCustomerAuth();
   const pathname = usePathname();
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="sticky top-0 z-30 border-b bg-surface-sunken">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-x-6 px-4 sm:h-16">
-          <Link href="/account" aria-label="Benuu Print — my account"><Brand /></Link>
-          <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-surface-sunken pb-[env(safe-area-inset-bottom)] sm:static sm:order-2 sm:flex sm:gap-1 sm:border-0 sm:bg-transparent sm:pb-0">
+          <Link href="/account" aria-label={t("customer.benuuPrintMyAccount")}><Brand /></Link>
+          <nav aria-label={t("customer.main")} className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-surface-sunken pb-[env(safe-area-inset-bottom)] sm:static sm:order-2 sm:flex sm:gap-1 sm:border-0 sm:bg-transparent sm:pb-0">
             {NAV.map((n) => {
               const active = n.match(pathname);
               return (
                 <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={cn("relative flex min-h-16 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium uppercase tracking-[0.08em] transition-colors active:bg-white/5 sm:min-h-0 sm:h-9 sm:flex-row sm:gap-2 sm:rounded-sm sm:px-3 sm:text-sm sm:normal-case sm:tracking-normal", active ? "text-foreground before:absolute before:inset-x-4 before:top-0 before:h-0.5 before:bg-brand sm:bg-brand-soft/60 sm:before:inset-x-3 sm:before:top-auto sm:before:bottom-0" : "text-muted-foreground hover:text-foreground sm:hover:bg-white/5")}>
-                  <n.icon aria-hidden className={cn("size-5 sm:size-4", active && "text-brand")} />{n.label}
+                  <n.icon aria-hidden className={cn("size-5 sm:size-4", active && "text-brand")} />{t.text(n.label)}
                 </Link>
               );
             })}
           </nav>
           <div className="flex items-center gap-3 sm:order-3">
+            <LanguageSwitcher className="hidden sm:inline-flex" />
+            <LanguageSwitcher compact className="sm:hidden" />
             <span className="hidden max-w-48 truncate text-sm text-muted-foreground sm:inline" data-testid="portal-customer">{customer?.name}</span>
-            <Button variant="secondary" size="sm" onClick={() => void logout()}>Sign out</Button>
+            <Button variant="secondary" size="sm" onClick={() => void logout()}>{t("customer.signOut")}</Button>
           </div>
         </div>
       </header>
       <main className="bp-enter mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-28 sm:py-10 sm:pb-10">{children}</main>
-      <footer className="hidden border-t bg-surface-sunken px-4 py-4 text-center text-xs text-muted-foreground sm:block">Benuu Print · Questions? Contact your Benuu Print team.</footer>
+      <footer className="hidden border-t bg-surface-sunken px-4 py-4 text-center text-xs text-muted-foreground sm:block">{t("customer.benuuPrintQuestionsContactYourBenuu")}</footer>
     </div>
   );
 }

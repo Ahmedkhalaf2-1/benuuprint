@@ -13,6 +13,7 @@ import { useSampleInvalidation } from "./hooks";
 import * as api from "./api";
 import type { ActionMeta } from "./actions";
 import type { SampleDetail } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 /** Problems returned by a failed submit: "<section>: <message>" lines, shown together. */
 export function submissionProblems(e: unknown): string[] | null {
@@ -35,6 +36,7 @@ export function ActionDialog({
   /** Called after the action succeeded (e.g. leave the edit page after submit). */
   onDone?: (updated: SampleDetail) => void;
 }) {
+  const { t, locale } = useI18n();
   const router = useRouter();
   const inv = useSampleInvalidation();
   const [reason, setReason] = useState("");
@@ -46,7 +48,7 @@ export function ActionDialog({
     mutationFn: () => api.sampleAction(sample.id, meta.route, meta.reason === "none" ? undefined : { reason: reasonTrim || undefined }),
     onSuccess: (updated) => {
       inv.afterAction(sample.id);
-      toast.success(`${sample.sampleNumber}: ${meta.label.toLowerCase()} done`);
+      toast.success(t("samples.samplenumberV2Done", { sampleNumber: sample.sampleNumber, v2: locale === "en" ? meta.label.toLowerCase() : t.text(meta.label) }));
       onClose();
       onDone?.(updated);
       // `revise` returns the NEW revision (a new draft): go there.
@@ -65,18 +67,18 @@ export function ActionDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && !run.isPending && onClose()}>
-      <DialogContent title={`${meta.label} — ${sample.sampleNumber}`} description={meta.description}>
+      <DialogContent title={`${t.text(meta.label)} — ${sample.sampleNumber}`} description={meta.description}>
         <div className="space-y-3">
           {error ? <FormError {...error} /> : null}
           {meta.reason !== "none" ? (
             <div className="space-y-1.5">
-              <Label htmlFor="action-reason">Reason{meta.reason === "required" ? <span aria-hidden className="ms-0.5 text-danger">*</span> : <span className="font-normal text-muted-foreground"> (optional)</span>}</Label>
+              <Label htmlFor="action-reason">{t("common.reason")}{meta.reason === "required" ? <span aria-hidden className="ms-0.5 text-danger">*</span> : <span className="font-normal text-muted-foreground">{" "}{t("samples.optional")}</span>}</Label>
               <Textarea id="action-reason" autoFocus rows={3} value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} aria-required={meta.reason === "required"} />
             </div>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={onClose} disabled={run.isPending}>Back</Button>
-            <Button variant={meta.tone === "danger" ? "danger" : "primary"} loading={run.isPending} disabled={needReason} onClick={() => run.mutate()}>{meta.confirmLabel}</Button>
+            <Button variant="secondary" onClick={onClose} disabled={run.isPending}>{t("common.back")}</Button>
+            <Button variant={meta.tone === "danger" ? "danger" : "primary"} loading={run.isPending} disabled={needReason} onClick={() => run.mutate()}>{t.text(meta.confirmLabel)}</Button>
           </div>
         </div>
       </DialogContent>

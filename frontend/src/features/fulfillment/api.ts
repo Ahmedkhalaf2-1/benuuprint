@@ -1,3 +1,4 @@
+import { getActive } from "@/i18n/active";
 import { api } from "@/lib/api/client";
 import { env } from "@/lib/config/env";
 import type { Paginated, QueryParams } from "@/types/api";
@@ -45,6 +46,6 @@ export const revokeTrackingToken = (orderId: string) => api.delete<TrackingStatu
 /** The PUBLIC endpoint (no auth, token in the path): used only for the admin "Public tracking preview". */
 export async function fetchPublicTracking(token: string, signal?: AbortSignal): Promise<PublicTracking> {
   const r = await fetch(`${env.apiUrl}/track/orders/${enc(token)}`, { signal });
-  if (!r.ok) throw new Error(r.status === 404 ? "This tracking link is not valid (revoked, expired or unknown)." : `Tracking request failed (${r.status})`);
+  if (!r.ok) throw new Error(r.status === 404 ? getActive().t("fulfillment.trackingLinkInvalid") : getActive().t("fulfillment.trackingRequestFailed", { status: r.status }));
   return (await r.json()) as PublicTracking;
 }

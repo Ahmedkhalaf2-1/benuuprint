@@ -13,17 +13,19 @@ import { Label, Textarea } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConfiguratorOptions } from "@/features/master-data/hooks";
 import { errorMessage, isApiError } from "@/lib/api/errors";
-import { formatDateTime } from "@/lib/utils/format";
+
 import { APPROVAL_MODE_LABELS, label } from "./labels";
 import * as api from "./api";
 import { useActiveTerms, useSampleInvalidation } from "./hooks";
 import type { SampleDetail, Terms } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 /**
  * Active sample terms + acceptance. There is no customer login yet, so every acceptance is RECORDED BY STAFF on the
  * customer's behalf with a source note: the wording says so and never implies the customer accepted in the app.
  */
 export function TermsPanel({ sample, canRecord }: { sample: SampleDetail; canRecord: boolean }) {
+  const { t, fmt } = useI18n();
   const inv = useSampleInvalidation();
   const admin = useActiveTerms();
   const config = useConfiguratorOptions();
@@ -39,40 +41,40 @@ export function TermsPanel({ sample, canRecord }: { sample: SampleDetail; canRec
 
   return (
     <Card id="sec-terms" aria-labelledby="terms-title" className="scroll-mt-20">
-      <CardHeader><CardTitle><span id="terms-title">Sample terms</span></CardTitle>{acceptedActive ? <span className="inline-flex items-center gap-1 text-xs font-medium text-tone-success-fg"><CheckCircle2 aria-hidden className="size-4" /> Accepted</span> : null}</CardHeader>
+      <CardHeader><CardTitle><span id="terms-title">{t("samples.sampleTerms")}</span></CardTitle>{acceptedActive ? <span className="inline-flex items-center gap-1 text-xs font-medium text-tone-success-fg"><CheckCircle2 aria-hidden className="size-4" />{" "}{t("samples.accepted")}</span> : null}</CardHeader>
       <CardContent className="space-y-4">
-        {loading ? <Skeleton className="h-24" /> : admin.error && !terms && !isApiError(admin.error) ? <ErrorState error={admin.error} /> : !terms ? <p className="text-sm text-muted-foreground">No active sample terms are configured.</p> : (
+        {loading ? <Skeleton className="h-24" /> : admin.error && !terms && !isApiError(admin.error) ? <ErrorState error={admin.error} /> : !terms ? <p className="text-sm text-muted-foreground">{t("samples.noActiveSampleTermsAreConfigured")}</p> : (
           <>
             <div>
-              <p className="text-sm font-semibold">{terms.title} <span className="font-normal text-muted-foreground">· version {terms.version}{terms.effectiveAt ? ` · effective ${formatDateTime(terms.effectiveAt)}` : ""}</span></p>
-              <div tabIndex={0} role="region" aria-label="Terms text" className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-md border bg-surface-muted p-3 text-sm">{terms.content}</div>
+              <p className="text-sm font-semibold">{terms.title} <span className="font-normal text-muted-foreground">{t("samples.versionVersion", { version: terms.version })}{terms.effectiveAt ? t("samples.effectiveEffectiveat", { effectiveAt: fmt.dateTime(terms.effectiveAt) }) : ""}</span></p>
+              <div tabIndex={0} role="region" aria-label={t("samples.termsText")} className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-md border bg-surface-muted p-3 text-sm">{terms.content}</div>
             </div>
             {sample.termsAcceptances.length > 0 ? (
               <ul className="space-y-1.5" data-testid="terms-acceptances">
                 {sample.termsAcceptances.map((a) => (
                   <li key={a.id} className="rounded-md border px-3 py-2 text-sm">
                     <span className="font-medium">{a.title} v{a.version}</span> — {label(APPROVAL_MODE_LABELS, a.mode) || a.mode}
-                    <span className="block text-xs text-muted-foreground">{formatDateTime(a.acceptedAt)}{a.sourceNote ? ` · Source: ${a.sourceNote}` : ""}</span>
+                    <span className="block text-xs text-muted-foreground">{fmt.dateTime(a.acceptedAt)}{a.sourceNote ? t("samples.sourceSourcenote", { sourceNote: a.sourceNote }) : ""}</span>
                   </li>
                 ))}
               </ul>
-            ) : <p className="text-sm text-muted-foreground">No acceptance recorded yet. The active terms must be accepted before the sample can be submitted.</p>}
-            {!acceptedActive && sample.termsAcceptances.length > 0 ? <p role="status" className="text-sm text-tone-warning-fg">The recorded acceptance is for an older version; version {terms.version} is now active.</p> : null}
+            ) : <p className="text-sm text-muted-foreground">{t("samples.noAcceptanceRecordedYetTheActive")}</p>}
+            {!acceptedActive && sample.termsAcceptances.length > 0 ? <p role="status" className="text-sm text-tone-warning-fg">{t("samples.theRecordedAcceptanceIsForAn", { version: terms.version })}</p> : null}
             {canRecord && !acceptedActive ? (
               <form
                 className="space-y-3 rounded-md border bg-surface-muted p-3"
                 onSubmit={async (e) => {
                   e.preventDefault();
                   setError(null);
-                  try { await record.mutateAsync(); toast.success(`Acceptance of version ${terms.version} recorded`); setNote(""); setConfirm(false); } catch (err) { setError({ message: errorMessage(err), requestId: isApiError(err) ? err.requestId : undefined }); }
+                  try { await record.mutateAsync(); toast.success(t("samples.acceptanceOfVersionVersionRecorded", { version: terms.version })); setNote(""); setConfirm(false); } catch (err) { setError({ message: errorMessage(err), requestId: isApiError(err) ? err.requestId : undefined }); }
                 }}
               >
-                <p className="text-sm font-medium">Record acceptance of {terms.title} v{terms.version}</p>
-                <p className="text-xs text-muted-foreground">Recorded by staff on the customer&apos;s behalf. The customer is not signing in to accept.</p>
+                <p className="text-sm font-medium">{t("samples.recordAcceptanceOfTitleVVersion", { title: terms.title, version: terms.version })}</p>
+                <p className="text-xs text-muted-foreground">{t("samples.recordedByStaffOnTheCustomer")}</p>
                 {error ? <FormError {...error} /> : null}
-                <FormField id="terms-source" label="How was it accepted?" required hint="e.g. “Confirmed by WhatsApp on 21 Oct, 14:05”"><Textarea id="terms-source" rows={2} value={note} onChange={(e) => setNote(e.target.value)} /></FormField>
-                <div className="flex items-start gap-2"><Checkbox id="terms-confirm" checked={confirm} onCheckedChange={(c) => setConfirm(c === true)} className="mt-0.5" /><Label htmlFor="terms-confirm" className="font-normal">The customer accepted {terms.title} version {terms.version}.</Label></div>
-                <Button type="submit" loading={record.isPending} disabled={!confirm || note.trim().length < 3}>Record acceptance of v{terms.version}</Button>
+                <FormField id="terms-source" label={t("samples.howWasItAccepted")} required hint={t("samples.eGConfirmedByWhatsappOn")}><Textarea id="terms-source" rows={2} value={note} onChange={(e) => setNote(e.target.value)} /></FormField>
+                <div className="flex items-start gap-2"><Checkbox id="terms-confirm" checked={confirm} onCheckedChange={(c) => setConfirm(c === true)} className="mt-0.5" /><Label htmlFor="terms-confirm" className="font-normal">{t("samples.theCustomerAcceptedTitleVersionVersion", { title: terms.title, version: terms.version })}</Label></div>
+                <Button type="submit" loading={record.isPending} disabled={!confirm || note.trim().length < 3}>{t("samples.recordAcceptanceOfVVersion", { version: terms.version })}</Button>
               </form>
             ) : null}
           </>

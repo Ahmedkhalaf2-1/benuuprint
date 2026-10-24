@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { errorMessage } from "@/lib/api/errors";
 import { useArchiveCustomer, useSetCustomerStatus } from "./hooks";
+import { useI18n } from "@/i18n/provider";
 
 export function ArchiveCustomerDialog({
   customer,
@@ -14,21 +15,22 @@ export function ArchiveCustomerDialog({
   onOpenChange: (open: boolean) => void;
   onArchived?: () => void;
 }) {
+  const { t } = useI18n();
   const archive = useArchiveCustomer();
   return (
     <ConfirmDialog
       open={!!customer}
       onOpenChange={onOpenChange}
-      title={`Archive ${customer?.displayName ?? "customer"}?`}
-      description="The customer is hidden from lists and can no longer be edited or receive new brands. Its live brands are archived too; after restoring the customer, each brand must be restored individually. Nothing is deleted."
-      confirmLabel="Archive customer"
+      title={t("customers.archiveV1", { v1: customer?.displayName ?? "customer" })}
+      description={t("customers.theCustomerIsHiddenFromLists")}
+      confirmLabel={t("customers.archiveCustomer")}
       destructive
       loading={archive.isPending}
       onConfirm={() => {
         if (!customer) return;
         archive.mutate(customer.id, {
           onSuccess: () => {
-            toast.success(`${customer.displayName} archived`);
+            toast.success(t("customers.displaynameArchived", { displayName: customer.displayName }));
             onOpenChange(false);
             onArchived?.();
           },
@@ -44,6 +46,7 @@ export function ArchiveCustomerDialog({
 
 /** Restore = setting a status on an archived customer (there is no dedicated restore route). */
 export function useRestoreCustomer() {
+  const { t } = useI18n();
   const setStatus = useSetCustomerStatus();
   return {
     pending: setStatus.isPending,
@@ -52,7 +55,7 @@ export function useRestoreCustomer() {
         { id: customer.id, status: "ACTIVE" },
         {
           onSuccess: () => {
-            toast.success(`${customer.displayName} restored`, { description: "Its brands stay archived until restored individually." });
+            toast.success(t("customers.displaynameRestored", { displayName: customer.displayName }), { description: t("customers.itsBrandsStayArchivedUntilRestored") });
             after?.();
           },
           onError: (e) => toast.error(errorMessage(e)),

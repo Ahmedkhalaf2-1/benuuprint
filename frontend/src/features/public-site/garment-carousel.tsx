@@ -4,8 +4,10 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils/cn";
+import { scrollChildToCenter } from "@/lib/utils/scroll";
 import { START_SAMPLE_HREF } from "./content";
 import { GarmentPreview, type FabricVisualKey, type GarmentKind } from "./garment";
+import { useI18n } from "@/i18n/provider";
 
 export interface CarouselItem { name: string; kind: GarmentKind; lines: string[] }
 
@@ -16,7 +18,9 @@ const FABRIC: Partial<Record<GarmentKind, FabricVisualKey>> = { hoodie: "fleece"
  * Next card peeks in to signal swipe. Each card previews through `GarmentPreview` (the 3D-ready boundary) and ends in a quiet text action (no full-width button per card).
  * Swiping is never required: the chips and the normal page scroll reach everything.
  */
-export function GarmentCarousel({ items, label, className, actionHref = START_SAMPLE_HREF, actionLabel = (name) => `Start with ${name}` }: { items: CarouselItem[]; label: string; className?: string; actionHref?: string; actionLabel?: (name: string) => string }) {
+export function GarmentCarousel({ items, label, className, actionHref = START_SAMPLE_HREF, actionLabel }: { items: CarouselItem[]; label: string; className?: string; actionHref?: string; actionLabel?: (name: string) => string }) {
+  const { t } = useI18n();
+  const actionText = actionLabel ?? ((name: string) => t("site.startWithName", { name }));
   const track = useRef<HTMLUListElement>(null);
   const chips = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
@@ -40,12 +44,12 @@ export function GarmentCarousel({ items, label, className, actionHref = START_SA
     const card = el?.children[i] as HTMLElement | undefined;
     if (!el || !card) return;
     const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollTo({ left: card.offsetLeft - (el.clientWidth - card.clientWidth) / 2, behavior: reduce ? "auto" : "smooth" });
+    scrollChildToCenter(el, card, !reduce);
   };
 
   return (
     <div className={className} data-testid="garment-carousel">
-      <div ref={chips} role="tablist" aria-label={`${label} — choose`} className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+      <div ref={chips} role="tablist" aria-label={t("site.labelChoose", { label })} className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
         {items.map((it, i) => (
           <button key={it.kind} type="button" role="tab" aria-selected={i === active} onClick={() => select(i)} className={cn("h-11 shrink-0 border px-4 text-sm font-medium uppercase tracking-[0.04em] transition-colors active:scale-[0.97]", i === active ? "border-pub-brand bg-pub-brand-deep/25 text-pub-text" : "border-pub-line text-pub-muted")}>{it.name}</button>
         ))}
@@ -57,7 +61,7 @@ export function GarmentCarousel({ items, label, className, actionHref = START_SA
             <p className="mt-3 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-pub-muted"><span className="text-pub-brand">{String(i + 1).padStart(2, "0")}</span> / {String(items.length).padStart(2, "0")}</p>
             <h3 className="mt-1.5 text-2xl font-semibold uppercase leading-none tracking-[-0.04em]">{it.name}</h3>
             {it.lines.map((l, k) => <p key={k} className={cn("mt-1.5 text-sm leading-relaxed", k === 0 ? "text-pub-text/90" : "text-pub-muted")}>{l}</p>)}
-            <Link href={actionHref} className="group mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-pub-brand"><span className="pub-link">{actionLabel(it.name)}</span><ArrowRight aria-hidden className="size-4 transition-transform group-active:translate-x-0.5" /></Link>
+            <Link href={actionHref} className="group mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-pub-brand"><span className="pub-link">{actionText(it.name)}</span><ArrowRight aria-hidden className="size-4 transition-transform ltr:group-active:translate-x-0.5 rtl:group-active:-translate-x-0.5 rtl:-scale-x-100" /></Link>
           </li>
         ))}
       </ul>

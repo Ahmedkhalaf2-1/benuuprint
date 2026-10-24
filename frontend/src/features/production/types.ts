@@ -1,3 +1,4 @@
+import { getActive } from "@/i18n/active";
 /** Shapes verified against the live OpenAPI + live responses (2026-10-22). */
 export const STAGE_STATUSES = ["WAITING", "READY", "IN_PROGRESS", "BLOCKED", "COMPLETED", "SKIPPED", "FAILED", "CANCELLED"] as const;
 export type StageStatus = (typeof STAGE_STATUSES)[number];
@@ -196,7 +197,7 @@ export type TaskView = Record<string, unknown>;
 export interface OrderViewVariant { variantId: string; size: { code: string; name: string } | null; color: { name: string; hex: string | null } | null; quantity: number; notes: string | null }
 /** Bulk jobs: what the order asks for (no prices, no customer contact). */
 export interface OrderView { orderNumber: string; plannedQuantity: number; batch: boolean; items: Array<{ productName: string; notes: string | null; variants: OrderViewVariant[] }> }
-export const variantLabel = (v: OrderViewVariant) => [v.color?.name, v.size?.name].filter(Boolean).join(" / ") || "Variant";
+export const variantLabel = (v: OrderViewVariant) => [v.color?.name, v.size?.name].filter(Boolean).join(" / ") || getActive().t.text("Variant");
 export interface StaffStageDetail {
   stage: JobStage;
   job: StaffJobSummary;

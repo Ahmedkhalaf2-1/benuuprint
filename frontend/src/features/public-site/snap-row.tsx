@@ -2,6 +2,8 @@
 
 import { Children, useCallback, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
+import { scrollChildToCenter, scrollProgress } from "@/lib/utils/scroll";
+import { useI18n } from "@/i18n/provider";
 
 /**
  * Native CSS scroll-snap row with a position indicator. Children are the items (`<li>`s with their own snap/width classes).
@@ -9,6 +11,7 @@ import { cn } from "@/lib/utils/cn";
  * and move the row. `dotsClassName` controls where the dots are visible (e.g. phones only).
  */
 export function SnapRow({ label, className, dotsClassName = "lg:hidden", children }: { label: string; className?: string; dotsClassName?: string; children: ReactNode }) {
+  const { t } = useI18n();
   const ref = useRef<HTMLUListElement>(null);
   const items = Children.toArray(children);
   const [active, setActive] = useState(0);
@@ -16,8 +19,7 @@ export function SnapRow({ label, className, dotsClassName = "lg:hidden", childre
   const onScroll = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    const max = el.scrollWidth - el.clientWidth;
-    setActive(max <= 0 ? 0 : Math.round((el.scrollLeft / max) * (items.length - 1)));
+    setActive(Math.round(scrollProgress(el) * (items.length - 1)));
   }, [items.length]);
 
   const go = (i: number) => {
@@ -25,7 +27,7 @@ export function SnapRow({ label, className, dotsClassName = "lg:hidden", childre
     const child = el?.children[i] as HTMLElement | undefined;
     if (!el || !child) return;
     const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollTo({ left: child.offsetLeft - el.offsetLeft - (el.clientWidth - child.clientWidth) / 2, behavior: reduce ? "auto" : "smooth" });
+    scrollChildToCenter(el, child, !reduce);
   };
 
   return (
@@ -33,7 +35,7 @@ export function SnapRow({ label, className, dotsClassName = "lg:hidden", childre
       <ul ref={ref} aria-label={label} tabIndex={0} onScroll={onScroll} className={className}>{children}</ul>
       <div className={cn("mt-5 flex items-center justify-center gap-1", dotsClassName)} data-testid="snap-dots">
         {items.map((_, i) => (
-          <button key={i} type="button" aria-label={`Show item ${i + 1} of ${items.length}`} aria-current={i === active} onClick={() => go(i)} className="flex size-6 items-center justify-center">
+          <button key={i} type="button" aria-label={t("site.showItemV1OfLength", { v1: i + 1, length: items.length })} aria-current={i === active} onClick={() => go(i)} className="flex size-6 items-center justify-center">
             <span className={cn("h-1 rounded-full transition-all duration-300", i === active ? "w-6 bg-pub-brand" : "w-1.5 bg-pub-line")} />
           </button>
         ))}

@@ -1,3 +1,5 @@
+"use client";
+
 import { FULL_PROCESS } from "../content-pages";
 import { StartSampleLink } from "../cta";
 import { ProcessGarmentVisual, type ProcessStage } from "../garment";
@@ -5,6 +7,7 @@ import { PageHero, PublicCta } from "../page-shell";
 import { PhaseTabs } from "../phase-tabs";
 import { ProcessBand } from "../process-band";
 import { ProcessStep } from "../process-step";
+import { useI18n } from "@/i18n/provider";
 
 const PHASES = [
   { name: "Sample", intro: "Prove the garment before you scale it.", stage: 3 },
@@ -14,9 +17,10 @@ const PHASES = [
 
 /** The full eleven-step journey, in customer language. Each phase carries its own sticky garment visual (a 3D swap point via ProcessGarmentVisual). */
 export function ProcessPage({ videoSrc }: { videoSrc: string | null }) {
+  const { t } = useI18n();
   return (
     <main>
-      <PageHero eyebrow="Process" title={<>Eleven steps, <span className="text-pub-brand">all visible.</span></>} lede="From the first idea to your next reorder. You always know which step you are on and what happens next." outline="Steps">
+      <PageHero eyebrow={t("site.process")} title={<>{t("site.elevenSteps")}{" "}<span className="text-pub-brand">{t("site.allVisible")}</span></>} lede={t("site.fromTheFirstIdeaToYour")} outline={t("site.steps")}>
         <StartSampleLink />
       </PageHero>
       <div className="border-b border-pub-line"><div className="mx-auto w-full max-w-[88rem] px-5 py-8 sm:px-8 sm:py-12 lg:px-12"><ProcessBand videoSrc={videoSrc} /></div></div>
@@ -27,14 +31,14 @@ export function ProcessPage({ videoSrc }: { videoSrc: string | null }) {
           <section key={phase.name} aria-labelledby={`phase-${pi}`} className={pi % 2 ? "scroll-mt-28 border-b border-pub-line bg-pub-surface lg:scroll-mt-0" : "scroll-mt-28 border-b border-pub-line lg:scroll-mt-0"}>
             <div className="mx-auto grid w-full max-w-[88rem] gap-12 px-5 py-12 sm:px-8 sm:py-28 lg:grid-cols-[22rem_1fr] lg:gap-20 lg:px-12">
               <div className="lg:sticky lg:top-28 lg:self-start">
-                <p className="font-mono text-sm text-pub-brand">Phase {pi + 1}</p>
-                <h2 id={`phase-${pi}`} className="mt-3 text-[clamp(2.5rem,5vw,4.5rem)] font-semibold uppercase [line-height:0.92] tracking-[-0.045em]">{phase.name}</h2>
-                <p className="mt-4 text-pub-muted">{phase.intro}</p>
+                <p className="font-mono text-sm text-pub-brand">{t("site.phaseV1", { v1: pi + 1 })}</p>
+                <h2 id={`phase-${pi}`} className="mt-3 text-[clamp(2.5rem,5vw,4.5rem)] font-semibold uppercase [line-height:0.92] tracking-[-0.045em]">{t.text(phase.name)}</h2>
+                <p className="mt-4 text-pub-muted">{t.text(phase.intro)}</p>
                 <div className="mt-8 hidden aspect-square w-full max-w-[16rem] border border-pub-line bg-pub-bg p-3 lg:block"><ProcessGarmentVisual stage={phase.stage as ProcessStage} /></div>
               </div>
               <ol className="border-t border-pub-line">
                 {steps.map((s) => (
-                  <ProcessStep key={s.title} n={FULL_PROCESS.indexOf(s) + 1} title={s.title} body={s.body} you={s.you} see={s.see} />
+                  <ProcessStep key={s.title} n={FULL_PROCESS.indexOf(s) + 1} title={t.text(s.title)} body={t.text(s.body)} you={t.text(s.you)} see={t.text(s.see)} />
                 ))}
               </ol>
             </div>

@@ -115,9 +115,9 @@
   --radius-lg: 6px;
 
   /* Latin: Geist (SIL OFL, bundled via the `geist` package). Arabic-safe system fallbacks follow. */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic",
+  --font-sans: var(--font-geist-sans), "IBM Plex Sans Arabic", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic",
     "Noto Naskh Arabic", "Tahoma", "Arial", sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: var(--font-geist-mono), "IBM Plex Sans Arabic", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --text-title: 1.75rem;
   --text-section: 1.25rem;
@@ -202,3 +202,22 @@
     .pub-hero-fade { animation: pub-fade-away linear both; animation-timeline: scroll(root); animation-range: 0 80vh; }
   }
 }
+
+/*
+ * Arabic typography. Latin glyphs keep Geist (the font stacks above fall through to IBM Plex Sans Arabic only for Arabic glyphs).
+ * Arabic is a connected script: uppercase is meaningless, letter-spacing breaks the joins, and the very tight editorial line-heights
+ * clip the tall ascenders / marks. These rules are unlayered so they win over the utility classes without touching the English side.
+ */
+html[lang="ar"] [class*="uppercase"] { text-transform: none; }
+html[lang="ar"] [class*="tracking-"] { letter-spacing: 0; }
+html[lang="ar"] h1, html[lang="ar"] h2, html[lang="ar"] h3 { line-height: 1.22; word-spacing: 0.02em; }
+html[lang="ar"] h1 { line-height: 1.18; }
+html[lang="ar"] .pub-clip { padding-block: 0.08em; }
+html[lang="ar"] [class*="font-mono"] { font-feature-settings: normal; }
+/* Fixed leading utilities on running text */
+html[lang="ar"] p { line-height: 1.7; }
+/* Technical values stay left-to-right even inside Arabic pages */
+[dir="ltr"] { unicode-bidi: isolate; }
+
+/* Technical tokens (codes, keys, links to addresses) stay left-to-right and isolated inside RTL text. */
+html[dir="rtl"] code, html[dir="rtl"] kbd, html[dir="rtl"] samp, html[dir="rtl"] a[href^="mailto:"], html[dir="rtl"] a[href^="tel:"], html[dir="rtl"] [data-ltr] { direction: ltr; unicode-bidi: isolate; }

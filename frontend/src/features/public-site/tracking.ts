@@ -79,8 +79,9 @@ export const ORDER_STATUS_LABEL: Record<string, string> = {
 export const SHIPMENT_STATUS_LABEL: Record<string, string> = {
   PREPARING: "Preparing", ON_THE_WAY: "On the way", DELIVERED: "Delivered", DELIVERY_ATTEMPT_FAILED: "Delivery attempt failed", RETURNED: "Returned",
 };
-export const orderStatusLabel = (s: string) => ORDER_STATUS_LABEL[s] ?? humanize(s);
-export const shipmentStatusLabel = (s: string) => SHIPMENT_STATUS_LABEL[s] ?? humanize(s);
+/** `text` localises the English label (pass `t.text`); the backend status code itself is never translated or altered. */
+export const orderStatusLabel = (s: string, text: (en: string) => string = (x) => x) => text(ORDER_STATUS_LABEL[s] ?? humanize(s));
+export const shipmentStatusLabel = (s: string, text: (en: string) => string = (x) => x) => text(SHIPMENT_STATUS_LABEL[s] ?? humanize(s));
 
 export const TRACK_STEPS = ["Order received", "In production", "Packing", "On the way", "Delivered"] as const;
 /** Position on the five-step line, or null when the order is paused/cancelled (shown as a notice instead). */

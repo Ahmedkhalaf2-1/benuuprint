@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, TableSkeleton } from "@/components/feedback/sta
 import { cn } from "@/lib/utils/cn";
 import type { Paginated } from "@/types/api";
 import { Pagination } from "./pagination";
+import { useI18n } from "@/i18n/provider";
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -43,6 +44,7 @@ export function DataTable<T>({
   columns, result, isLoading, error, onRetry, sort, direction = "desc", onSortChange, onPageChange, onPageSizeChange,
   rowKey, rowActions, toolbar, emptyTitle, emptyDescription, empty, caption,
 }: DataTableProps<T>) {
+  const { t } = useI18n();
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is not memoizable by the React Compiler; known and harmless here
   const table = useReactTable({
     data: result?.data ?? [],
@@ -64,7 +66,7 @@ export function DataTable<T>({
       ) : isLoading ? (
         <TableSkeleton columns={Math.min(colCount, 6)} />
       ) : !result || result.data.length === 0 ? (
-        empty ?? <EmptyState title={emptyTitle ?? "No results"} description={emptyDescription ?? "Try changing the filters or search."} />
+        empty ?? <EmptyState title={emptyTitle ?? t("common.noResults")} description={emptyDescription ?? t("common.tryChangingTheFiltersOrSearch")} />
       ) : (
         <>
           <div className="relative overflow-x-auto">
@@ -85,16 +87,16 @@ export function DataTable<T>({
                         >
                           {sortKey && onSortChange ? (
                             <button type="button" className="inline-flex items-center gap-1 hover:text-foreground" onClick={() => onSortChange(sortKey, active && direction === "asc" ? "desc" : "asc")}>
-                              {flexRender(h.column.columnDef.header, h.getContext())}
+                              {typeof h.column.columnDef.header === "string" ? t.text(h.column.columnDef.header) : flexRender(h.column.columnDef.header, h.getContext())}
                               {active ? (direction === "asc" ? <ArrowUp aria-hidden className="size-3" /> : <ArrowDown aria-hidden className="size-3" />) : <ChevronsUpDown aria-hidden className="size-3 opacity-50" />}
                             </button>
                           ) : (
-                            flexRender(h.column.columnDef.header, h.getContext())
+                            typeof h.column.columnDef.header === "string" ? t.text(h.column.columnDef.header) : flexRender(h.column.columnDef.header, h.getContext())
                           )}
                         </th>
                       );
                     })}
-                    {rowActions ? <th scope="col" className="w-10 px-4"><span className="sr-only">Actions</span></th> : null}
+                    {rowActions ? <th scope="col" className="w-10 px-4"><span className="sr-only">{t("common.actions")}</span></th> : null}
                   </tr>
                 ))}
               </thead>

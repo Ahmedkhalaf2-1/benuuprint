@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
+import { useI18n } from "@/i18n/provider";
 
 export const MASTER_SECTIONS = [
   { label: "Overview", href: "/master-data", exact: true },
@@ -18,9 +19,10 @@ export const MASTER_SECTIONS = [
 
 /** Section tabs. Real links (keyboard + middle-click friendly) with aria-current on the active one. */
 export function MasterNav() {
+  const { t } = useI18n();
   const pathname = usePathname();
   return (
-    <nav aria-label="Master data sections" className="-mt-1 mb-5 overflow-x-auto border-b">
+    <nav aria-label={t("masterData.masterDataSections")} className="-mt-1 mb-5 overflow-x-auto border-b">
       <ul className="flex min-w-max gap-5">
         {MASTER_SECTIONS.map((s) => {
           const active = "exact" in s ? pathname === s.href : pathname === s.href || pathname.startsWith(`${s.href}/`);
@@ -31,7 +33,7 @@ export function MasterNav() {
                 aria-current={active ? "page" : undefined}
                 className={cn("-mb-px inline-flex h-10 items-center whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground", active && "border-brand text-foreground")}
               >
-                {s.label}
+                {t.text(s.label)}
               </Link>
             </li>
           );

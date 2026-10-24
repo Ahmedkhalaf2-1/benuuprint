@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+import { localizedTitle } from "@/i18n/server";
 import { NewSample } from "@/features/portal/new-sample";
 
-export const metadata: Metadata = { title: "Request a sample" };
+export const generateMetadata = () => localizedTitle("Request a sample");
 
 export default function Page() {
   return <NewSample />;

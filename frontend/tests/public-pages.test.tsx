@@ -4,6 +4,12 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const state = vi.hoisted(() => ({ locale: "en" as "en" | "ar" }));
+vi.mock("@/i18n/server", async () => {
+  const { buildI18n } = await import("@/i18n/provider");
+  return { getLocale: async () => state.locale, getI18n: async () => buildI18n(state.locale) };
+});
+
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn() }), usePathname: () => "/about", useSearchParams: () => new URLSearchParams(), redirect: vi.fn() }));
 
@@ -19,7 +25,7 @@ import { buildRobots, buildSitemap, organizationJsonLd, pageMetadata } from "@/f
 import { TrackEntry } from "@/features/public-site/track-entry";
 import { extractToken, loadTracking, toTrackingView } from "@/features/public-site/tracking";
 
-afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); push.mockClear(); });
+afterEach(() => { state.locale = "en"; vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); push.mockClear(); });
 
 const EXPECTED = ["/", "/capabilities", "/products", "/fabrics", "/process", "/about", "/contact", "/track", "/privacy", "/terms"];
 const SITE = "https://example.test";
@@ -50,7 +56,8 @@ describe("sitemap, robots, metadata", () => {
   });
   it("every public page exports title, description, Open Graph and Twitter metadata", async () => {
     for (const slug of ["capabilities", "products", "fabrics", "process", "about", "contact", "track", "privacy", "terms"]) {
-      const { metadata } = await import(`@/app/(public)/${slug}/page`);
+      const { generateMetadata } = await import(`@/app/(public)/${slug}/page`);
+      const metadata = await generateMetadata();
       expect(metadata.title, slug).toBeTruthy();
       expect(metadata.description?.length, slug).toBeGreaterThan(40);
       expect(metadata.openGraph?.title, slug).toContain("Benuu Print");
@@ -59,12 +66,26 @@ describe("sitemap, robots, metadata", () => {
     }
   });
   it("canonical URLs exist only when a site URL is configured", async () => {
-    expect(pageMetadata({ path: "/about", title: "About", description: "d" }).alternates).toBeUndefined();
+    expect((await pageMetadata({ path: "/about", title: "About", description: "d" })).alternates).toBeUndefined();
     vi.resetModules();
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
     const seo = await import("@/features/public-site/seo");
-    expect(seo.pageMetadata({ path: "/about", title: "About", description: "d" }).alternates).toEqual({ canonical: "/about" });
+    expect((await seo.pageMetadata({ path: "/about", title: "About", description: "d" })).alternates).toEqual({ canonical: "/about" });
     expect((seo.publicGroupMetadata.metadataBase as URL).origin).toBe(SITE);
+  });
+  it("Arabic mode localises titles, descriptions and Open Graph text but keeps the brand, canonical and robots", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
+    state.locale = "ar";
+    const { generateMetadata } = await import("@/app/(public)/about/page");
+    const m = await generateMetadata();
+    expect(String(m.title)).toBe("من نحن");
+    expect(m.description).toMatch(/Benuu Print/);
+    expect(m.description).toMatch(/[\u0600-\u06FF]/);
+    expect((m.openGraph as { title: string }).title).toBe("من نحن · Benuu Print");
+    expect((m.openGraph as { siteName: string }).siteName).toBe("Benuu Print");
+    expect(m.alternates).toEqual({ canonical: "/about" });
+    expect(JSON.stringify(m)).not.toMatch(/hreflang|languages/);
   });
   it("structured data holds only known facts", () => {
     const ld = organizationJsonLd("");
@@ -72,7 +93,8 @@ describe("sitemap, robots, metadata", () => {
     expect(organizationJsonLd(SITE)).toMatchObject({ url: SITE });
   });
   it("tracking links are never indexed and never leak a referrer", async () => {
-    const { metadata } = await import("@/app/(public)/track/[token]/page");
+    const { generateMetadata } = await import("@/app/(public)/track/[token]/page");
+    const metadata = await generateMetadata();
     expect(metadata.robots).toEqual({ index: false, follow: false });
     expect(metadata.referrer).toBe("no-referrer");
   });

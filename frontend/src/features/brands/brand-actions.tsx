@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { errorMessage } from "@/lib/api/errors";
 import { useArchiveBrand, useRestoreBrand } from "./hooks";
+import { useI18n } from "@/i18n/provider";
 
 export function ArchiveBrandDialog({
   brand,
@@ -14,20 +15,21 @@ export function ArchiveBrandDialog({
   onOpenChange: (open: boolean) => void;
   onArchived?: () => void;
 }) {
+  const { t } = useI18n();
   const archive = useArchiveBrand();
   return (
     <ConfirmDialog
       open={!!brand}
       onOpenChange={onOpenChange}
-      title={`Archive ${brand?.name ?? "brand"}?`}
-      description="The brand is hidden from default lists and its name becomes available again for this customer. Restoring it later re-checks that the name is still free. Nothing is deleted."
-      confirmLabel="Archive brand"
+      title={t("brands.archiveV1", { v1: brand?.name ?? "brand" })}
+      description={t("brands.theBrandIsHiddenFromDefault")}
+      confirmLabel={t("brands.archiveBrand")}
       destructive
       loading={archive.isPending}
       onConfirm={() => {
         if (!brand) return;
         archive.mutate({ id: brand.id, customerId: brand.customerId }, {
-          onSuccess: () => { toast.success(`${brand.name} archived`); onOpenChange(false); onArchived?.(); },
+          onSuccess: () => { toast.success(t("brands.nameArchived", { name: brand.name })); onOpenChange(false); onArchived?.(); },
           onError: (e) => { toast.error(errorMessage(e)); onOpenChange(false); },
         });
       }}
@@ -37,12 +39,13 @@ export function ArchiveBrandDialog({
 
 /** Restore = setting a status on an archived brand. 409 if the customer is still archived or the name is taken. */
 export function useRestoreBrandAction() {
+  const { t } = useI18n();
   const m = useRestoreBrand();
   return {
     pending: m.isPending,
     restore: (brand: { id: string; name: string; customerId: string }, after?: () => void) =>
       m.mutate({ id: brand.id, customerId: brand.customerId }, {
-        onSuccess: () => { toast.success(`${brand.name} restored`); after?.(); },
+        onSuccess: () => { toast.success(t("brands.nameRestored", { name: brand.name })); after?.(); },
         onError: (e) => toast.error(errorMessage(e)),
       }),
   };

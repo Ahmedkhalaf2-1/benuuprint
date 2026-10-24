@@ -1,4 +1,7 @@
+"use client";
+
 import { AlertOctagon, AlertTriangle, Info } from "lucide-react";
+import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils/cn";
 
 export type Severity = "INFO" | "WARNING" | "CRITICAL";
@@ -18,13 +21,15 @@ export function SeverityBadge({
   iconOnly?: boolean;
   className?: string;
 }) {
+  const { t, fmt } = useI18n();
   const c = config[severity as Severity] ?? config.INFO;
+  const text = fmt.code(config[severity as Severity] ? severity : "INFO");
   const Icon = c.Icon;
   return (
     <span
       role="status"
       data-severity={severity}
-      aria-label={`Severity: ${c.label}`}
+      aria-label={t("common.severityLabel", { label: text })}
       className={cn(
         "inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-sm px-1.5 text-[0.75rem] font-medium leading-none",
         c.cls,
@@ -32,7 +37,7 @@ export function SeverityBadge({
       )}
     >
       <Icon aria-hidden className="size-3.5" />
-      {iconOnly ? <span className="sr-only">{c.label}</span> : c.label}
+      {iconOnly ? <span className="sr-only">{text}</span> : text}
     </span>
   );
 }

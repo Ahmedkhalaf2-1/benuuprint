@@ -1,6 +1,6 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@/lib/forms/resolver";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,10 +15,11 @@ import { CustomerPicker, type PickedCustomer } from "@/features/customers/custom
 import { emptyToNull, omitEmpty } from "@/features/customers/schemas";
 import { useWarnUnsaved } from "@/hooks/use-warn-unsaved";
 import { applyApiErrors } from "@/lib/forms/api-errors";
-import { humanizeCode } from "@/lib/utils/format";
+
 import { useCreateBrand, useUpdateBrand } from "./hooks";
 import { BRAND_FIELDS, brandSchema, type BrandFormValues } from "./schemas";
 import { BRAND_EDITABLE_STATUSES, type BrandDetail } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 const empty: BrandFormValues = { name: "", instagram: "", website: "", description: "", primaryColor: "", secondaryColor: "", status: "ACTIVE" };
 
@@ -41,6 +42,7 @@ function ColorInput({ id, error, register, value }: { id: string; error?: string
 
 /** Create (needs a customer) or edit (customer is fixed: UpdateBrandDto cannot move a brand). */
 export function BrandForm({ brand, initialCustomer }: { brand?: BrandDetail; initialCustomer?: PickedCustomer | null }) {
+  const { t, fmt } = useI18n();
   const router = useRouter();
   const [customer, setCustomer] = useState<PickedCustomer | null>(brand?.customer ?? initialCustomer ?? null);
   const [customerError, setCustomerError] = useState<string | null>(null);
@@ -63,11 +65,11 @@ export function BrandForm({ brand, initialCustomer }: { brand?: BrandDetail; ini
     try {
       if (brand) {
         const saved = await update.mutateAsync(emptyToNull(v, ["name", "status"]));
-        toast.success("Brand updated");
+        toast.success(t("brands.brandUpdated"));
         router.push(`/brands/${saved.id}`);
       } else {
         const created = await create.mutateAsync(omitEmpty(v) as Parameters<typeof create.mutateAsync>[0]);
-        toast.success(`${created.brandNumber} created`);
+        toast.success(t("brands.brandnumberCreated", { brandNumber: created.brandNumber }));
         router.push(`/brands/${created.id}`);
       }
     } catch (e) {
@@ -81,11 +83,11 @@ export function BrandForm({ brand, initialCustomer }: { brand?: BrandDetail; ini
   const archivedCustomerHint = brand?.status === "ARCHIVED";
 
   return (
-    <form onSubmit={onSubmit} noValidate aria-label={brand ? "Edit brand" : "New brand"} className="max-w-3xl space-y-4">
+    <form onSubmit={onSubmit} noValidate aria-label={brand ? t("brands.editBrand") : t("brands.newBrand")} className="max-w-3xl space-y-4">
       {formError ? <FormError {...formError} /> : null}
       <Card>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <FormField id="customer" label="Customer" required error={customerError ?? undefined} className="sm:col-span-2" hint={brand ? "A brand cannot be moved to another customer." : undefined}>
+          <FormField id="customer" label={t("common.customer")} required error={customerError ?? undefined} className="sm:col-span-2" hint={brand ? t("brands.aBrandCannotBeMovedTo") : undefined}>
             {brand ? (
               <p className="flex h-9 items-center text-sm">
                 <Link href={`/customers/${brand.customer.id}`} className="hover:text-brand hover:underline">{brand.customer.customerNumber} · {brand.customer.displayName}</Link>
@@ -94,22 +96,22 @@ export function BrandForm({ brand, initialCustomer }: { brand?: BrandDetail; ini
               <CustomerPicker id="customer" value={customer} onChange={(c) => { setCustomer(c); setCustomerError(null); }} invalid={!!customerError} describedBy={customerError ? "customer-error" : undefined} />
             )}
           </FormField>
-          <FormField id="name" label="Brand name" required error={err("name")} className="sm:col-span-2" hint="Unique per customer, ignoring upper/lower case.">
+          <FormField id="name" label={t("brands.brandName")} required error={err("name")} className="sm:col-span-2" hint={t("brands.uniquePerCustomerIgnoringUpperLower")}>
             <Input id="name" autoFocus aria-invalid={!!errors.name} aria-describedby={errors.name ? "name-error" : "name-hint"} {...register("name")} />
           </FormField>
-          <FormField id="instagram" label="Instagram" error={err("instagram")} hint="Handle without @"><Input id="instagram" {...register("instagram")} /></FormField>
-          <FormField id="website" label="Website" error={err("website")}><Input id="website" type="url" placeholder="https://" aria-invalid={!!errors.website} {...register("website")} /></FormField>
-          <FormField id="primaryColor" label="Primary colour" error={err("primaryColor")}><ColorInput id="primaryColor" register={register} value={w_primaryColor} error={err("primaryColor")} /></FormField>
-          <FormField id="secondaryColor" label="Secondary colour" error={err("secondaryColor")}><ColorInput id="secondaryColor" register={register} value={w_secondaryColor} error={err("secondaryColor")} /></FormField>
-          <FormField id="status" label="Status" error={err("status")} hint={archivedCustomerHint ? "Setting a status restores this archived brand." : undefined}>
-            <Select id="status" value={w_status} onValueChange={(v) => setValue("status", v as BrandFormValues["status"], { shouldDirty: true })} options={BRAND_EDITABLE_STATUSES.map((s) => ({ value: s, label: humanizeCode(s) }))} />
+          <FormField id="instagram" label={t("brands.instagram")} error={err("instagram")} hint={t("brands.handleWithout")}><Input id="instagram" {...register("instagram")} /></FormField>
+          <FormField id="website" label={t("brands.website")} error={err("website")}><Input id="website" type="url" placeholder="https://" aria-invalid={!!errors.website} {...register("website")} /></FormField>
+          <FormField id="primaryColor" label={t("brands.primaryColour")} error={err("primaryColor")}><ColorInput id="primaryColor" register={register} value={w_primaryColor} error={err("primaryColor")} /></FormField>
+          <FormField id="secondaryColor" label={t("brands.secondaryColour")} error={err("secondaryColor")}><ColorInput id="secondaryColor" register={register} value={w_secondaryColor} error={err("secondaryColor")} /></FormField>
+          <FormField id="status" label={t("common.status")} error={err("status")} hint={archivedCustomerHint ? t("brands.settingAStatusRestoresThisArchived") : undefined}>
+            <Select id="status" value={w_status} onValueChange={(v) => setValue("status", v as BrandFormValues["status"], { shouldDirty: true })} options={BRAND_EDITABLE_STATUSES.map((s) => ({ value: s, label: fmt.code(s) }))} />
           </FormField>
-          <FormField id="description" label="Description" error={err("description")} className="sm:col-span-2"><Textarea id="description" rows={3} {...register("description")} /></FormField>
+          <FormField id="description" label={t("common.description")} error={err("description")} className="sm:col-span-2"><Textarea id="description" rows={3} {...register("description")} /></FormField>
         </CardContent>
       </Card>
       <div className="flex items-center gap-2">
-        <Button type="submit" loading={pending} disabled={pending || (!!brand && !isDirty)}>{brand ? "Save changes" : "Create brand"}</Button>
-        <Button type="button" variant="secondary" onClick={() => router.back()} disabled={pending}>Cancel</Button>
+        <Button type="submit" loading={pending} disabled={pending || (!!brand && !isDirty)}>{brand ? t("brands.saveChanges") : t("brands.createBrand")}</Button>
+        <Button type="button" variant="secondary" onClick={() => router.back()} disabled={pending}>{t("common.cancel")}</Button>
       </div>
     </form>
   );

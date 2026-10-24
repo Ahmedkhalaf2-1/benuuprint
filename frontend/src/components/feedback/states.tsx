@@ -1,16 +1,20 @@
+"use client";
+
 import { AlertCircle, Inbox, ShieldX } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils/cn";
+import { useI18n } from "@/i18n/provider";
 
 function StateShell({ icon, title, description, children, className, role }: { icon: ReactNode; title: string; description?: ReactNode; children?: ReactNode; className?: string; role?: "alert" | "status" }) {
+  const { t } = useI18n();
   return (
     <div role={role} className={cn("flex flex-col items-center justify-center gap-2 px-4 py-10 text-center", className)}>
       <div aria-hidden className="flex size-11 items-center justify-center rounded-sm border bg-surface-sunken text-muted-foreground [&_svg]:size-5">{icon}</div>
-      <h3 className="text-base font-semibold tracking-tight">{title}</h3>
-      {description ? <p className="max-w-sm text-sm text-muted-foreground">{description}</p> : null}
+      <h3 className="text-base font-semibold tracking-tight">{t.text(title)}</h3>
+      {description ? <p className="max-w-sm text-sm text-muted-foreground">{typeof description === "string" ? t.text(description) : description}</p> : null}
       {children ? <div className="mt-2 flex flex-wrap justify-center gap-2">{children}</div> : null}
     </div>
   );
@@ -25,12 +29,13 @@ export function EmptyState({ title = "Nothing here yet", description, icon, acti
 }
 
 export function ErrorState({ error, title = "Something went wrong", onRetry, className }: { error?: unknown; title?: string; onRetry?: () => void; className?: string }) {
+  const { t } = useI18n();
   const api = error instanceof ApiError ? error : null;
-  const description = api ? api.messages.join(" ") : "Please try again.";
+  const description = api ? api.messages.map((m) => t.text(m)).join(" ") : t.text("Please try again.");
   return (
     <StateShell role="alert" icon={<AlertCircle className="text-danger" />} title={title} description={description} className={className}>
-      {onRetry ? <Button variant="secondary" size="sm" onClick={onRetry}>Try again</Button> : null}
-      {api?.requestId ? <p className="w-full text-xs text-muted-foreground">Reference: <code className="font-mono">{api.requestId}</code></p> : null}
+      {onRetry ? <Button variant="secondary" size="sm" onClick={onRetry}>{t("common.tryAgain")}</Button> : null}
+      {api?.requestId ? <p className="w-full text-xs text-muted-foreground">{t("common.referenceLabel")} <code className="font-mono">{api.requestId}</code></p> : null}
     </StateShell>
   );
 }
@@ -50,8 +55,9 @@ export function MetricSkeleton() {
 }
 
 export function TableSkeleton({ rows = 8, columns = 5 }: { rows?: number; columns?: number }) {
+  const { t } = useI18n();
   return (
-    <div role="status" aria-label="Loading table" className="divide-y">
+    <div role="status" aria-label={t("common.loadingTable")} className="divide-y">
       {Array.from({ length: rows }, (_, r) => (
         <div key={r} className="flex gap-4 px-4 py-3">
           {Array.from({ length: columns }, (_, c) => (
@@ -64,8 +70,9 @@ export function TableSkeleton({ rows = 8, columns = 5 }: { rows?: number; column
 }
 
 export function PageSkeleton() {
+  const { t } = useI18n();
   return (
-    <div role="status" aria-label="Loading page" className="space-y-5">
+    <div role="status" aria-label={t("common.loadingPage")} className="space-y-5">
       <div className="space-y-2"><Skeleton className="h-8 w-56" /><Skeleton className="h-4 w-80" /></div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({ length: 4 }, (_, i) => <MetricSkeleton key={i} />)}</div>
       <Skeleton className="h-64 w-full" />
@@ -74,8 +81,9 @@ export function PageSkeleton() {
 }
 
 export function DetailSkeleton() {
+  const { t } = useI18n();
   return (
-    <div role="status" aria-label="Loading details" className="space-y-5">
+    <div role="status" aria-label={t("common.loadingDetails")} className="space-y-5">
       <div className="space-y-2"><Skeleton className="h-3 w-24" /><Skeleton className="h-8 w-72" /></div>
       <Skeleton className="h-40 w-full" />
       <Skeleton className="h-56 w-full" />

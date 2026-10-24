@@ -8,12 +8,13 @@ import { AccessDeniedState, DetailSkeleton, EmptyState, ErrorState } from "@/com
 import { DetailHeader, InfoGrid, InfoItem } from "@/components/layout/detail";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { isApiError } from "@/lib/api/errors";
-import { formatDateTime, humanizeCode } from "@/lib/utils/format";
+import { humanizeCode } from "@/lib/utils/format";
 import { useProductType, useProductTypeFabrics, useProductTypes } from "./hooks";
 import { Compatibility } from "./compatibility";
 import { ADMIN_MANAGED, ReferenceListPage } from "./reference-list-page";
 import { rowStatus } from "./status";
 import { PRODUCT_CATEGORIES, type ProductType } from "./types";
+import { useI18n } from "@/i18n/provider";
 
 const dash = <span className="text-muted-foreground">—</span>;
 
@@ -27,26 +28,28 @@ const columns: ColumnDef<ProductType, unknown>[] = [
 ];
 
 export function ProductTypesPage() {
+  const { t, fmt } = useI18n();
   return (
     <ReferenceListPage
-      title="Product types"
-      description="Garment types a sample or order can be made of."
-      caption="Product types"
+      title={t("masterData.productTypes")}
+      description={t("masterData.garmentTypesASampleOrOrder")}
+      caption={t("masterData.productTypes")}
       columns={columns}
       useList={useProductTypes}
-      emptyTitle="No product types configured"
-      filters={[{ param: "category", label: "Categories", options: PRODUCT_CATEGORIES.map((c) => ({ value: c, label: humanizeCode(c) })) }]}
+      emptyTitle={t("masterData.noProductTypesConfigured")}
+      filters={[{ param: "category", label: t("masterData.categories"), options: PRODUCT_CATEGORIES.map((c) => ({ value: c, label: fmt.code(c) })) }]}
     />
   );
 }
 
 export function ProductTypeDetailPage({ id }: { id: string }) {
+  const { t, fmt } = useI18n();
   const q = useProductType(id);
   const fabrics = useProductTypeFabrics(id);
   if (q.isLoading) return <DetailSkeleton />;
   if (q.error) {
     if (isApiError(q.error) && q.error.kind === "forbidden") return <AccessDeniedState />;
-    if (isApiError(q.error) && (q.error.kind === "not_found" || q.error.kind === "validation")) return <ErrorState title="Product type not found" error={q.error} className="py-20" />;
+    if (isApiError(q.error) && (q.error.kind === "not_found" || q.error.kind === "validation")) return <ErrorState title={t("masterData.productTypeNotFound")} error={q.error} className="py-20" />;
     return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   }
   const p = q.data;
@@ -54,7 +57,7 @@ export function ProductTypeDetailPage({ id }: { id: string }) {
   return (
     <>
       <DetailHeader
-        breadcrumbs={[{ label: "Master data", href: "/master-data" }, { label: "Product types", href: "/master-data/products" }, { label: p.code }]}
+        breadcrumbs={[{ label: t("masterData.masterData"), href: "/master-data" }, { label: t("masterData.productTypes"), href: "/master-data/products" }, { label: p.code }]}
         reference={p.code}
         title={p.name}
         status={<StatusBadge status={rowStatus(p)} />}
@@ -62,20 +65,20 @@ export function ProductTypeDetailPage({ id }: { id: string }) {
       />
       <div className="space-y-4">
         <Card aria-labelledby="pt-details">
-          <CardHeader><CardTitle><span id="pt-details">Details</span></CardTitle></CardHeader>
+          <CardHeader><CardTitle><span id="pt-details">{t("common.details")}</span></CardTitle></CardHeader>
           <CardContent>
             <InfoGrid>
-              <InfoItem label="Category">{p.category ? humanizeCode(p.category) : null}</InfoItem>
-              <InfoItem label="Default sample fee"><span className="tabular-nums">{p.defaultSampleFee}</span></InfoItem>
-              <InfoItem label="Sort order">{String(p.sortOrder)}</InfoItem>
-              <InfoItem label="Created">{formatDateTime(p.createdAt)}</InfoItem>
-              <InfoItem label="Updated">{formatDateTime(p.updatedAt)}</InfoItem>
-              <InfoItem label="Description" className="sm:col-span-2 lg:col-span-3">{p.description}</InfoItem>
+              <InfoItem label={t("masterData.category")}>{p.category ? fmt.code(p.category) : null}</InfoItem>
+              <InfoItem label={t("masterData.defaultSampleFee")}><span className="tabular-nums">{p.defaultSampleFee}</span></InfoItem>
+              <InfoItem label={t("masterData.sortOrder")}>{String(p.sortOrder)}</InfoItem>
+              <InfoItem label={t("common.created")}>{fmt.dateTime(p.createdAt)}</InfoItem>
+              <InfoItem label={t("common.updated")}>{fmt.dateTime(p.updatedAt)}</InfoItem>
+              <InfoItem label={t("common.description")} className="sm:col-span-2 lg:col-span-3">{p.description}</InfoItem>
             </InfoGrid>
           </CardContent>
         </Card>
         <Card aria-labelledby="pt-fabrics">
-          <CardHeader><CardTitle><span id="pt-fabrics">Compatible fabrics</span></CardTitle></CardHeader>
+          <CardHeader><CardTitle><span id="pt-fabrics">{t("masterData.compatibleFabrics")}</span></CardTitle></CardHeader>
           {fabrics.isLoading ? <CardContent><DetailSkeleton /></CardContent> : fabrics.error ? <ErrorState error={fabrics.error} onRetry={() => fabrics.refetch()} className="py-6" /> : fabrics.data && fabrics.data.length > 0 ? (
             <ul className="divide-y">
               {fabrics.data.map((f) => (
@@ -87,7 +90,7 @@ export function ProductTypeDetailPage({ id }: { id: string }) {
                 </li>
               ))}
             </ul>
-          ) : <EmptyState title="No fabric guidance configured" description="No fabric is marked recommended or restricted for this product. Guidance does not block other fabrics." className="py-8" />}
+          ) : <EmptyState title={t("masterData.noFabricGuidanceConfigured")} description={t("masterData.noFabricIsMarkedRecommendedOr")} className="py-8" />}
         </Card>
       </div>
     </>

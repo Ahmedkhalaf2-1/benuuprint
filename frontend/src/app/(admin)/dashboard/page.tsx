@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import { localizedTitle } from "@/i18n/server";
 import { Suspense } from "react";
 import { ManagementDashboard } from "@/features/management/pages";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const generateMetadata = () => localizedTitle("Dashboard");
 
 export default function Page() {
   return <Suspense fallback={null}><ManagementDashboard /></Suspense>;
