@@ -175,6 +175,7 @@
 .pub { color-scheme: dark; background: var(--pub-bg); color: var(--pub-text); }
 .pub ::selection { background: var(--pub-brand-deep); color: #fff; }
 .pub :focus-visible { outline-color: var(--pub-brand); }
+.pub h1, .pub h2, .pub h3, .pub h4, .pub header nav a, .pub footer h2, .pub footer h3, .pub-display { font-family: var(--font-thmanyah), var(--font-sans); }
 .pub-clip { overflow: hidden; }
 .pub-stitch { stroke-dasharray: 6 7; }
 .pub-static, .pub-static * { transition: none !important; animation: none !important; }

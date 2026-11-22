@@ -28,8 +28,8 @@ export function PublicCta({ title, text }: { title?: string; text?: string }) {
     <section data-cta-end aria-labelledby="page-cta-title" className="relative isolate overflow-hidden border-t border-pub-line">
       <div aria-hidden className="absolute inset-0 -z-10" style={{ background: "radial-gradient(ellipse 60% 90% at 85% 100%, rgb(12 127 93 / 0.3), transparent 70%)" }} />
       <div className="mx-auto w-full max-w-[88rem] px-5 py-16 sm:px-8 sm:py-32 lg:px-12">
-        <h2 id="page-cta-title" className="pub-reveal text-balance text-[clamp(2.5rem,7vw,6rem)] font-semibold uppercase [line-height:0.92] tracking-[-0.05em]">{title ?? t("site.readyToMakeItReal")}</h2>
-        <p className="mt-6 max-w-md text-lg text-pub-muted">{text ?? t("site.startWithASampleScaleWhen")}</p>
+        <h2 id="page-cta-title" className="pub-reveal text-balance text-[clamp(2.5rem,7vw,6rem)] font-semibold uppercase [line-height:0.92] tracking-[-0.05em]">{title ?? t("site.ctaTitle")}</h2>
+        <p className="mt-6 max-w-md text-lg text-pub-muted">{text ?? t("site.ctaLede")}</p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row"><StartSampleLink className="h-14 w-full sm:h-12 sm:w-auto" /><ContactLink className="h-14 w-full sm:h-12 sm:w-auto" /></div>
       </div>
     </section>

@@ -34,7 +34,7 @@ export function HeroView({ media }: { media: HeroMedia }) {
         <div className="pub-fade mt-7 flex flex-col gap-7 sm:mt-14 sm:gap-8 lg:flex-row lg:items-end lg:justify-between" style={{ "--d": "700ms" } as React.CSSProperties}>
           <p className="max-w-lg text-base leading-relaxed text-pub-text/80 sm:text-lg">
             <span className="sm:hidden">{t("site.fromFirstSampleToFullScale")}</span>
-            <span className="hidden sm:inline">{t("site.customApparelManufacturingFromFirstSample")}</span>
+            <span className="hidden sm:inline">{t("site.heroLedeLong")}</span>
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <StartSampleLink className="h-14 w-full sm:h-12 sm:w-auto"><span className="sm:hidden">{t("site.startASample")}</span><span className="hidden sm:inline">{t("site.startYourSample")}</span></StartSampleLink>
