@@ -8,6 +8,7 @@ import { scrollChildToCenter } from "@/lib/utils/scroll";
 import { START_SAMPLE_HREF } from "./content";
 import { GarmentPreview, type FabricVisualKey, type GarmentKind } from "./garment";
 import { useI18n } from "@/i18n/provider";
+import { SHOWCASE_COLOUR } from "./garment";
 
 export interface CarouselItem { name: string; kind: GarmentKind; lines: string[] }
 
@@ -15,7 +16,9 @@ const FABRIC: Partial<Record<GarmentKind, FabricVisualKey>> = { hoodie: "fleece"
 
 /**
  * Touch-first garment chooser for phones: a tappable chip row and a native scroll-snap row of garment cards, kept in sync.
- * Next card peeks in to signal swipe. Each card previews through `GarmentPreview` (the 3D-ready boundary) and ends in a quiet text action (no full-width button per card).
+ * Next card peeks in to signal swipe. Each card previews through `GarmentPreview` and ends in a quiet text action (no full-width button per card).
+ * Every card is a 3D viewer stage, but only the centred card loads its model (at most one at a time; a model seen before comes from
+ * the loader cache). Cards off-centre stay an empty dark stage: no stand-in drawing. The model auto-rotates and leaves swipes to the carousel.
  * Swiping is never required: the chips and the normal page scroll reach everything.
  */
 export function GarmentCarousel({ items, label, className, actionHref = START_SAMPLE_HREF, actionLabel }: { items: CarouselItem[]; label: string; className?: string; actionHref?: string; actionLabel?: (name: string) => string }) {
@@ -57,7 +60,7 @@ export function GarmentCarousel({ items, label, className, actionHref = START_SA
       <ul ref={track} aria-label={label} tabIndex={0} className="-mx-5 mt-4 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
         {items.map((it, i) => (
           <li key={it.kind} data-index={i} aria-current={i === active} className={cn("w-[66vw] max-w-[17rem] shrink-0 snap-center border bg-pub-surface p-4 transition-[border-color,opacity] duration-300", i === active ? "border-pub-line opacity-100" : "border-pub-line/60 opacity-70")}>
-            <div className="mx-auto w-[72%]"><GarmentPreview productType={it.kind} colour="#2b302e" fabric={FABRIC[it.kind] ?? "jersey"} /></div>
+            <div className="mx-auto w-[72%]"><GarmentPreview interactive deferred={i !== active} productType={it.kind} colour={SHOWCASE_COLOUR} fabric={FABRIC[it.kind] ?? "jersey"} controls="none" interaction="buttons" /></div>
             <p className="mt-3 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-pub-muted"><span className="text-pub-brand">{String(i + 1).padStart(2, "0")}</span> / {String(items.length).padStart(2, "0")}</p>
             <h3 className="mt-1.5 text-2xl font-semibold uppercase leading-none tracking-[-0.04em]">{it.name}</h3>
             {it.lines.map((l, k) => <p key={k} className={cn("mt-1.5 text-sm leading-relaxed", k === 0 ? "text-pub-text/90" : "text-pub-muted")}>{l}</p>)}

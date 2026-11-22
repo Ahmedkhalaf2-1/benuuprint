@@ -1,5 +1,7 @@
 # Frontend Phase 9 — 3D T-shirt viewer (Sample Builder first)
 
+> Superseded in part by [Phase 10](FRONTEND_PHASE_10_3D_GARMENTS.md): the procedural stand-in and `hero-media` model resolver are gone; real GLB garments come from `features/garment-3d/model-registry.ts`.
+
 Scope: first 3D step. T-shirt viewer integrated into the public **Sample Builder preview** only. Products / Process / Hero are the next integrations (same boundary). No backend, Admin or Portal changes.
 
 ## Dependencies (new)

@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { decideRenderer, type RendererEnv } from "./renderer-policy";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { decideRenderer, type RendererEnv, type RendererMode } from "./renderer-policy";
 
 function hasWebGL(): boolean {
   try {
@@ -10,29 +10,27 @@ function hasWebGL(): boolean {
   } catch { return false; }
 }
 
-/** Client-side renderer choice for a garment visual. Starts as "2d" (matches SSR), upgrades after capability detection. */
-export function useGarmentRenderer(enabled: boolean) {
+/** A visitor's "View in 3D" applies to every garment viewer on the page (e.g. each card of the phone carousel), for this visit. */
+let optedIn = false;
+const optInSubs = new Set<() => void>();
+const subscribeOptIn = (cb: () => void) => { optInSubs.add(cb); return () => { optInSubs.delete(cb); }; };
+const setOptedIn = () => { optedIn = true; optInSubs.forEach((cb) => cb()); };
+
+/**
+ * Client-side capability check for a garment viewer. "pending" until it has run (that is also what the server renders: the empty,
+ * dark viewer with a loading indicator), then "3d" | "opt-in" | "none". There is no illustration mode.
+ */
+export function useGarmentRenderer(enabled: boolean): { mode: RendererMode | "pending"; requestOptIn: () => void } {
   const [env, setEnv] = useState<Omit<RendererEnv, "optIn"> | null>(null);
-  const [optIn, setOptIn] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const optIn = useSyncExternalStore(subscribeOptIn, () => optedIn, () => false);
 
   useEffect(() => {
     if (!enabled) return;
-    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string }; deviceMemory?: number }).connection;
-    const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-    const wide = typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 768px)") : null;
-    const read = () => setEnv({ webgl: hasWebGL(), saveData: conn?.saveData, effectiveType: conn?.effectiveType, narrow: wide ? !wide.matches : true, deviceMemory: mem, cores: navigator.hardwareConcurrency });
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string }; deviceMemory?: number };
+    // Capability detection can only run in the browser: one state update after mount.
+    const read = () => setEnv({ webgl: hasWebGL(), saveData: nav.connection?.saveData, effectiveType: nav.connection?.effectiveType, deviceMemory: nav.deviceMemory, cores: navigator.hardwareConcurrency });
     read();
-    wide?.addEventListener("change", read);
-    return () => wide?.removeEventListener("change", read);
   }, [enabled]);
 
-  const renderer = enabled && env && !failed ? decideRenderer({ ...env, optIn }) : "2d";
-  return {
-    renderer,
-    /** 3D is possible here but not automatic (phone / constrained): offer an explicit button. */
-    canOptIn: enabled && !!env?.webgl && !failed && renderer === "2d",
-    requestOptIn: useCallback(() => setOptIn(true), []),
-    reportFailure: useCallback(() => setFailed(true), []),
-  };
+  return { mode: env ? decideRenderer({ ...env, optIn }) : "pending", requestOptIn: useCallback(() => setOptedIn(), []) };
 }

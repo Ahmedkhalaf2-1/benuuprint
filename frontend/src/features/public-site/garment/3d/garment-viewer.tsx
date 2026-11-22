@@ -1,233 +1,219 @@
 "use client";
 
-import { ContactShadows, Environment, Lightformer, OrbitControls, useGLTF } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { ContactShadows, Environment, Lightformer, OrbitControls } from "@react-three/drei";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Box3, BufferGeometry, Color, CylinderGeometry, DoubleSide, Euler, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Spherical, Vector3, type Group, type Object3D, type Texture } from "three";
-import { DecalGeometry } from "three/examples/jsm/geometries/DecalGeometry.js";
-/** The slice of OrbitControls the rig needs (drei types its ref with three-stdlib, which is not a direct dependency). */
-interface ControlsLike { target: Vector3; update: () => void }
-import { RenderBoundary } from "../render-boundary";
+import { type BufferGeometry, Color, Mesh, MeshStandardMaterial, SRGBColorSpace, Spherical, type Texture, TextureLoader, Vector3 } from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+import { modelFor, type GarmentModelSpec } from "@/features/garment-3d/model-registry";
+import { placementSpec, type PlacementId, type PlacementStatus, type ViewFace } from "@/features/garment-3d/placement-config";
+import type { PrintLayer, PrintSource } from "@/features/garment-3d/print-design";
 import { readableOn } from "../garment-2d";
-import { PLACEMENT_ZONE } from "../silhouettes";
-import type { DecorationVisualKey, FabricVisualKey, GarmentKind } from "../types";
+import type { FabricVisualKey, GarmentKind } from "../types";
 import { decorationTexture, puffBump, sublimationTexture } from "./decal-textures";
-import { FABRIC_MATERIAL, fabricBump } from "./fabric-materials";
-import { chestPlacement } from "./placement";
+import { FABRIC_MATERIAL } from "./fabric-materials";
+import { buildDecal, findAnchor } from "./print-decal";
+import { MODEL_HEIGHT, prepareModel, toColour, type PreparedModel } from "./prepare-model";
 
-export type ViewerView = "front" | "back";
+/** The slice of OrbitControls the rig needs (drei types its ref with three-stdlib, which is not a direct dependency). */
+interface ControlsLike { target: Vector3; update: () => void; enableRotate: boolean; domElement?: HTMLElement | null }
+
+type ViewerPrint = PrintLayer;
+
 export interface GarmentViewerProps {
   productType: GarmentKind;
-  colour: string;
-  fabric: FabricVisualKey;
-  decoration: DecorationVisualKey | null;
-  /** Optional real model. When absent (or it fails to load) the procedural stand-in tee is used. */
-  modelSrc?: string | null;
-  view: ViewerView;
+  /** false while the selected garment differs from `productType` (its model is still being chosen/loaded): nothing is drawn. */
+  showModel: boolean;
+  /** Bumped by Retry: a failed load is dropped from the loader cache and fetched again. */
+  attempt: number;
+  /** Garment colour (hex). null = the model's own material colour. Ignored for models whose colour is baked (denim, printed suit). */
+  colour: string | null;
+  fabric: FabricVisualKey | null;
+  /** Prints to project onto the garment (artwork or a decoration look). */
+  prints: ViewerPrint[];
+  /** Sublimation-style all-over colour field (marketing builder). */
+  allOver: boolean;
+  view: ViewFace;
   zoom: 0 | 1 | 2;
   resetKey: number;
   /** false pauses rendering (off-screen). */
   active: boolean;
   reducedMotion: boolean;
-  onReady: () => void;
+  /** "rotate": drag/touch rotates (vertical page scroll still passes through). "buttons": no drag; the page/carousel keeps all gestures. */
+  interaction: "rotate" | "buttons";
+  autoRotate: boolean;
+  onReady: (kind: GarmentKind) => void;
   onLost: () => void;
+  onPlacementStatus?: (s: PlacementStatus) => void;
 }
 
-/* ------------------------------ material ------------------------------ */
-function applyFabric(material: MeshPhysicalMaterial, fabric: FabricVisualKey) {
-  const f = FABRIC_MATERIAL[fabric];
-  const bump = fabricBump(fabric);
-  bump.repeat.set(f.repeat, f.repeat);
-  material.roughness = f.roughness;
-  material.sheen = f.sheen;
-  material.bumpMap = bump;
-  material.bumpScale = f.bump * 1.2;
-  material.needsUpdate = true;
-}
-function applyMap(material: MeshPhysicalMaterial, map: Texture | null) {
-  material.map = map;
-  material.needsUpdate = true;
-}
+const configureLoader = (l: GLTFLoader) => { l.setMeshoptDecoder(MeshoptDecoder); };
 
-function useGarmentMaterial(colour: string, fabric: FabricVisualKey, decoration: DecorationVisualKey | null) {
-  const material = useMemo(() => new MeshPhysicalMaterial({ side: DoubleSide, sheenColor: new Color("#ffffff"), sheenRoughness: 0.6 }), []);
-  const target = useRef(new Color(colour));
-  useEffect(() => { target.current.set(colour); }, [colour]);
-  useEffect(() => { applyFabric(material, fabric); }, [fabric, material]);
+/* ------------------------------- print decal ------------------------------- */
+function useSourceTexture(source: PrintSource, ink: string): { map: Texture | null; aspect: number; bump: Texture | null } {
+  const [art, setArt] = useState<{ url: string; tex: Texture } | null>(null);
+  const url = source.type === "artwork" ? source.url : null;
   useEffect(() => {
-    const tex = decoration === "sublimation" ? sublimationTexture() : null;
-    applyMap(material, tex);
-    return () => tex?.dispose();
-  }, [decoration, material]);
-  useFrame((_, dt) => {
-    if (decoration === "sublimation") material.color.set("#ffffff");
-    else material.color.lerp(target.current, 1 - Math.exp(-dt * 10));
-  });
-  useEffect(() => () => material.dispose(), [material]);
-  return material;
-}
-
-/* ------------------------------- decal ------------------------------- */
-/** Projects the decoration onto the garment surface (world-space geometry; the garment does not move). */
-function Decoration({ target, decoration, colour, position, size, depth }: { target: Mesh | null; decoration: DecorationVisualKey | null; colour: string; position: Vector3; size: number; depth: number }) {
-  const kind = decoration && decoration !== "sublimation" ? decoration : null;
-  const decal = useMemo(() => {
-    if (!target || !kind) return null;
-    target.updateMatrixWorld(true);
-    const geometry = new DecalGeometry(target, position, new Euler(0, 0, 0), new Vector3(size, size, depth));
-    const map = decorationTexture(kind, readableOn(colour));
-    const bump = kind === "puff" ? puffBump() : null;
-    const material = new MeshStandardMaterial({ map, transparent: true, roughness: kind === "embroidery" ? 0.9 : kind === "puff" ? 0.7 : 0.55, polygonOffset: true, polygonOffsetFactor: -4, depthWrite: false, bumpMap: bump, bumpScale: kind === "puff" ? 6 : 0 });
-    return { mesh: new Mesh(geometry, material), dispose: () => { geometry.dispose(); map.dispose(); bump?.dispose(); material.dispose(); } };
-  }, [target, kind, colour, position, size, depth]);
-  useEffect(() => () => decal?.dispose(), [decal]);
-  return decal ? <primitive object={decal.mesh} /> : null;
-}
-
-/* ------------------------- stand-in procedural tee ------------------------- */
-function buildTorso(): BufferGeometry {
-  const g = new CylinderGeometry(0.95, 1.0, 2.3, 64, 40, true);
-  const pos = g.attributes.position!;
-  const A = 0.82;
-  for (let i = 0; i < pos.count; i++) {
-    const t = (pos.getY(i) + 1.15) / 2.3;
-    const u = t > A ? (t - A) / (1 - A) : 0;
-    const k = 1 - 0.58 * u * u * (3 - 2 * u);
-    const flare = 1 + 0.03 * (1 - t);
-    pos.setXYZ(i, pos.getX(i) * k * flare, pos.getY(i) + 0.1 * u, pos.getZ(i) * 0.55 * k * flare);
-  }
-  g.computeVertexNormals();
-  return g;
-}
-
-function ProceduralTee({ material, decoration, colour }: { material: MeshPhysicalMaterial; decoration: DecorationVisualKey | null; colour: string }) {
-  const torso = useMemo(() => buildTorso(), []);
-  const sleeve = useMemo(() => new CylinderGeometry(0.3, 0.37, 0.95, 40, 8, true), []);
-  const [mesh, setMesh] = useState<Mesh | null>(null);
-  const p = chestPlacement("tshirt");
-  const position = useMemo(() => new Vector3(p.x, p.y, 0.56), [p.x, p.y]);
-  return (
-    <group>
-      <mesh ref={setMesh} geometry={torso} material={material} />
-      <mesh geometry={sleeve} material={material} position={[1.27, 0.42, 0]} rotation={[0, 0, -2.27]} scale={[1, 1, 0.85]} />
-      <mesh geometry={sleeve} material={material} position={[-1.27, 0.42, 0]} rotation={[0, 0, 2.27]} scale={[1, 1, 0.85]} />
-      <mesh material={material} position={[0, 1.13, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 0.6, 1]}><torusGeometry args={[0.41, 0.05, 16, 48]} /></mesh>
-      <Decoration target={mesh} decoration={decoration} colour={colour} position={position} size={p.size} depth={0.6} />
-    </group>
-  );
-}
-
-/* ------------------------------ real model ------------------------------ */
-/**
- * Real GLB. Contract: any meshes; they all receive the garment material (so they should have UVs for the fabric bump). The model is
- * centred and scaled to the stand-in's height, and the decoration is projected onto its largest mesh at the shared chest zone.
- */
-function GlbTee({ src, material, decoration, colour, kind }: { src: string; material: MeshPhysicalMaterial; decoration: DecorationVisualKey | null; colour: string; kind: GarmentKind }) {
-  const gltf = useGLTF(src);
-  const prepared = useMemo(() => {
-    const root = gltf.scene.clone(true);
-    const box = new Box3().setFromObject(root);
-    const size = box.getSize(new Vector3());
-    const scale = 2.6 / (size.y || 1);
-    root.scale.multiplyScalar(scale);
-    root.updateMatrixWorld(true);
-    const nb = new Box3().setFromObject(root);
-    const c = nb.getCenter(new Vector3());
-    root.position.sub(c);
-    root.updateMatrixWorld(true);
-    let biggest: Mesh | null = null;
-    let most = 0;
-    root.traverse((o: Object3D) => {
-      const m = o as Mesh;
-      if (!m.isMesh) return;
-      m.material = material;
-      const n = m.geometry.attributes.position?.count ?? 0;
-      if (n > most) { most = n; biggest = m; }
+    if (!url) return;
+    let live = true;
+    let loaded: Texture | null = null;
+    new TextureLoader().load(url, (tex) => {
+      tex.colorSpace = SRGBColorSpace;
+      tex.anisotropy = 4;
+      loaded = tex;
+      if (live) setArt({ url, tex }); else tex.dispose();
     });
-    const fb = new Box3().setFromObject(root);
-    return { root, biggest: biggest as Mesh | null, box: fb };
-  }, [gltf.scene, material]);
-  const zone = PLACEMENT_ZONE[kind];
-  const h = prepared.box.max.y - prepared.box.min.y;
-  const w = h * 0.62;
-  const position = useMemo(() => new Vector3(prepared.box.min.x + (prepared.box.max.x - prepared.box.min.x) / 2 + (zone.x + zone.w / 2 - 200) * (w / 176), prepared.box.max.y - ((zone.y + zone.h / 2 - 62) / 284) * h, prepared.box.max.z), [prepared, zone, h, w]);
+    return () => { live = false; loaded?.dispose(); };
+  }, [url]);
+  const look = source.type === "look" ? source.key : null;
+  const lookTex = useMemo(() => (look ? { map: decorationTexture(look, ink), bump: look === "puff" ? puffBump() : null } : null), [look, ink]);
+  useEffect(() => () => { lookTex?.map.dispose(); lookTex?.bump?.dispose(); }, [lookTex]);
+  if (source.type === "artwork") return { map: art && art.url === url ? art.tex : null, aspect: source.aspect, bump: null };
+  return { map: lookTex?.map ?? null, aspect: 1, bump: lookTex?.bump ?? null };
+}
+
+function PrintDecal({ model, kind, print, ink, onStatus }: { model: PreparedModel; kind: GarmentKind; print: ViewerPrint; ink: string; onStatus: (id: PlacementId, ok: boolean) => void }) {
+  const spec = placementSpec(kind, print.placement);
+  const { map, aspect, bump } = useSourceTexture(print.source, ink);
+  const look = print.source.type === "look" ? print.source.key : null;
+  const material = useMemo(() => new MeshStandardMaterial({ map, bumpMap: bump, bumpScale: bump ? 6 : 0, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, roughness: look === "embroidery" ? 0.9 : look === "puff" ? 0.7 : 0.75 }), [look, map, bump]);
+  useEffect(() => () => material.dispose(), [material]);
+  const anchor = useMemo(() => (spec ? findAnchor(model, spec, print.du, print.dv) : null), [model, spec, print.du, print.dv]);
+  useEffect(() => { onStatus(print.placement, !!anchor); }, [anchor, onStatus, print.placement]);
+  const geometries = useMemo<BufferGeometry[]>(() => (spec && anchor ? buildDecal(model, spec, anchor, print.size, aspect, print.rotation) : []), [model, spec, anchor, print.size, aspect, print.rotation]);
+  useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
+  const meshes = useMemo(() => geometries.map((g) => { const m = new Mesh(g, material); m.renderOrder = 2; return m; }), [geometries, material]);
+  if (!map) return null;
+  return <>{meshes.map((m) => <primitive key={m.uuid} object={m} />)}</>;
+}
+
+/* ---------------------------------- model ---------------------------------- */
+function GarmentModel({ spec, colour, fabric, allOver, prints, onReady, onPlacementStatus }: { spec: GarmentModelSpec; colour: string | null; fabric: FabricVisualKey | null; allOver: boolean; prints: ViewerPrint[]; onReady: (k: GarmentKind) => void; onPlacementStatus?: (s: PlacementStatus) => void }) {
+  const gltf = useLoader(GLTFLoader, spec.src, configureLoader);
+  const model = useMemo(() => prepareModel(gltf.scene, spec), [gltf.scene, spec]);
+  useEffect(() => () => model.dispose(), [model]);
+
+  // Colour: damped transition on the recolourable fabric materials only.
+  const recolor = spec.colour.mode === "recolor";
+  const target = useMemo(() => model.base.map((b) => (recolor && !allOver ? toColour(colour, b) : allOver ? new Color("#ffffff") : b.clone())), [model, colour, recolor, allOver]);
+  const first = useRef(true);
+  useEffect(() => { if (first.current) { first.current = false; model.fabric.forEach((m, i) => m.color.copy(target[i]!)); } }, [model, target]);
+  useFrame((_, dt) => { const k = 1 - Math.exp(-dt * 10); model.fabric.forEach((m, i) => m.color.lerp(target[i]!, k)); });
+
+  // Fabric look: roughness only (the models carry their own weave/normal detail).
+  useEffect(() => {
+    if (!fabric) return;
+    const r = FABRIC_MATERIAL[fabric].roughness;
+    model.fabric.forEach((m) => { if (!m.roughnessMap) m.roughness = Math.max(0.78, r); });
+  }, [fabric, model]);
+
+  // Sublimation preview: an all-over field through the model's own UVs.
+  useEffect(() => {
+    if (!allOver || !recolor) return;
+    const tex = sublimationTexture();
+    const prev = model.fabric.map((m) => m.map);
+    model.fabric.forEach((m) => { m.map = tex; m.needsUpdate = true; });
+    return () => { model.fabric.forEach((m, i) => { m.map = prev[i] ?? null; m.needsUpdate = true; }); tex.dispose(); };
+  }, [allOver, recolor, model]);
+
+  const ink = readableOn(recolor && colour ? colour : "#2b302e");
+  const status = useRef<PlacementStatus>({});
+  const report = useMemo(() => (id: PlacementId, ok: boolean) => {
+    const next = ok ? "ok" : "blocked";
+    if (status.current[id] === next) return;
+    status.current = { ...status.current, [id]: next };
+    onPlacementStatus?.(status.current);
+  }, [onPlacementStatus]);
+
+  const readied = useRef<object | null>(null);
+  useFrame(() => { if (readied.current !== model) { readied.current = model; onReady(spec.kind); } });
+
   return (
     <group>
-      <primitive object={prepared.root} />
-      <Decoration target={prepared.biggest} decoration={decoration} colour={colour} position={position} size={zone.w * (w / 176)} depth={h * 0.3} />
+      <primitive object={model.root} />
+      {prints.map((p) => <PrintDecal key={p.placement} model={model} kind={spec.kind} print={p} ink={ink} onStatus={report} />)}
     </group>
   );
 }
 
-/* --------------------------------- rig --------------------------------- */
+/* ----------------------------------- rig ----------------------------------- */
 const DIST = [8.2, 6.6, 4.8] as const;
 const POLAR = 1.45;
+const THETA: Record<ViewFace, number> = { front: 0, back: Math.PI, left: Math.PI / 2, right: -Math.PI / 2 };
 
-/** Camera moves for Front/Back, zoom and reset: eased along the orbit sphere so the camera never cuts through the garment. */
-function Rig({ view, zoom, resetKey, reducedMotion, controls }: { view: ViewerView; zoom: 0 | 1 | 2; resetKey: number; reducedMotion: boolean; controls: React.RefObject<ControlsLike | null> }) {
+/** Camera moves for views, zoom and reset: eased along the orbit sphere so the camera never cuts through the garment. */
+function Rig({ view, zoom, resetKey, reducedMotion, controls }: { view: ViewFace; zoom: 0 | 1 | 2; resetKey: number; reducedMotion: boolean; controls: React.RefObject<ControlsLike | null> }) {
   const { camera } = useThree();
   const moving = useRef(true);
   useEffect(() => { moving.current = true; }, [view, zoom, resetKey]);
   useFrame(() => {
     const c = controls.current;
     if (!moving.current || !c) return;
-    const goalTheta = view === "front" ? 0 : Math.PI;
     const s = new Spherical().setFromVector3(camera.position.clone().sub(c.target));
-    let dTheta = goalTheta - s.theta;
-    dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
+    const dTheta = Math.atan2(Math.sin(THETA[view] - s.theta), Math.cos(THETA[view] - s.theta));
     const k = reducedMotion ? 1 : 0.12;
     s.theta += dTheta * k;
     s.phi += (POLAR - s.phi) * k;
     s.radius += (DIST[zoom] - s.radius) * k;
     camera.position.copy(new Vector3().setFromSpherical(s).add(c.target));
     c.update();
-    if (Math.abs(dTheta) < 0.005 && Math.abs(DIST[zoom] - s.radius) < 0.02) moving.current = false;
+    if (Math.abs(dTheta) < 0.004 && Math.abs(DIST[zoom] - s.radius) < 0.02 && Math.abs(POLAR - s.phi) < 0.004) moving.current = false;
   });
   return null;
 }
 
-function Ready({ onReady }: { onReady: () => void }) {
-  const done = useRef(false);
-  useFrame(() => { if (!done.current) { done.current = true; onReady(); } });
+function applyTouchPolicy(canvas: HTMLElement, controls: ControlsLike | null, interaction: "rotate" | "buttons") {
+  canvas.style.touchAction = interaction === "rotate" ? "pan-y" : "pan-x pan-y";
+  if (controls) controls.enableRotate = interaction === "rotate";
+}
+
+/** OrbitControls sets `touch-action: none` on the canvas; restore page scrolling: vertical pans always scroll the page. */
+function TouchPolicy({ controls, interaction }: { controls: React.RefObject<ControlsLike | null>; interaction: "rotate" | "buttons" }) {
+  const { gl } = useThree();
+  useEffect(() => applyTouchPolicy(gl.domElement, controls.current, interaction));
   return null;
 }
 
-/* --------------------------------- scene --------------------------------- */
+/* ---------------------------------- scene ---------------------------------- */
 function Scene(p: GarmentViewerProps) {
-  const material = useGarmentMaterial(p.colour, p.fabric, p.decoration);
+  const spec = modelFor(p.productType);
   const controls = useRef<ControlsLike | null>(null);
   const [interacted, setInteracted] = useState(false);
-  const group = useRef<Group>(null);
-  const stand = <ProceduralTee material={material} decoration={p.decoration} colour={p.colour} />;
+  // Retry after a failed download/parse: the loader cache keeps the error, so drop it before the model is requested again.
+  useMemo(() => { if (p.attempt > 0 && spec) useLoader.clear(GLTFLoader, spec.src); }, [p.attempt, spec]);
+  if (!spec) return null;
   return (
     <>
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[3, 5, 4]} intensity={1.6} />
-      <directionalLight position={[-4, 2, -3]} intensity={0.6} />
-      <Environment resolution={64} frames={1}>
-        <Lightformer form="rect" intensity={2.2} position={[0, 4, 4]} scale={[8, 3, 1]} />
-        <Lightformer form="rect" intensity={1.2} position={[-5, 1, -3]} scale={[3, 6, 1]} />
-        <Lightformer form="rect" intensity={1.2} position={[5, 1, 2]} scale={[3, 6, 1]} />
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[3, 5, 4]} intensity={1.4} />
+      <directionalLight position={[-4, 2, -3]} intensity={0.7} />
+      <Environment resolution={64} frames={1} environmentIntensity={0.75}>
+        <Lightformer form="rect" intensity={2} position={[0, 4, 4]} scale={[8, 3, 1]} />
+        <Lightformer form="rect" intensity={1.1} position={[-5, 1, -3]} scale={[3, 6, 1]} />
+        <Lightformer form="rect" intensity={1.1} position={[5, 1, 2]} scale={[3, 6, 1]} />
       </Environment>
-      <group ref={group}>
-        {p.modelSrc ? (
-          <RenderBoundary fallback={stand}><Suspense fallback={null}><GlbTee src={p.modelSrc} material={material} decoration={p.decoration} colour={p.colour} kind={p.productType} /></Suspense></RenderBoundary>
-        ) : stand}
-      </group>
-      <ContactShadows position={[0, -1.4, 0]} opacity={0.5} scale={9} blur={2.6} far={3.2} frames={1} />
-      <OrbitControls ref={controls as never} makeDefault target={[0, 0.1, 0]} enablePan={false} enableZoom={false} enableDamping={!p.reducedMotion} dampingFactor={0.08} minPolarAngle={Math.PI / 3} maxPolarAngle={(2 * Math.PI) / 3} autoRotate={!p.reducedMotion && !interacted && p.view === "front"} autoRotateSpeed={1.1} onStart={() => setInteracted(true)} />
+      <Suspense fallback={null}>
+        <group visible={p.showModel}>
+        <GarmentModel key={spec.kind} spec={spec} colour={p.colour} fabric={p.fabric} allOver={p.allOver} prints={p.prints} onReady={p.onReady} onPlacementStatus={p.onPlacementStatus} />
+        <ContactShadows key={`shadow-${spec.kind}`} position={[0, -MODEL_HEIGHT / 2 - 0.02, 0]} opacity={0.45} scale={8} blur={2.6} far={3.2} frames={1} />
+        </group>
+      </Suspense>
+      <OrbitControls ref={controls as never} makeDefault target={[0, 0, 0]} enablePan={false} enableZoom={false} enableRotate={p.interaction === "rotate"} enableDamping={!p.reducedMotion} dampingFactor={0.08} minPolarAngle={POLAR - 0.35} maxPolarAngle={POLAR + 0.2} autoRotate={p.autoRotate && !p.reducedMotion && !interacted} autoRotateSpeed={1.1} onStart={() => setInteracted(true)} />
+      <TouchPolicy controls={controls} interaction={p.interaction} />
       <Rig view={p.view} zoom={p.zoom} resetKey={p.resetKey} reducedMotion={p.reducedMotion} controls={controls} />
-      <Ready onReady={p.onReady} />
     </>
   );
 }
 
 export default function GarmentViewer(p: GarmentViewerProps) {
+  // High-density phones: cap the pixel ratio (fill-rate is the bottleneck there, not geometry).
+  const [maxDpr] = useState(() => (typeof window !== "undefined" && window.innerWidth < 768 ? 1.5 : 1.75));
   return (
     <Canvas
-      dpr={[1, 1.75]}
+      dpr={[1, maxDpr]}
       frameloop={p.active ? "always" : "never"}
-      camera={{ position: [0, 0.2, DIST[p.zoom]], fov: 32 }}
+      camera={{ position: [0, 0.2, DIST[p.zoom]], fov: 32, near: 0.1, far: 50 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => gl.domElement.addEventListener("webglcontextlost", (e) => { e.preventDefault(); p.onLost(); })}
       aria-hidden

@@ -20,6 +20,7 @@ import { FILE_TYPE_LABELS, FileDownloadButton } from "./files";
 import { FIT_LABELS, PROVIDER_LABELS, SIDE_LABELS, UNIT_LABELS } from "./labels";
 import { GarmentPreview } from "@/features/public-site/garment";
 import { BrandForm } from "./brands";
+import { ColourPreview3D, DesignPreview3D, colourHex, sampleGarmentKind } from "./garment-customizer";
 import { useBrands } from "./hooks";
 import { Chip, FileTile, GroupCard, StepHeader, Swatch, garmentKindFor } from "./wizard-ui";
 import type { StepKey } from "./wizard-config";
@@ -117,6 +118,8 @@ export function FabricStep({ sample, options, patch, stepRef }: StepProps) {
   const fabric = options.fabrics.find((x) => x.id === f.fabricId);
   const colours = fabric?.colors ?? [];
   const range = fabric && (fabric.minGsm || fabric.maxGsm) ? t("customer.usuallyGsmRange", { min: fabric.minGsm ?? "…", max: fabric.maxGsm ?? "…" }) : undefined;
+  const kind = sampleGarmentKind(sample);
+  const liveHex = f.fabricMode === "catalog" && f.colorMode === "catalog" ? colourHex(options, f.fabricId, f.fabricColorId, null) : colourHex(options, null, null, f.customHex);
   const recommended = (id: string) => options.fabrics.find((x) => x.id === id)?.productTypes.find((p) => p.productTypeId === sample.productTypeId)?.isRecommended;
   return (
     <Section stepKey="fabric">
@@ -159,6 +162,7 @@ export function FabricStep({ sample, options, patch, stepRef }: StepProps) {
           </div>
         )}
       </GroupCard>
+      {kind ? <ColourPreview3D kind={kind} hex={liveHex} /> : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField id="fb-gsm" label={t("customer.fabricWeightOptional")} hint={t("customer.fabricWeightHint", { range: range ?? "" }).trim()}><Input id="fb-gsm" className="max-w-40" inputMode="decimal" value={f.gsm} onChange={(e) => form.set({ gsm: e.target.value })} placeholder={fabric?.defaultGsm ? String(fabric.defaultGsm) : "e.g. 220"} /></FormField>
         <FormField id="fb-notes" label={t("customer.anythingElseAboutTheFabric")}><Textarea id="fb-notes" rows={3} value={f.fabricNotes} onChange={(e) => form.set({ fabricNotes: e.target.value })} /></FormField>
@@ -210,9 +214,11 @@ interface DecoForm { id?: string; printMethodId: string; placement: string; side
 const emptyDeco: DecoForm = { printMethodId: "", placement: "", side: "FRONT", width: "", height: "", unit: "CM", colorCount: "", notes: "", artworkRequired: false };
 const num = (v: string) => (v.trim() === "" ? null : Number(v));
 
-function DecorationDialog({ sample, options, initial, onClose, onSaved }: { sample: SampleDetail; options: SampleOptions; initial: DecoForm; onClose: () => void; onSaved: () => void }) {
+function DecorationDialog({ sample, options, initial, artwork = null, onClose, onSaved }: { sample: SampleDetail; options: SampleOptions; initial: DecoForm; artwork?: File | null; onClose: () => void; onSaved: () => void }) {
   const { t } = useI18n();
   const [f, setF] = useState(initial);
+  // Artwork tried in the 3D preview: uploaded through the existing files endpoint, linked to this decoration, only if kept ticked.
+  const [uploadArt, setUploadArt] = useState(!!artwork);
   const [error, setError] = useState<Err | null>(null);
   const [busy, setBusy] = useState(false);
   const set = (p: Partial<DecoForm>) => setF((x) => ({ ...x, ...p }));
@@ -224,8 +230,10 @@ function DecorationDialog({ sample, options, initial, onClose, onSaved }: { samp
     const body: api.DecorationBody = { printMethodId: f.printMethodId, placement: f.placement.trim(), side: f.side, ...(f.width || f.height ? { unit: f.unit } : {}), width: num(f.width), height: num(f.height), colorCount: num(f.colorCount), notes: f.notes.trim() || null, artworkRequired: f.artworkRequired };
     setBusy(true);
     try {
-      if (f.id) await api.updateDecoration(sample.id, f.id, body);
-      else await api.addDecoration(sample.id, { ...body, printMethodId: f.printMethodId, placement: f.placement.trim() });
+      const saved = f.id ? await api.updateDecoration(sample.id, f.id, body) : await api.addDecoration(sample.id, { ...body, printMethodId: f.printMethodId, placement: f.placement.trim() });
+      if (artwork && uploadArt && saved?.id) {
+        try { await api.uploadFile(sample.id, artwork, "ARTWORK", { decorationId: saved.id }); toast.success(t("customer.fileUploaded")); } catch { toast.error(t("customer.artworkUploadFailed")); }
+      }
       onSaved(); onClose();
     } catch (e) { setError({ message: errorMessage(e), requestId: isApiError(e) ? e.requestId : undefined }); } finally { setBusy(false); }
   };
@@ -247,6 +255,7 @@ function DecorationDialog({ sample, options, initial, onClose, onSaved }: { samp
           <FormField id="dc-cc" label={t("customer.numberOfColoursOptional")}><Input id="dc-cc" className="max-w-32" inputMode="numeric" value={f.colorCount} onChange={(e) => set({ colorCount: e.target.value })} /></FormField>
           <FormField id="dc-notes" label={t("common.notes")}><Textarea id="dc-notes" rows={2} value={f.notes} onChange={(e) => set({ notes: e.target.value })} /></FormField>
           <div className="flex items-center gap-2"><Checkbox id="dc-art" checked={f.artworkRequired} onCheckedChange={(c) => set({ artworkRequired: c === true })} /><Label htmlFor="dc-art" className="font-normal">{t("customer.iWillUploadArtworkForThis")}</Label></div>
+          {artwork ? <div className="flex items-start gap-2" data-testid="dc-upload-artwork"><Checkbox id="dc-art-up" checked={uploadArt} onCheckedChange={(c) => setUploadArt(c === true)} className="mt-0.5" /><Label htmlFor="dc-art-up" className="font-normal">{t("customer.uploadArtworkWithDecoration")}<span className="block truncate text-xs text-muted-foreground">{artwork.name}</span></Label></div> : null}
           <div className="flex justify-end gap-2"><Button variant="secondary" onClick={onClose}>{t("common.cancel")}</Button><Button loading={busy} onClick={() => void submit()}>{f.id ? t("customer.saveDecoration") : t("customer.addDecoration")}</Button></div>
         </div>
       </DialogContent>
@@ -258,32 +267,35 @@ function DecorationDialog({ sample, options, initial, onClose, onSaved }: { samp
 export function DecorationStep({ sample, options, patch, stepRef, changed }: StepProps) {
   const { t } = useI18n();
   const [dlg, setDlg] = useState<DecoForm | null>(null);
+  const [dlgArt, setDlgArt] = useState<File | null>(null);
   const [error, setError] = useState<Err | null>(null);
+  const kind = sampleGarmentKind(sample);
   const form = useStepForm({ printNotes: sample.printNotes ?? "" }, stepRef, async (f) => { await patch({ printNotes: f.printNotes.trim() || null }); });
   return (
     <Section stepKey="decoration">
       {error ? <FormError {...error} /> : null}{form.error ? <FormError {...form.error} /> : null}
+      {kind ? <DesignPreview3D sample={sample} options={options} kind={kind} onAdd={(p) => { setDlgArt(p.artwork); setDlg({ ...emptyDeco, placement: p.placement, side: p.side || emptyDeco.side, artworkRequired: !!p.artwork }); }} /> : null}
       {sample.decorations.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed bg-surface-sunken/60 px-6 py-10 text-center" data-testid="decorations-empty">
           <span aria-hidden className="flex size-11 items-center justify-center rounded-sm border bg-surface text-muted-foreground"><Paperclip className="size-5" /></span>
           <div><p className="font-semibold">{t("customer.noPrintingOrEmbroideryAddedYet")}</p><p className="mt-1 text-sm text-muted-foreground">{t("customer.addOneForEveryPlaceSomething")}</p></div>
-          <Button onClick={() => setDlg(emptyDeco)}><Plus />{" "}{t("customer.addDecoration")}</Button>
+          <Button onClick={() => { setDlgArt(null); setDlg(emptyDeco); }}><Plus />{" "}{t("customer.addDecoration")}</Button>
         </div>
       ) : (
         <>
           <ul className="grid gap-3 lg:grid-cols-2" data-testid="wizard-decorations">{sample.decorations.map((d) => (
             <li key={d.id} className="bp-enter-item space-y-3 rounded-lg border bg-surface p-4 text-sm">
               <div className="flex items-start justify-between gap-2"><div><p className="font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-brand">{d.printMethod.name}</p><p className="mt-0.5 text-base font-semibold">{d.placement}</p></div>
-                <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={() => setDlg({ id: d.id, printMethodId: d.printMethod.id, placement: d.placement, side: d.side, width: d.width ?? "", height: d.height ?? "", unit: d.unit ?? "CM", colorCount: d.colorCount ? String(d.colorCount) : "", notes: d.notes ?? "", artworkRequired: d.artworkRequired })}>{t("common.edit")}</Button>
+                <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={() => { setDlgArt(null); setDlg({ id: d.id, printMethodId: d.printMethod.id, placement: d.placement, side: d.side, width: d.width ?? "", height: d.height ?? "", unit: d.unit ?? "CM", colorCount: d.colorCount ? String(d.colorCount) : "", notes: d.notes ?? "", artworkRequired: d.artworkRequired }); }}>{t("common.edit")}</Button>
                   <IconButton size="sm" label={t("customer.removeNamePlacement", { name: d.printMethod.name, placement: d.placement })} icon={<Trash2 />} onClick={async () => { try { await api.removeDecoration(sample.id, d.id); changed(); } catch (e) { setError({ message: errorMessage(e) }); } }} /></span></div>
               <div className="flex flex-wrap gap-1.5"><Chip>{t.text(SIDE_LABELS[d.side] ?? d.side)}</Chip>{d.width && d.height ? <Chip>{d.width} × {d.height} {d.unit ? t.text(UNIT_LABELS[d.unit] ?? d.unit) : ""}</Chip> : null}{d.colorCount ? <Chip>{d.colorCount} {d.colorCount === 1 ? t("customer.colour") : t("customer.colours")}</Chip> : null}{d.artwork ? <Chip tone="brand">{t("customer.artworkName", { name: d.artwork.name })}</Chip> : d.artworkRequired ? <Chip tone="warning">{t("customer.artworkNeeded")}</Chip> : null}</div>
               {d.notes ? <p className="text-muted-foreground">{d.notes}</p> : null}
             </li>))}</ul>
-          <Button variant="secondary" onClick={() => setDlg(emptyDeco)}><Plus />{" "}{t("customer.addADecoration")}</Button>
+          <Button variant="secondary" onClick={() => { setDlgArt(null); setDlg(emptyDeco); }}><Plus />{" "}{t("customer.addADecoration")}</Button>
         </>
       )}
       <FormField id="dc-printnotes" label={t("customer.anythingElseAboutThePrinting")}><Textarea id="dc-printnotes" rows={3} value={form.f.printNotes} onChange={(e) => form.set({ printNotes: e.target.value })} /></FormField>
-      {dlg ? <DecorationDialog sample={sample} options={options} initial={dlg} onClose={() => setDlg(null)} onSaved={changed} /> : null}
+      {dlg ? <DecorationDialog sample={sample} options={options} initial={dlg} artwork={dlgArt} onClose={() => { setDlg(null); setDlgArt(null); }} onSaved={changed} /> : null}
     </Section>
   );
 }

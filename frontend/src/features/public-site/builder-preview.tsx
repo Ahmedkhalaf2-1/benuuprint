@@ -1,19 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { placementsFor, type PlacementStatus } from "@/features/garment-3d/placement-config";
+import { usePlacementView, usePrintDesign, type PrintLayer } from "@/features/garment-3d/print-design";
 import { cn } from "@/lib/utils/cn";
 import { StartSampleLink } from "./cta";
-import { BuilderGarmentPreview, type DecorationVisualKey, type FabricVisualKey, type GarmentKind } from "./garment";
+import { BuilderGarmentPreview, PrintControls, type DecorationVisualKey, type FabricVisualKey, type GarmentKind } from "./garment";
 import { Section, SectionIntro } from "./primitives";
 import { useI18n } from "@/i18n/provider";
 
 /**
- * MARKETING PREVIEW ONLY. Local state, no network, no storage: it never creates or saves a sample.
- * The real builder lives behind /account/samples/new. Each option carries the presentation token the garment visual consumes
+ * MARKETING PREVIEW ONLY. Local state, no network, no storage: it never creates or saves a sample, and a "tried" artwork image
+ * stays in this browser tab (object URL, never uploaded). The real builder lives behind /account/samples/new.
+ * Colours here are illustrative; production colours come from the fabric catalogue inside the sample request. Each option carries the presentation token the garment visual consumes
  * (and a future 3D viewer would consume the same state).
  */
 export const PREVIEW_OPTIONS = {
-  Product: [{ name: "T-Shirt", kind: "tshirt" }, { name: "Hoodie", kind: "hoodie" }, { name: "Sweatshirt", kind: "sweatshirt" }, { name: "Polo", kind: "polo" }],
+  Product: [{ name: "T-Shirt", kind: "tshirt" }, { name: "Hoodie", kind: "hoodie" }, { name: "Sweatshirt", kind: "sweatshirt" }, { name: "Polo", kind: "polo" }, { name: "Jacket", kind: "jacket" }],
   Fabric: [{ name: "Heavyweight Cotton", key: "twill" }, { name: "Cotton Jersey", key: "jersey" }, { name: "Brushed Fleece", key: "brushed" }],
   Colour: [{ name: "Black", hex: "#17191a" }, { name: "Bone", hex: "#d9d2c3" }, { name: "Forest", hex: "#12453a" }, { name: "Navy", hex: "#1b2a4a" }],
   Decoration: [{ name: "Embroidery", key: "embroidery" }, { name: "Screen Print", key: "screen-print" }, { name: "DTF", key: "dtf" }, { name: "Puff", key: "puff" }, { name: "Sublimation", key: "sublimation" }],
@@ -46,13 +49,17 @@ function Group({ label, index, value, children }: { label: string; index: number
   );
 }
 
-export function BuilderPreview({ modelSrc = null }: { modelSrc?: string | null }) {
+export function BuilderPreview() {
   const { t } = useI18n();
   const [product, setProduct] = useState<(typeof PREVIEW_OPTIONS.Product)[number]>(PREVIEW_OPTIONS.Product[0]);
   const [fabric, setFabric] = useState<(typeof PREVIEW_OPTIONS.Fabric)[number]>(PREVIEW_OPTIONS.Fabric[0]);
   const [colour, setColour] = useState<(typeof PREVIEW_OPTIONS.Colour)[number]>(PREVIEW_OPTIONS.Colour[0]);
   const [decoration, setDecoration] = useState<(typeof PREVIEW_OPTIONS.Decoration)[number]>(PREVIEW_OPTIONS.Decoration[0]);
   const [qty, setQty] = useState<number>(250);
+  const design = usePrintDesign(product.kind);
+  const [view, setView] = usePlacementView(product.kind, design.active);
+  const [status, setStatus] = useState<PlacementStatus>({});
+  const prints = useMemo(() => Object.values(design.layers).filter((l): l is PrintLayer => !!l), [design.layers]);
 
   const spec: Array<[string, string]> = [[t.text("Product"), t.text(product.name)], [t.text("Fabric"), t.text(fabric.name)], [t.text("Colour"), t.text(colour.name)], [t.text("Decoration"), t.text(decoration.name)], [t.text("Quantity"), String(qty)]];
 
@@ -66,8 +73,13 @@ export function BuilderPreview({ modelSrc = null }: { modelSrc?: string | null }
           <Group label={t("common.product")} index={1} value={t.text(product.name)}>{PREVIEW_OPTIONS.Product.map((o) => <Choice key={o.name} label={t.text(o.name)} selected={product.name === o.name} onSelect={() => setProduct(o)} />)}</Group>
           <Group label={t("common.fabric")} index={2} value={t.text(fabric.name)}>{PREVIEW_OPTIONS.Fabric.map((o) => <Choice key={o.name} label={t.text(o.name)} selected={fabric.name === o.name} onSelect={() => setFabric(o)} />)}</Group>
           <Group label={t("common.colour")} index={3} value={t.text(colour.name)}>{PREVIEW_OPTIONS.Colour.map((o) => <Choice key={o.name} label={t.text(o.name)} swatch={o.hex} selected={colour.name === o.name} onSelect={() => setColour(o)} />)}</Group>
+          <p className="-mt-3 text-xs text-pub-muted">{t("site.illustrativeColours")}</p>
           <Group label={t("site.decoration")} index={4} value={t.text(decoration.name)}>{PREVIEW_OPTIONS.Decoration.map((o) => <Choice key={o.name} label={t.text(o.name)} selected={decoration.name === o.name} onSelect={() => setDecoration(o)} />)}</Group>
           <Group label={t("common.quantity")} index={5} value={String(qty)}>{QUANTITIES.map((q) => <Choice key={q} label={String(q)} selected={qty === q} onSelect={() => setQty(q)} />)}</Group>
+          {placementsFor(product.kind).length ? <details className="group border-t border-pub-line pt-5" data-testid="try-artwork">
+            <summary className="flex min-h-10 cursor-pointer list-none items-baseline justify-between gap-3 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-pub-muted [&::-webkit-details-marker]:hidden"><span><span className="text-pub-brand">06</span> · {t("site.tryYourArtwork")}</span><span aria-hidden className="text-pub-text/70 transition-transform group-open:rotate-45">+</span></summary>
+            <PrintControls className="mt-4" kind={product.kind} design={design} status={status} note={<>{t("site.publicArtworkNote")} {t("site.preview3dDisclaimer")}</>} />
+          </details> : null}
           <div data-cta-end className="border-t border-pub-line pt-5 lg:hidden">
             <StartSampleLink className="h-14 w-full">{t("site.buildYours")}</StartSampleLink>
             <p className="mt-3 text-center text-xs text-pub-muted">{t("site.previewOnlyYourRealSampleRequest")}</p>
@@ -75,7 +87,7 @@ export function BuilderPreview({ modelSrc = null }: { modelSrc?: string | null }
         </div>
         <div className="order-1 grid gap-8 border-b border-pub-line bg-pub-surface p-3 max-lg:sticky max-lg:top-16 max-lg:z-20 max-lg:gap-2 max-lg:bg-pub-surface/95 max-lg:backdrop-blur sm:p-8 lg:order-2 lg:border-b-0 xl:grid-cols-[1fr_15rem]">
           <div className="mx-auto w-full max-w-lg max-lg:max-w-[min(100%,24svh)] sm:max-lg:max-w-lg">
-            <BuilderGarmentPreview modelSrc={modelSrc} productType={product.kind} colour={colour.hex} fabric={fabric.key} decoration={decoration.key} />
+            <BuilderGarmentPreview productType={product.kind} colour={colour.hex} fabric={fabric.key} decoration={decoration.key} prints={prints} view={view} onViewChange={setView} onPlacementStatus={setStatus} />
           </div>
           <p data-testid="builder-summary-mobile" className="truncate pb-1 text-center font-mono text-[0.6875rem] uppercase tracking-[0.1em] text-pub-muted lg:hidden"><span className="text-pub-text">{t.text(product.name)}</span> · {t.text(fabric.name)} · {t.text(colour.name)} · {t.text(decoration.name)} · {qty}</p>
           <div className="flex flex-col justify-between gap-8 max-lg:hidden">

@@ -19,12 +19,6 @@ export function resolveProcessVideo(): string | null {
   return existsSync(path.join(process.cwd(), "public", PROCESS_VIDEO_SRC)) ? PROCESS_VIDEO_SRC : null;
 }
 
-/** Optional real T-shirt model. Absent today: the viewer uses its procedural stand-in. Drop `public/models/tshirt.glb` and rebuild. */
-export const GARMENT_MODEL_SRC = "/models/tshirt.glb";
-export function resolveGarmentModel(): string | null {
-  return existsSync(path.join(process.cwd(), "public", GARMENT_MODEL_SRC)) ? GARMENT_MODEL_SRC : null;
-}
-
 /** Shared sign-in visual (staff `/login` and customer `/account/login`). */
 export const LOGIN_VIDEO_SRC = "/media/benue-login.mp4";
 export const LOGIN_POSTER_SRC = "/media/benue-login-poster.webp";

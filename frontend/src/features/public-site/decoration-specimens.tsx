@@ -1,6 +1,8 @@
 import type { DecorationVisualKey } from "./garment/types";
 
 const RAYS = Array.from({ length: 36 }, (_, i) => (i / 36) * Math.PI * 2);
+/** Server (Node) and browser trig can differ in the last digit; round so SSR and hydration produce the same path. */
+const px = (n: number) => n.toFixed(2);
 
 /**
  * Close-up specimens, one distinct treatment per method (decorative, not production samples). `kind` is the same token a future
@@ -37,7 +39,7 @@ export function DecorationSpecimen({ kind }: { kind: DecorationVisualKey }) {
       ) : null}
       {kind === "embroidery" ? (
         <g className="group-hover:opacity-100">
-          {RAYS.map((a, i) => <path key={i} d={`M${100 + Math.cos(a) * 24} ${96 + Math.sin(a) * 24} L${100 + Math.cos(a) * 52} ${96 + Math.sin(a) * 52}`} stroke={i % 2 ? "#2bb98c" : "#d9d2c3"} strokeWidth="2" strokeLinecap="round" />)}
+          {RAYS.map((a, i) => <path key={i} d={`M${px(100 + Math.cos(a) * 24)} ${px(96 + Math.sin(a) * 24)} L${px(100 + Math.cos(a) * 52)} ${px(96 + Math.sin(a) * 52)}`} stroke={i % 2 ? "#2bb98c" : "#d9d2c3"} strokeWidth="2" strokeLinecap="round" />)}
           <circle cx="100" cy="96" r="56" stroke="#2bb98c" strokeWidth="1.5" strokeDasharray="4 3.5" />
           <path d="M78 164 H122" stroke="#d9d2c3" strokeWidth="2" strokeDasharray="5 3" />
         </g>

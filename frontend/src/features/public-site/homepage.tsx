@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 import { Hero } from "./hero";
-import { resolveGarmentModel, resolveProcessVideo } from "./hero-media";
+import { resolveProcessVideo } from "./hero-media";
 import { StitchDivider } from "./primitives";
 import { BrandStatement, Capabilities, Decoration, FabricStory, FinalCta, PortalShowcase, QualitySection, Transparency, TrustStrip, WorkSection } from "./sections-static";
 import { WhatWeMake } from "./what-we-make";
@@ -18,7 +18,7 @@ export function Homepage() {
         <BrandStatement />
         <WhatWeMake />
         <ProcessStory videoSrc={resolveProcessVideo()} />
-        <BuilderPreview modelSrc={resolveGarmentModel()} />
+        <BuilderPreview />
         <FabricStory />
         <Decoration />
         <StitchDivider className="py-4" />

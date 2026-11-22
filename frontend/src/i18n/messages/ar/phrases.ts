@@ -1138,4 +1138,15 @@ const builderAndTail: Record<string, string> = {
   "No": "لا",
 };
 
-export const phrases: Messages["phrases"] = { ...siteContent, ...sitePages, ...siteLegal, ...siteMeta, ...tracking, ...siteMisc, ...pageTitles, ...shell, ...portalLabels, ...staffModuleShared, ...staffModule, ...tabs, ...errorsAndForms, ...labelMaps, ...commandCenter, ...accountPages, ...moreTitles, ...maxChars, ...heroLines, ...moreLabels, ...publicExtras, ...tailMisc, ...modeToggle, ...backendCopy, ...serverPages, ...builderAndTail };
+/** 3D garment preview: placement names (garment-3d/placement-config) and builder additions. */
+const garment3d: Record<string, string> = {
+  "Center chest": "منتصف الصدر",
+  "Right chest": "الصدر الأيمن",
+  "Upper back": "أعلى الظهر",
+  "Full back": "الظهر بالكامل",
+  "Left leg": "الرجل اليسرى",
+  "Right leg": "الرجل اليمنى",
+  "Jacket": "جاكيت",
+};
+
+export const phrases: Messages["phrases"] = { ...garment3d, ...siteContent, ...sitePages, ...siteLegal, ...siteMeta, ...tracking, ...siteMisc, ...pageTitles, ...shell, ...portalLabels, ...staffModuleShared, ...staffModule, ...tabs, ...errorsAndForms, ...labelMaps, ...commandCenter, ...accountPages, ...moreTitles, ...maxChars, ...heroLines, ...moreLabels, ...publicExtras, ...tailMisc, ...modeToggle, ...backendCopy, ...serverPages, ...builderAndTail };

@@ -149,25 +149,26 @@ describe("garment visual boundary", () => {
     expect(el).toHaveAttribute("data-garment-decoration", "puff");
   });
 
-  it("builder state is passed straight through to the garment preview", async () => {
+  it("builder state drives the 3D garment viewer", async () => {
     const { container } = render(<BuilderPreview />);
-    const props = () => { const el = container.querySelector("[data-garment-visual]")!; return ["kind", "colour", "fabric", "decoration"].map((k) => el.getAttribute(`data-garment-${k}`)); };
-    expect(props()).toEqual(["tshirt", "#17191a", "twill", "embroidery"]);
+    const kind = () => container.querySelector("[data-builder-preview] [data-garment-renderer]")!.getAttribute("data-garment-kind");
+    expect(kind()).toBe("tshirt");
     await userEvent.click(screen.getByRole("radio", { name: "Polo" }));
     await userEvent.click(screen.getByRole("radio", { name: "Forest" }));
-    await userEvent.click(screen.getByRole("radio", { name: "Brushed Fleece" }));
-    await userEvent.click(screen.getByRole("radio", { name: "Puff" }));
-    expect(props()).toEqual(["polo", "#12453a", "brushed", "puff"]);
+    expect(kind()).toBe("polo");
+    expect(screen.getByTestId("builder-summary")).toHaveTextContent(/Polo.*Forest/);
   });
 
-  it("the builder staging wraps the same garment visual", () => {
+  it("the builder staging holds only the 3D viewer: never a 2D garment drawing", () => {
     const { container } = render(<BuilderGarmentPreview productType="tshirt" decoration="dtf" />);
-    expect(container.querySelector("[data-builder-preview] [data-garment-visual]")).not.toBeNull();
+    expect(container.querySelector("[data-builder-preview] [data-garment-renderer]")).not.toBeNull();
+    expect(container.querySelector("[data-garment-visual]")).toBeNull();
   });
 
   it("What We Make drives the preview from hover and focus using local presentation kinds", async () => {
     const { container } = render(<WhatWeMake />);
-    const kind = () => container.querySelector("[data-testid=make-preview] [data-garment-visual]")!.getAttribute("data-garment-kind");
+    const kind = () => container.querySelector("[data-testid=make-preview] [data-garment-renderer]")!.getAttribute("data-garment-kind");
+    expect(container.querySelector("[data-testid=make-preview] [data-garment-visual]")).toBeNull();
     expect(kind()).toBe(WHAT_WE_MAKE[0]!.kind);
     await userEvent.hover(container.querySelector("a[data-kind=hoodie]")!);
     expect(kind()).toBe("hoodie");

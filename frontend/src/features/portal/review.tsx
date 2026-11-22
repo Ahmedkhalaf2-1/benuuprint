@@ -17,6 +17,7 @@ import { FILE_TYPE_LABELS } from "./files";
 import { fitLabel, providerLabel, SIDE_LABELS, UNIT_LABELS } from "./labels";
 import type { SampleDetail } from "./types";
 import type { StepKey } from "./wizard-config";
+import { hasDesign } from "@/features/garment-3d/print-design";
 import { Chip, Fact, FileTile, StepHeader, SummaryCard, Swatch, garmentKindFor } from "./wizard-ui";
 import { useI18n } from "@/i18n/provider";
 
@@ -106,6 +107,7 @@ export function ReviewSummary({ sample, onEdit, highlight }: { sample: SampleDet
             </li>))}</ul>
         )}
         {s.printNotes ? <p className="text-sm"><span className="text-muted-foreground">{t("customer.printNotes")}{" "}</span>{s.printNotes}</p> : null}
+        {hasDesign(`sample:${s.id}`) ? <p className="text-xs text-muted-foreground" data-testid="preview-not-saved">{t("customer.previewNotSaved")}</p> : null}
       </SummaryCard>
     </>
   );

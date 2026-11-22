@@ -6,11 +6,12 @@ import { WHAT_WE_MAKE, START_SAMPLE_HREF } from "./content";
 import { GarmentCarousel } from "./garment-carousel";
 import { GarmentPreview, type GarmentKind } from "./garment";
 import { Section, SectionIntro } from "./primitives";
+import { SHOWCASE_COLOUR } from "./garment";
 import { useI18n } from "@/i18n/provider";
 
 /**
- * Category list with a garment preview that follows hover/focus. The preview is `GarmentPreview`, so when 3D models exist
- * the right-hand panel changes implementation but this list and its state stay as they are.
+ * Category list with a garment preview that follows hover/focus. The preview is the real 3D model of the category where one
+ * exists (one shared viewer; models load on demand after a short hover pause), else the 2D visual.
  */
 export function WhatWeMake() {
   const { t, loc } = useI18n();
@@ -34,7 +35,7 @@ export function WhatWeMake() {
         </ul>
         <div className="hidden lg:block">
           <div className="sticky top-28 border border-pub-line bg-pub-surface p-8" data-testid="make-preview">
-            <GarmentPreview productType={active.kind} colour="#2b302e" fabric="jersey" caption={active.name} />
+            <GarmentPreview interactive productType={active.kind} colour={SHOWCASE_COLOUR} fabric="jersey" caption={active.name} controls="compact" switchDelay={150} />
           </div>
         </div>
       </div>
