@@ -68,8 +68,8 @@ export function BuilderPreview() {
       <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
         <SectionIntro eyebrow={t("site.n04SampleBuilder")} title={<span id="builder-title">{t("site.buildItBeforeWeMakeIt")}</span>}>{t("site.builderLede")}</SectionIntro>
       </div>
-      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] border border-pub-line sm:mt-14 lg:grid-cols-[minmax(0,26rem)_1fr]">
-        <div className="order-2 space-y-6 border-pub-line p-5 sm:space-y-7 sm:p-8 lg:order-1 lg:border-e">
+      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] border border-pub-line sm:mt-14 lg:grid-cols-[minmax(0,26rem)_1fr] lg:bg-pub-surface">
+        <div className="order-2 space-y-6 border-pub-line p-5 sm:space-y-7 sm:p-8 lg:order-1 lg:border-e lg:bg-pub-bg">
           <Group label={t("common.product")} index={1} value={t.text(product.name)}>{PREVIEW_OPTIONS.Product.map((o) => <Choice key={o.name} label={t.text(o.name)} selected={product.name === o.name} onSelect={() => setProduct(o)} />)}</Group>
           <Group label={t("common.fabric")} index={2} value={t.text(fabric.name)}>{PREVIEW_OPTIONS.Fabric.map((o) => <Choice key={o.name} label={t.text(o.name)} selected={fabric.name === o.name} onSelect={() => setFabric(o)} />)}</Group>
           <Group label={t("common.colour")} index={3} value={t.text(colour.name)}>{PREVIEW_OPTIONS.Colour.map((o) => <Choice key={o.name} label={t.text(o.name)} swatch={o.hex} selected={colour.name === o.name} onSelect={() => setColour(o)} />)}</Group>
@@ -85,8 +85,8 @@ export function BuilderPreview() {
             <p className="mt-3 text-center text-xs text-pub-muted">{t("site.previewOnlyYourRealSampleRequest")}</p>
           </div>
         </div>
-        <div className="order-1 grid gap-8 border-b border-pub-line bg-pub-surface p-3 max-lg:sticky max-lg:top-16 max-lg:z-20 max-lg:gap-2 max-lg:bg-pub-surface/95 max-lg:backdrop-blur sm:p-8 lg:order-2 lg:border-b-0 xl:grid-cols-[1fr_15rem]">
-          <div className="mx-auto w-full max-w-lg max-lg:max-w-[min(100%,24svh)] sm:max-lg:max-w-lg">
+        <div className="order-1 grid gap-8 border-b border-pub-line bg-pub-surface p-3 max-lg:sticky max-lg:top-16 max-lg:z-20 max-lg:gap-2 max-lg:bg-pub-surface/95 max-lg:backdrop-blur sm:p-8 lg:order-2 lg:sticky lg:top-16 lg:self-start lg:border-b-0 xl:grid-cols-[1fr_15rem]">
+          <div className="mx-auto w-full max-w-lg max-lg:max-w-[min(100%,24svh)] sm:max-lg:max-w-lg lg:max-w-[min(32rem,calc(100svh-9rem))]">
             <BuilderGarmentPreview productType={product.kind} colour={colour.hex} fabric={fabric.key} decoration={decoration.key} prints={prints} view={view} onViewChange={setView} onPlacementStatus={setStatus} />
           </div>
           <p data-testid="builder-summary-mobile" className="truncate pb-1 text-center font-mono text-[0.6875rem] uppercase tracking-[0.1em] text-pub-muted lg:hidden"><span className="text-pub-text">{t.text(product.name)}</span> · {t.text(fabric.name)} · {t.text(colour.name)} · {t.text(decoration.name)} · {qty}</p>
