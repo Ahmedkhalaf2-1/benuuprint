@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CircleHelp, Factory, LayoutGrid, Package, Paperclip, PencilLine, Plus, Ruler, Scissors, Shirt, Tag, Trash2, Truck, UploadCloud } from "lucide-react";
+import { Brush, Check, CircleHelp, Factory, Layers, LayoutGrid, Package, Paperclip, PencilLine, Plus, Ruler, Scissors, Shirt, Tag, Trash2, Truck, UploadCloud } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ChoiceGroup } from "@/components/forms/choice-group";
@@ -18,11 +18,11 @@ import * as api from "./api";
 import { fabricBody, fabricProblems, fabricState, fabricsFor, notesBody, notesState, patternsFor, productBody, productProblems, productState, sizeBody, sizeState, type FabricState, type NotesState, type ProductState, type SizeState } from "./builders";
 import { FILE_TYPE_LABELS, FileDownloadButton } from "./files";
 import { FIT_LABELS, PROVIDER_LABELS, SIDE_LABELS, UNIT_LABELS } from "./labels";
-import { GarmentPreview } from "@/features/public-site/garment";
 import { BrandForm } from "./brands";
-import { ColourPreview3D, DesignPreview3D, colourHex, sampleGarmentKind } from "./garment-customizer";
+import { colourHex, sampleGarmentKind } from "./garment-customizer";
+import { StudioDesignPanel, StudioProductSelector, useLiveColour, useLiveProduct } from "./studio";
 import { useBrands } from "./hooks";
-import { Chip, FileTile, GroupCard, StepHeader, Swatch, garmentKindFor } from "./wizard-ui";
+import { Chip, FileTile, GroupCard, StepHeader, Swatch } from "./wizard-ui";
 import type { StepKey } from "./wizard-config";
 import { FILE_TYPES, type FileType, type SampleBody, type SampleDetail, type SampleOptions } from "./types";
 import { useI18n } from "@/i18n/provider";
@@ -89,13 +89,14 @@ export function ProductStep({ sample, options, patch, stepRef }: StepProps) {
   const { t } = useI18n();
   const form = useStepForm<ProductState>(productState(sample), stepRef, async (f) => { await patch(productBody(f)); }, productProblems);
   const { f } = form;
+  useLiveProduct(f.productTypeId || null, f.mode === "custom");
   return (
     <Section stepKey="product">
       {form.error ? <FormError {...form.error} /> : null}
       <ModeToggle name="Product source" value={f.mode} onChange={(mode) => form.set({ mode })} labels={[t.text("From the Benuu Print catalogue"), t.text("Something else — I'll describe it")]} hints={[t.text("Pick a product we already make."), t.text("Tell us about a product that isn't listed.")]} />
       {f.mode === "catalog" ? (
         <GroupCard icon={<Shirt />} title={t("customer.chooseAProduct")}>
-          <ChoiceGroup name="product-type" aria-label={t("common.product")} value={f.productTypeId} onValueChange={(v) => form.set({ productTypeId: v })} columns={3} options={options.productTypes.map((p) => ({ value: p.id, label: p.name, description: p.description ?? undefined, icon: <span className="block size-14"><GarmentPreview productType={garmentKindFor(p.name)} colour="#2b302e" fabric="jersey" /></span> }))} />
+          <StudioProductSelector options={options} value={f.productTypeId} onChange={(v) => form.set({ productTypeId: v })} />
         </GroupCard>
       ) : (
         <GroupCard icon={<PencilLine />} title={t("customer.describeYourProduct")} help={t("customer.aNameAndAnythingThatHelps")}>
@@ -118,8 +119,8 @@ export function FabricStep({ sample, options, patch, stepRef }: StepProps) {
   const fabric = options.fabrics.find((x) => x.id === f.fabricId);
   const colours = fabric?.colors ?? [];
   const range = fabric && (fabric.minGsm || fabric.maxGsm) ? t("customer.usuallyGsmRange", { min: fabric.minGsm ?? "…", max: fabric.maxGsm ?? "…" }) : undefined;
-  const kind = sampleGarmentKind(sample);
   const liveHex = f.fabricMode === "catalog" && f.colorMode === "catalog" ? colourHex(options, f.fabricId, f.fabricColorId, null) : colourHex(options, null, null, f.customHex);
+  useLiveColour(liveHex);
   const recommended = (id: string) => options.fabrics.find((x) => x.id === id)?.productTypes.find((p) => p.productTypeId === sample.productTypeId)?.isRecommended;
   return (
     <Section stepKey="fabric">
@@ -145,7 +146,7 @@ export function FabricStep({ sample, options, patch, stepRef }: StepProps) {
         {f.fabricMode === "catalog" && colours.length > 0 ? <ModeToggle name="Colour source" value={f.colorMode} onChange={(colorMode) => form.set({ colorMode })} labels={[t.text("Pick from this fabric's colours"), "A different colour"]} /> : null}
         {f.fabricMode === "catalog" && f.colorMode === "catalog" ? (
           colours.length === 0 ? <p className="text-sm text-muted-foreground">{f.fabricId ? t("customer.thisFabricHasNoListedColours") : t("customer.chooseAFabricFirstToSee")}</p> : (
-            <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6" role="radiogroup" aria-label={t("customer.fabricColour2")}>{colours.map((c) => {
+            <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 2xl:grid-cols-6" role="radiogroup" aria-label={t("customer.fabricColour2")}>{colours.map((c) => {
               const on = f.fabricColorId === c.id;
               return (
                 <li key={c.id}><button type="button" role="radio" aria-checked={on} onClick={() => form.set({ fabricColorId: c.id })} className={cn("relative flex min-h-24 w-full flex-col items-center justify-center gap-1.5 rounded-md border bg-surface p-2 text-center text-sm transition-colors hover:border-border-strong active:scale-[0.97]", on && "border-brand bg-brand-soft/50 shadow-[inset_0_2px_0_var(--brand)]")}>
@@ -162,7 +163,6 @@ export function FabricStep({ sample, options, patch, stepRef }: StepProps) {
           </div>
         )}
       </GroupCard>
-      {kind ? <ColourPreview3D kind={kind} hex={liveHex} /> : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField id="fb-gsm" label={t("customer.fabricWeightOptional")} hint={t("customer.fabricWeightHint", { range: range ?? "" }).trim()}><Input id="fb-gsm" className="max-w-40" inputMode="decimal" value={f.gsm} onChange={(e) => form.set({ gsm: e.target.value })} placeholder={fabric?.defaultGsm ? String(fabric.defaultGsm) : "e.g. 220"} /></FormField>
         <FormField id="fb-notes" label={t("customer.anythingElseAboutTheFabric")}><Textarea id="fb-notes" rows={3} value={f.fabricNotes} onChange={(e) => form.set({ fabricNotes: e.target.value })} /></FormField>
@@ -274,26 +274,32 @@ export function DecorationStep({ sample, options, patch, stepRef, changed }: Ste
   return (
     <Section stepKey="decoration">
       {error ? <FormError {...error} /> : null}{form.error ? <FormError {...form.error} /> : null}
-      {kind ? <DesignPreview3D sample={sample} options={options} kind={kind} onAdd={(p) => { setDlgArt(p.artwork); setDlg({ ...emptyDeco, placement: p.placement, side: p.side || emptyDeco.side, artworkRequired: !!p.artwork }); }} /> : null}
-      {sample.decorations.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed bg-surface-sunken/60 px-6 py-10 text-center" data-testid="decorations-empty">
-          <span aria-hidden className="flex size-11 items-center justify-center rounded-sm border bg-surface text-muted-foreground"><Paperclip className="size-5" /></span>
-          <div><p className="font-semibold">{t("customer.noPrintingOrEmbroideryAddedYet")}</p><p className="mt-1 text-sm text-muted-foreground">{t("customer.addOneForEveryPlaceSomething")}</p></div>
-          <Button onClick={() => { setDlgArt(null); setDlg(emptyDeco); }}><Plus />{" "}{t("customer.addDecoration")}</Button>
-        </div>
-      ) : (
-        <>
-          <ul className="grid gap-3 lg:grid-cols-2" data-testid="wizard-decorations">{sample.decorations.map((d) => (
-            <li key={d.id} className="bp-enter-item space-y-3 rounded-lg border bg-surface p-4 text-sm">
-              <div className="flex items-start justify-between gap-2"><div><p className="font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-brand">{d.printMethod.name}</p><p className="mt-0.5 text-base font-semibold">{d.placement}</p></div>
-                <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={() => { setDlgArt(null); setDlg({ id: d.id, printMethodId: d.printMethod.id, placement: d.placement, side: d.side, width: d.width ?? "", height: d.height ?? "", unit: d.unit ?? "CM", colorCount: d.colorCount ? String(d.colorCount) : "", notes: d.notes ?? "", artworkRequired: d.artworkRequired }); }}>{t("common.edit")}</Button>
-                  <IconButton size="sm" label={t("customer.removeNamePlacement", { name: d.printMethod.name, placement: d.placement })} icon={<Trash2 />} onClick={async () => { try { await api.removeDecoration(sample.id, d.id); changed(); } catch (e) { setError({ message: errorMessage(e) }); } }} /></span></div>
-              <div className="flex flex-wrap gap-1.5"><Chip>{t.text(SIDE_LABELS[d.side] ?? d.side)}</Chip>{d.width && d.height ? <Chip>{d.width} × {d.height} {d.unit ? t.text(UNIT_LABELS[d.unit] ?? d.unit) : ""}</Chip> : null}{d.colorCount ? <Chip>{d.colorCount} {d.colorCount === 1 ? t("customer.colour") : t("customer.colours")}</Chip> : null}{d.artwork ? <Chip tone="brand">{t("customer.artworkName", { name: d.artwork.name })}</Chip> : d.artworkRequired ? <Chip tone="warning">{t("customer.artworkNeeded")}</Chip> : null}</div>
-              {d.notes ? <p className="text-muted-foreground">{d.notes}</p> : null}
-            </li>))}</ul>
-          <Button variant="secondary" onClick={() => { setDlgArt(null); setDlg(emptyDeco); }}><Plus />{" "}{t("customer.addADecoration")}</Button>
-        </>
-      )}
+      {kind ? (
+        <GroupCard icon={<Brush />} title={t("customer.studioAddDesign")} help={t("customer.studioAddDesignHelp")}>
+          <StudioDesignPanel sample={sample} options={options} kind={kind} onAdd={(p) => { setDlgArt(p.artwork); setDlg({ ...emptyDeco, placement: p.placement, side: p.side || emptyDeco.side, artworkRequired: !!p.artwork }); }} />
+        </GroupCard>
+      ) : <p className="rounded-md border bg-surface-sunken/60 px-4 py-3 text-sm text-muted-foreground" data-testid="no-3d-decorations">{t("customer.studioNoModelDecorations")}</p>}
+      <GroupCard icon={<Layers />} title={t("customer.studioDecorations")} help={t("customer.studioDecorationsHelp")}>
+        {sample.decorations.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed bg-surface-sunken/60 px-6 py-10 text-center" data-testid="decorations-empty">
+            <span aria-hidden className="flex size-11 items-center justify-center rounded-sm border bg-surface text-muted-foreground"><Paperclip className="size-5" /></span>
+            <div><p className="font-semibold">{t("customer.noPrintingOrEmbroideryAddedYet")}</p><p className="mt-1 text-sm text-muted-foreground">{t("customer.addOneForEveryPlaceSomething")}</p></div>
+            <Button onClick={() => { setDlgArt(null); setDlg(emptyDeco); }}><Plus />{" "}{t("customer.addDecoration")}</Button>
+          </div>
+        ) : (
+          <>
+            <ul className="grid gap-3 xl:grid-cols-2" data-testid="wizard-decorations">{sample.decorations.map((d) => (
+              <li key={d.id} className="bp-enter-item space-y-3 rounded-lg border bg-surface p-4 text-sm">
+                <div className="flex items-start justify-between gap-2"><div><p className="font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-brand">{d.printMethod.name}</p><p className="mt-0.5 text-base font-semibold">{d.placement}</p></div>
+                  <span className="flex gap-1"><Button size="sm" variant="secondary" onClick={() => { setDlgArt(null); setDlg({ id: d.id, printMethodId: d.printMethod.id, placement: d.placement, side: d.side, width: d.width ?? "", height: d.height ?? "", unit: d.unit ?? "CM", colorCount: d.colorCount ? String(d.colorCount) : "", notes: d.notes ?? "", artworkRequired: d.artworkRequired }); }}>{t("common.edit")}</Button>
+                    <IconButton size="sm" label={t("customer.removeNamePlacement", { name: d.printMethod.name, placement: d.placement })} icon={<Trash2 />} onClick={async () => { try { await api.removeDecoration(sample.id, d.id); changed(); } catch (e) { setError({ message: errorMessage(e) }); } }} /></span></div>
+                <div className="flex flex-wrap gap-1.5"><Chip>{t.text(SIDE_LABELS[d.side] ?? d.side)}</Chip>{d.width && d.height ? <Chip>{d.width} × {d.height} {d.unit ? t.text(UNIT_LABELS[d.unit] ?? d.unit) : ""}</Chip> : null}{d.colorCount ? <Chip>{d.colorCount} {d.colorCount === 1 ? t("customer.colour") : t("customer.colours")}</Chip> : null}{d.artwork ? <Chip tone="brand">{t("customer.artworkName", { name: d.artwork.name })}</Chip> : d.artworkRequired ? <Chip tone="warning">{t("customer.artworkNeeded")}</Chip> : null}</div>
+                {d.notes ? <p className="text-muted-foreground">{d.notes}</p> : null}
+              </li>))}</ul>
+            <Button variant="secondary" onClick={() => { setDlgArt(null); setDlg(emptyDeco); }}><Plus />{" "}{t("customer.addADecoration")}</Button>
+          </>
+        )}
+      </GroupCard>
       <FormField id="dc-printnotes" label={t("customer.anythingElseAboutThePrinting")}><Textarea id="dc-printnotes" rows={3} value={form.f.printNotes} onChange={(e) => form.set({ printNotes: e.target.value })} /></FormField>
       {dlg ? <DecorationDialog sample={sample} options={options} initial={dlg} artwork={dlgArt} onClose={() => { setDlg(null); setDlgArt(null); }} onSaved={changed} /> : null}
     </Section>

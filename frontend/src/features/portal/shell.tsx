@@ -37,10 +37,12 @@ export function PortalShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const { customer, logout } = useCustomerAuth();
   const pathname = usePathname();
+  // The sample studio (config + live 3D viewer side by side) needs a wider frame than the rest of the portal.
+  const width = /^\/account\/samples\/[^/]+\/edit\/?$/.test(pathname) ? "max-w-7xl" : "max-w-5xl";
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="sticky top-0 z-30 border-b bg-surface-sunken">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-x-6 px-4 sm:h-16">
+        <div className={cn("mx-auto flex h-14 items-center justify-between gap-x-6 px-4 sm:h-16", width)}>
           <Link href="/account" aria-label={t("customer.benuuPrintMyAccount")}><Brand /></Link>
           <nav aria-label={t("customer.main")} className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-surface-sunken pb-[env(safe-area-inset-bottom)] sm:static sm:order-2 sm:flex sm:gap-1 sm:border-0 sm:bg-transparent sm:pb-0">
             {NAV.map((n) => {
@@ -60,7 +62,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="bp-enter mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-28 sm:py-10 sm:pb-10">{children}</main>
+      <main className={cn("bp-enter mx-auto w-full flex-1 px-4 py-6 pb-28 sm:py-10 sm:pb-10", width)}>{children}</main>
       <footer className="hidden border-t bg-surface-sunken px-4 py-4 text-center text-xs text-muted-foreground sm:block">{t("customer.benuuPrintQuestionsContactYourBenuu")}</footer>
     </div>
   );

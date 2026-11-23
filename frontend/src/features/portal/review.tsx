@@ -12,13 +12,13 @@ import { Label } from "@/components/ui/input";
 import { errorMessage, isApiError } from "@/lib/api/errors";
 import * as api from "./api";
 import { useSubmissionCheck, useTerms } from "./hooks";
-import { GarmentPreview } from "@/features/public-site/garment";
 import { FILE_TYPE_LABELS } from "./files";
 import { fitLabel, providerLabel, SIDE_LABELS, UNIT_LABELS } from "./labels";
 import type { SampleDetail } from "./types";
 import type { StepKey } from "./wizard-config";
 import { hasDesign } from "@/features/garment-3d/print-design";
 import { Chip, Fact, FileTile, StepHeader, SummaryCard, Swatch, garmentKindFor } from "./wizard-ui";
+import { modelFor } from "@/features/garment-3d/model-registry";
 import { useI18n } from "@/i18n/provider";
 
 /** What is still missing, exactly as the backend reports it (`problems[]`). Nothing is re-validated here. */
@@ -80,10 +80,7 @@ export function ReviewSummary({ sample, onEdit, highlight }: { sample: SampleDet
       </SummaryCard>
       <SummaryCard stepKey="product" icon={<Ico k="product" />} title={t("common.product")} onEdit={onEdit} highlight={highlight === "product"}>
         {product ? (
-          <div className="flex items-center gap-4">
-            {!custom ? <span className="block size-16 shrink-0"><GarmentPreview productType={garmentKindFor(product)} colour="#2b302e" fabric="jersey" /></span> : null}
-            <div className="min-w-0"><p className="text-xl font-semibold tracking-tight">{product}</p><Chip className="mt-1.5">{custom ? t("customer.describedByYou") : t("customer.benuuPrintCatalogue")}</Chip></div>
-          </div>
+          <div className="min-w-0"><p className="text-xl font-semibold tracking-tight">{product}</p><span className="mt-1.5 flex flex-wrap gap-1.5"><Chip>{custom ? t("customer.describedByYou") : t("customer.benuuPrintCatalogue")}</Chip>{!custom && modelFor(garmentKindFor(product)) ? <Chip tone="brand">{t("customer.studioHas3d")}</Chip> : null}</span></div>
         ) : <p className="text-sm text-muted-foreground">{t("customer.notChosenYet")}</p>}
         {s.customProductDescription ? <p className="text-sm text-muted-foreground">{s.customProductDescription}</p> : null}
       </SummaryCard>
@@ -107,7 +104,7 @@ export function ReviewSummary({ sample, onEdit, highlight }: { sample: SampleDet
             </li>))}</ul>
         )}
         {s.printNotes ? <p className="text-sm"><span className="text-muted-foreground">{t("customer.printNotes")}{" "}</span>{s.printNotes}</p> : null}
-        {hasDesign(`sample:${s.id}`) ? <p className="text-xs text-muted-foreground" data-testid="preview-not-saved">{t("customer.previewNotSaved")}</p> : null}
+        {hasDesign(`sample:${s.id}`) ? <p className="text-xs text-muted-foreground" data-testid="preview-not-saved">{t("customer.previewNotSaved")} {t("customer.studioDisclaimer")}</p> : null}
       </SummaryCard>
     </>
   );

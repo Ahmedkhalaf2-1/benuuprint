@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
 import { defaultPlacement, type PlacementStatus, type ViewFace } from "@/features/garment-3d/placement-config";
 import type { PrintLayer } from "@/features/garment-3d/print-design";
@@ -33,6 +33,8 @@ export interface InteractiveGarmentProps extends GarmentVisualProps {
   deferred?: boolean;
   /** Pause before following a new garment (hover lists): quick sweeps across a list don't download every model. 0 = immediate. */
   switchDelay?: number;
+  /** Replaces the default "no model" line (e.g. the sample studio's own wording, or "choose a garment"). */
+  noModelMessage?: ReactNode;
 }
 
 type Stage = "pending" | "loading" | "ready" | "error" | "no-model" | "no-webgl" | "opt-in" | "deferred";
@@ -42,7 +44,7 @@ type Stage = "pending" | "loading" | "ready" | "error" | "no-model" | "no-webgl"
  * (no illustration, no placeholder garment), with a small status line. That is also what the server renders, so hydration never
  * swaps one garment drawing for another.
  */
-export function InteractiveGarment({ prints, view: viewProp, onViewChange, controls = "full", interaction = "rotate", autoRotate, onPlacementStatus, deferred = false, switchDelay = 0, ...props }: InteractiveGarmentProps) {
+export function InteractiveGarment({ prints, view: viewProp, onViewChange, controls = "full", interaction = "rotate", autoRotate, onPlacementStatus, deferred = false, switchDelay = 0, noModelMessage, ...props }: InteractiveGarmentProps) {
   const { t } = useI18n();
   const kind = props.productType;
   const hasModel = has3dModel(kind);
@@ -128,7 +130,7 @@ export function InteractiveGarment({ prints, view: viewProp, onViewChange, contr
       ) : stage === "no-webgl" ? (
         <div className="absolute inset-0 flex items-center justify-center"><p className={note}>{t("site.n3dUnavailable")}</p></div>
       ) : stage === "no-model" ? (
-        <div className="absolute inset-0 flex items-center justify-center" data-testid="no-3d-model"><p className={note}>{t("site.n3dModelUnavailable")}</p></div>
+        <div className="absolute inset-0 flex items-center justify-center" data-testid="no-3d-model"><p className={note}>{noModelMessage ?? t("site.n3dModelUnavailable")}</p></div>
       ) : stage === "opt-in" ? (
         <div className="absolute inset-0 flex items-center justify-center"><button type="button" className={btn} onClick={requestOptIn}>{t("site.viewIn3d")}</button></div>
       ) : null}

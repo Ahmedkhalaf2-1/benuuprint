@@ -62,11 +62,11 @@ describe("selection state", () => {
     await userEvent.click(screen.getByRole("radio", { name: /Option B/ }));
     expect(change).toHaveBeenCalledWith("b");
   });
-  it("catalogue products are cards that carry a garment visual and the product name", () => {
+  it("catalogue products are a compact list: names only, no garment drawings (the studio viewer shows the garment)", () => {
     renderWithClient(<ProductStep sample={sample({ productTypeId: "pt1" })} options={sampleOptions() as never} stepRef={{ current: null }} patch={async () => undefined} changed={() => undefined} />);
     const group = screen.getByRole("radiogroup", { name: "Product" });
     expect(within(group).getAllByRole("radio")).toHaveLength(2);
-    expect(group.querySelectorAll("[data-garment-visual]").length).toBe(2);
+    expect(group.querySelectorAll("[data-garment-visual]").length).toBe(0);
     expect(screen.getByTestId("step-header")).toHaveTextContent("Step 2 of 9");
   });
   it("maps catalogue names to presentation-only garment kinds", () => {

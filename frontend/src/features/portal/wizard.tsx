@@ -15,6 +15,8 @@ import { BrandStep, DecorationStep, ExtrasStep, FabricStep, FilesStep, NotesStep
 import type { SampleBody } from "./types";
 import { STEPS, type StepKey } from "./wizard-config";
 import { StepNav } from "./wizard-ui";
+import { StudioProvider, StudioViewer } from "./studio";
+import { cn } from "@/lib/utils/cn";
 import { useI18n } from "@/i18n/provider";
 
 export { STEPS, type StepKey } from "./wizard-config";
@@ -73,30 +75,46 @@ export function SampleWizard({ id }: { id: string }) {
   };
   const Body = { brand: BrandStep, product: ProductStep, fabric: FabricStep, size: SizeStep, decoration: DecorationStep, extras: ExtrasStep, files: FilesStep, notes: NotesStep }[step.key as Exclude<StepKey, "review">];
 
+  // The studio viewer is one shared instance for every step after Brand (it is never re-created between steps). Product, Fabric and
+  // Decoration get the full stage; later steps keep a compact one (desktop only; phones show it on the customization steps).
+  const studio = step.key !== "brand";
+  const main = step.key === "product" || step.key === "fabric" || step.key === "decoration";
+
   return (
-    <div className="space-y-8">
-      <div><p className="text-sm"><Link href="/account/samples" className="text-muted-foreground hover:text-foreground hover:underline">{t("customer.mySamples")}</Link></p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em]">{t("customer.yourSampleRequest")}{" "}<span className="ms-2 whitespace-nowrap font-mono text-sm font-normal text-brand">{sample.sampleNumber}</span></h1>
-        <p className="text-sm text-muted-foreground">{t("customer.tellUsWhatYouWantTo2")}</p></div>
-      <StepNav current={idx} onGo={(i) => { setEditing(null); void go(i); }} />
-      {editing && step.key !== "review" ? (
-        <div role="status" className="bp-enter-item flex flex-wrap items-center justify-between gap-3 rounded-md border border-brand/35 bg-brand-soft/40 px-4 py-2.5 text-sm" data-testid="editing-banner">
-          <span>{t("customer.youAreEditingFromYourReview")}</span>
-          <Button size="sm" variant="secondary" onClick={() => void backToReview()}><ArrowLeft className="rtl:-scale-x-100" />{" "}{t("customer.returnToReview")}</Button>
-        </div>
-      ) : null}
-      <div key={step.key} className="bp-enter rounded-lg border bg-surface p-5 sm:p-7" data-testid="step-body" data-step={step.key}>
-        {step.key === "review" ? <ReviewStep sample={sample} changed={() => invalidate(id)} onEdit={edit} highlight={flash} submitSlot={slot} onSubmitted={() => { invalidate(id); router.replace(`/account/samples/${id}?submitted=1`); }} /> : Body ? <Body {...props} /> : null}
-      </div>
-      <div className="sticky bottom-[4.25rem] z-20 -mx-4 border-t bg-surface-sunken px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0" data-testid="wizard-actions">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button variant="secondary" className="h-11 sm:h-9" disabled={idx === 0 || saving} onClick={() => void go(idx - 1)}>{t("common.back")}</Button>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" className="h-11 sm:h-9" loading={saving} onClick={() => void saveDraft()}>{t("common.saveDraft")}</Button>
-            {step.key !== "review" ? <Button className="h-11 sm:h-9" loading={saving} onClick={() => void go(idx + 1)}>{t("customer.saveContinue")}</Button> : <span ref={setSlot} data-testid="submit-slot" className="contents" />}
+    <StudioProvider sample={sample}>
+      <div className="space-y-8">
+        <div><p className="text-sm"><Link href="/account/samples" className="text-muted-foreground hover:text-foreground hover:underline">{t("customer.mySamples")}</Link></p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em]">{t("customer.yourSampleRequest")}{" "}<span className="ms-2 whitespace-nowrap font-mono text-sm font-normal text-brand">{sample.sampleNumber}</span></h1>
+          <p className="text-sm text-muted-foreground">{t("customer.tellUsWhatYouWantTo2")}</p></div>
+        <StepNav current={idx} onGo={(i) => { setEditing(null); void go(i); }} />
+        {editing && step.key !== "review" ? (
+          <div role="status" className="bp-enter-item flex flex-wrap items-center justify-between gap-3 rounded-md border border-brand/35 bg-brand-soft/40 px-4 py-2.5 text-sm" data-testid="editing-banner">
+            <span>{t("customer.youAreEditingFromYourReview")}</span>
+            <Button size="sm" variant="secondary" onClick={() => void backToReview()}><ArrowLeft className="rtl:-scale-x-100" />{" "}{t("customer.returnToReview")}</Button>
+          </div>
+        ) : null}
+        <div className={cn(studio && "lg:grid lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_30rem] xl:gap-8 2xl:grid-cols-[minmax(0,1fr)_34rem]")} data-testid="sample-studio">
+          {studio ? (
+            <aside className={cn("mb-6 lg:sticky lg:top-24 lg:order-2 lg:mb-0", !main && "max-lg:hidden", step.key === "decoration" && "max-lg:sticky max-lg:top-14 max-lg:z-10 max-lg:-mx-4 max-lg:bg-background max-lg:px-4 max-lg:pb-2")} data-testid="studio-aside">
+              <StudioViewer sample={sample} options={options.data} compact={!main} pinned={step.key === "decoration"} />
+            </aside>
+          ) : null}
+          <div className="min-w-0 space-y-6 lg:order-1">
+            <div key={step.key} className="bp-enter rounded-lg border bg-surface p-5 sm:p-7" data-testid="step-body" data-step={step.key}>
+              {step.key === "review" ? <ReviewStep sample={sample} changed={() => invalidate(id)} onEdit={edit} highlight={flash} submitSlot={slot} onSubmitted={() => { invalidate(id); router.replace(`/account/samples/${id}?submitted=1`); }} /> : Body ? <Body {...props} /> : null}
+            </div>
+            <div className="sticky bottom-[4.25rem] z-20 -mx-4 border-t bg-surface-sunken px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0" data-testid="wizard-actions">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Button variant="ghost" className="h-11 sm:h-9" disabled={idx === 0 || saving} onClick={() => void go(idx - 1)}>{t("common.back")}</Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="secondary" className="h-11 sm:h-9" loading={saving} onClick={() => void saveDraft()}>{t("common.saveDraft")}</Button>
+                  {step.key !== "review" ? <Button className="h-11 sm:h-9" loading={saving} onClick={() => void go(idx + 1)}>{t("customer.saveContinue")}</Button> : <span ref={setSlot} data-testid="submit-slot" className="contents" />}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </StudioProvider>
   );
 }

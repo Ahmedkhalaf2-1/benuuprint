@@ -77,3 +77,17 @@ multiplies without flattening the weave/normal detail. Denim and the printed sui
 Physical-device FPS (iOS Safari, low-end Android) not measured; verified in desktop Chrome (Metal) and mobile emulation.
 Preview sizes are not print dimensions. The jeans texture shows a third-party logo patch; replace the model/texture before launch if
 that is not acceptable.
+
+## Sample studio (customer sample request)
+`/account/samples/[id]/edit` is laid out as a studio: configuration (the existing steps, unchanged ids/order/saves) on the left, one
+shared live 3D viewer on the right (`src/features/portal/studio.tsx`). The frame widens to `max-w-7xl` on this route only.
+
+- **One viewer, never re-created between steps.** Shown from Product onward; full stage on Product / Fabric / Decoration, compact on
+  later steps (desktop sticky; phones show it above the form on the customization steps, pinned small on Decoration).
+- **Source of truth.** Saved sample values, plus the current step's unsaved picks pushed as live overrides (`useLiveProduct`,
+  `useLiveColour`); overrides are dropped as soon as the saved sample changes. Artwork/placement/size/position come from the
+  existing per-sample design store, shared by the decoration controls and the viewer (picking a back placement turns the garment).
+- **Product picker.** Compact radio list of the real catalogue product types with a "3D" tag where a model exists — no garment
+  drawings, no extra canvases. Products without a model: "3D preview isn't available for this garment yet."; the request works as before.
+- **Persistence.** Unchanged: placements become decorations only via the existing dialog; artwork uploads only through the existing
+  files endpoint when ticked there. Preview size/offset/rotation are not saved (no backend field).

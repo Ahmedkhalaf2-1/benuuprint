@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { customerTokenStore } from "@/lib/customer/session";
 import { DecorationStep, FabricStep } from "@/features/portal/steps";
+import { StudioProvider, StudioViewer } from "@/features/portal/studio";
 import type { SampleDetail } from "@/features/portal/types";
 import { json, mockApi, renderWithClient, sampleOptions } from "./helpers";
 
@@ -26,13 +27,17 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); customerTokenStore.clear(); });
 
 describe("3D preview in the real sample request", () => {
-  it("fabric step previews catalogue products only", () => {
-    const { unmount } = renderWithClient(<FabricStep sample={detail()} options={options} {...step} />);
-    expect(screen.getByTestId("colour-preview-3d")).toBeInTheDocument();
-    expect(screen.getByText("3D preview for reference. Final placement is confirmed during sample review.")).toBeInTheDocument();
+  it("the studio viewer follows the sample: catalogue garments in 3D, a clear message for products without a model", async () => {
+    const { unmount } = renderWithClient(<StudioProvider sample={detail()}><StudioViewer sample={detail()} options={options} /><FabricStep sample={detail()} options={options} {...step} /></StudioProvider>);
+    expect(screen.getByTestId("studio-viewer")).toHaveAttribute("data-garment", "tshirt");
+    expect(screen.getByTestId("studio-garment")).toHaveTextContent("T-Shirt");
+    expect(screen.getByText("3D preview is illustrative. Final print placement is confirmed during sample review.")).toBeInTheDocument();
+    expect(screen.queryByTestId("colour-preview-3d")).toBeNull(); // no second viewer inside the step
     unmount();
-    renderWithClient(<FabricStep sample={detail({ productTypeId: null, productName: null, customProductName: "Cape" })} options={options} {...step} />);
-    expect(screen.queryByTestId("colour-preview-3d")).toBeNull();
+    const custom = detail({ productTypeId: null, productName: null, customProductName: "Cape" });
+    renderWithClient(<StudioProvider sample={custom}><StudioViewer sample={custom} options={options} /></StudioProvider>);
+    expect(screen.getByTestId("studio-viewer")).toHaveAttribute("data-garment", "none");
+    expect(await screen.findByText("3D preview isn't available for this garment yet.")).toBeInTheDocument();
   });
 
   it("offers only the calibrated placements of the sample's garment", () => {
